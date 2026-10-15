@@ -2,6 +2,9 @@
 library(readr)
 library(dplyr)
 library(purrr)
+library(ggplot2)
+library(forcats)
+library(gridExtra)
 
 # read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -48,3 +51,84 @@ check_for_na <- function(df) {
 
 map(list(football_train, football_test, handball_long, handball_wide, tennis), check_for_na)
 
+# Visualizing handball long----
+
+# How each team's {goals, betting probabilities} changes over time
+plot_season <- function(df, variable, var_name) {
+  df %>%
+    group_by(team, season) %>%
+    summarize(
+      value = mean({{variable}}),
+      num_games = n()
+    ) %>%
+    ggplot() + 
+    geom_col(aes(y=value, x = season, fill = num_games)) +
+    facet_wrap(~team) + 
+    labs(title = paste0("Seasonal ", var_name), 
+         y = paste0("Average Seasonal ", var_name), 
+         fill = "Number of Games in Season", 
+         x = "Season")
+}
+plot_season(handball_long, goals, "Goals")
+plot_season(handball_long, bet.probs, "Betting Probabilities")
+
+# Relationship between betting probabilities and goals
+handball_long %>%
+  group_by(team, season) %>%
+  summarise(
+    mean_goals = mean(goals), 
+    mean_prob = mean(bet.probs)
+  ) %>%
+  ggplot()+
+  geom_point(aes(x=mean_goals, y = mean_prob))+
+  facet_wrap(~season)+
+  labs(title= "Goals vs Betting Probabilities for Teams")
+
+# Home vs Away's impact on {betting, goals}
+plot_home_way <- function(df, variable, var_name) {
+  df %>%
+    group_by(team, home_away) %>%
+    summarize(
+      value = mean({{variable}}),
+      num_games = n(),
+      .groups = "drop"
+    ) %>%
+    mutate(team = fct_reorder(team, value)) %>%
+    ggplot() + 
+    geom_col(aes(y=team, x = value, fill = home_away), 
+             position = "dodge") +
+    labs(title = paste0("Home vs Away ", var_name), 
+         y = "Team", 
+         fill = "Home vs Away", 
+         x = paste(var_name))
+}
+
+home_away_goals <- plot_home_way(handball_long, goals, "Goals")
+home_away_bets <- plot_home_way(handball_long, bet.probs, "Betting Probabilities")
+
+grid.arrange(home_away_bets, home_away_goals, nrow = 1)
+
+# handball long average goals per team
+handball_long %>% 
+  group_by(team) %>%  
+  summarise(team_mean_goals = mean(goals), .groups = "drop") %>%
+  mutate(team = fct_reorder(team, team_mean_goals)) %>%
+  ggplot()+
+  geom_col(aes(y = team, x = team_mean_goals))+
+  labs(title = "Handball Team Avg Goals per Match")
+
+# violin plot goals
+handball_long %>% 
+  group_by(team) %>%
+  mutate(team_median_goals = median(goals)) %>%
+  ungroup() %>%
+  mutate(team = fct_reorder(team, team_median_goals)) %>%
+  ggplot()+
+  geom_violin(aes(y = team, x = goals))+
+  labs(title = "Goal Distribution over Matches Sorted by Median")
+
+
+
+
+
+  
