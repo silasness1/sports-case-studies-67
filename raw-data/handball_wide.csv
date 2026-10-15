@@ -1,0 +1,1759 @@
+"matchid","hometeam","awayteam","season","homegoals","awaygoals","scorediff","bet.probs.diff"
+1,"Eulen Ludwigshafen","FRISCH AUF! Göppingen",2017,25,32,-7,-0.379984019493054
+2,"Eulen Ludwigshafen","Füchse Berlin",2017,19,25,-6,-0.683944800234841
+3,"Eulen Ludwigshafen","GWD Minden",2017,21,20,1,0.197210160824243
+4,"Eulen Ludwigshafen","Hannover-Burgdorf",2017,21,27,-6,-0.480373887555208
+5,"Eulen Ludwigshafen","HC Erlangen",2017,32,29,3,0.332054703135424
+6,"Eulen Ludwigshafen","HSG Wetzlar",2017,31,29,2,-0.448428093189426
+7,"Eulen Ludwigshafen","TV 05/07 Hüttenberg",2017,32,28,4,0.453040105245157
+8,"TV 05/07 Hüttenberg","Eulen Ludwigshafen",2017,28,27,1,0.197413878195637
+9,"Eulen Ludwigshafen","MT Melsungen",2017,27,31,-4,-0.320807948045534
+10,"Eulen Ludwigshafen","Rhein-Neckar Löwen",2017,18,26,-8,-0.817497830677214
+11,"Eulen Ludwigshafen","SC DHfK Leipzig",2017,21,34,-13,-0.370656370656371
+12,"Eulen Ludwigshafen","SC Magdeburg",2017,23,25,-2,-0.651687358900808
+13,"Eulen Ludwigshafen","SG Flensburg-Handewitt",2017,24,30,-6,-0.861978212060117
+14,"Eulen Ludwigshafen","TBV Lemgo Lippe",2017,24,20,4,-0.165860052682628
+15,"Eulen Ludwigshafen","THW Kiel",2017,21,25,-4,-0.767001592071654
+16,"Eulen Ludwigshafen","TuS N-Lübbecke",2017,23,23,0,0.276937715667955
+17,"Eulen Ludwigshafen","TVB Stuttgart",2017,24,25,-1,0.066457117198024
+18,"Eulen Ludwigshafen","VfL Gummersbach",2017,28,24,4,0.071131214050401
+19,"FRISCH AUF! Göppingen","Eulen Ludwigshafen",2017,32,28,4,0.761654610618765
+20,"FRISCH AUF! Göppingen","Füchse Berlin",2017,32,38,-6,-0.299964626812876
+21,"FRISCH AUF! Göppingen","GWD Minden",2017,27,28,-1,0.590462448303543
+22,"FRISCH AUF! Göppingen","Hannover-Burgdorf",2017,30,19,11,-0.136965415530602
+23,"FRISCH AUF! Göppingen","HC Erlangen",2017,25,27,-2,0.534209238940527
+24,"FRISCH AUF! Göppingen","HSG Wetzlar",2017,28,25,3,0.219657267787673
+25,"FRISCH AUF! Göppingen","TV 05/07 Hüttenberg",2017,28,17,11,0.596609253568665
+26,"TV 05/07 Hüttenberg","FRISCH AUF! Göppingen",2017,28,28,0,-0.207018349081548
+27,"FRISCH AUF! Göppingen","MT Melsungen",2017,29,28,1,-0.131608667037141
+28,"FRISCH AUF! Göppingen","Rhein-Neckar Löwen",2017,28,26,2,-0.592687222512976
+29,"FRISCH AUF! Göppingen","SC DHfK Leipzig",2017,20,19,1,0.306807727690893
+30,"FRISCH AUF! Göppingen","SC Magdeburg",2017,31,31,0,-0.193378374660127
+31,"FRISCH AUF! Göppingen","SG Flensburg-Handewitt",2017,28,28,0,-0.545743553514659
+32,"FRISCH AUF! Göppingen","TBV Lemgo Lippe",2017,27,26,1,0.598218900285215
+33,"FRISCH AUF! Göppingen","THW Kiel",2017,22,29,-7,-0.394232448395897
+34,"FRISCH AUF! Göppingen","TuS N-Lübbecke",2017,24,19,5,0.620830177594565
+35,"FRISCH AUF! Göppingen","TVB Stuttgart",2017,21,23,-2,0.520193870545642
+36,"FRISCH AUF! Göppingen","VfL Gummersbach",2017,24,16,8,0.585127733437686
+37,"Füchse Berlin","Eulen Ludwigshafen",2017,30,24,6,0.85730466908914
+38,"Füchse Berlin","FRISCH AUF! Göppingen",2017,33,19,14,0.674018720157895
+39,"Füchse Berlin","GWD Minden",2017,39,31,8,0.786404765771949
+40,"Füchse Berlin","Hannover-Burgdorf",2017,24,24,0,0.466363970110087
+41,"Füchse Berlin","HC Erlangen",2017,31,25,6,0.754693643530041
+42,"Füchse Berlin","HSG Wetzlar",2017,29,23,6,0.619178889198387
+43,"Füchse Berlin","TV 05/07 Hüttenberg",2017,28,23,5,0.598334641932062
+44,"TV 05/07 Hüttenberg","Füchse Berlin",2017,28,30,-2,-0.628147761047784
+45,"Füchse Berlin","MT Melsungen",2017,32,29,3,0.473784100605258
+46,"Füchse Berlin","Rhein-Neckar Löwen",2017,29,23,6,-0.236579286387725
+47,"Füchse Berlin","SC DHfK Leipzig",2017,24,20,4,0.586314445246435
+48,"Füchse Berlin","SC Magdeburg",2017,23,23,0,0.419357851080777
+49,"Füchse Berlin","SG Flensburg-Handewitt",2017,26,30,-4,0.115348191173685
+50,"Füchse Berlin","TBV Lemgo Lippe",2017,35,23,12,0.741152181308433
+51,"Füchse Berlin","THW Kiel",2017,25,24,1,0.133556368476916
+52,"Füchse Berlin","TuS N-Lübbecke",2017,26,20,6,0.872828912240333
+53,"Füchse Berlin","TVB Stuttgart",2017,26,24,2,0.718074898618897
+54,"Füchse Berlin","VfL Gummersbach",2017,31,23,8,0.812164768594118
+55,"GWD Minden","Eulen Ludwigshafen",2017,29,26,3,0.570552530739562
+56,"GWD Minden","FRISCH AUF! Göppingen",2017,26,26,0,-0.375336436049388
+57,"GWD Minden","Füchse Berlin",2017,29,37,-8,-0.484904642234933
+58,"GWD Minden","Hannover-Burgdorf",2017,29,28,1,-0.451249296141595
+59,"GWD Minden","HC Erlangen",2017,33,22,11,0.123016650342802
+60,"GWD Minden","HSG Wetzlar",2017,26,24,2,-0.056262125458073
+61,"GWD Minden","TV 05/07 Hüttenberg",2017,35,28,7,0.66437018481378
+62,"TV 05/07 Hüttenberg","GWD Minden",2017,26,30,-4,-0.022866429813289
+63,"GWD Minden","MT Melsungen",2017,26,29,-3,-0.333468262688178
+64,"GWD Minden","Rhein-Neckar Löwen",2017,24,35,-11,-0.790284435561733
+65,"GWD Minden","SC DHfK Leipzig",2017,26,29,-3,-0.256873705416679
+66,"GWD Minden","SC Magdeburg",2017,29,41,-12,-0.578191439100444
+67,"GWD Minden","SG Flensburg-Handewitt",2017,30,34,-4,-0.736209783935558
+68,"GWD Minden","TBV Lemgo Lippe",2017,24,24,0,0.210251482284535
+69,"GWD Minden","THW Kiel",2017,25,31,-6,-0.707643826129693
+70,"GWD Minden","TuS N-Lübbecke",2017,21,18,3,0.364047676159438
+71,"GWD Minden","TVB Stuttgart",2017,26,29,-3,0.392307692307692
+72,"GWD Minden","VfL Gummersbach",2017,29,24,5,0.347152266563348
+73,"Hannover-Burgdorf","Eulen Ludwigshafen",2017,33,23,10,0.785725836115029
+74,"Hannover-Burgdorf","FRISCH AUF! Göppingen",2017,28,28,0,0.4621909210237
+75,"Hannover-Burgdorf","Füchse Berlin",2017,33,27,6,-0.314207444646809
+76,"Hannover-Burgdorf","GWD Minden",2017,36,29,7,0.675233316025633
+77,"Hannover-Burgdorf","HC Erlangen",2017,25,19,6,0.578316211278948
+78,"Hannover-Burgdorf","HSG Wetzlar",2017,29,27,2,0.296572607188309
+79,"TV 05/07 Hüttenberg","Hannover-Burgdorf",2017,19,29,-10,-0.686888555308246
+80,"Hannover-Burgdorf","TV 05/07 Hüttenberg",2017,32,25,7,0.819154456485949
+81,"Hannover-Burgdorf","MT Melsungen",2017,26,22,4,0.260400019371398
+82,"Hannover-Burgdorf","Rhein-Neckar Löwen",2017,23,26,-3,-0.385572990137644
+83,"Hannover-Burgdorf","SC DHfK Leipzig",2017,30,25,5,0.581821222307586
+84,"Hannover-Burgdorf","SC Magdeburg",2017,32,30,2,0.138093014737179
+85,"Hannover-Burgdorf","SG Flensburg-Handewitt",2017,32,29,3,-0.592247331295502
+86,"Hannover-Burgdorf","TBV Lemgo Lippe",2017,27,24,3,0.597736731521344
+87,"Hannover-Burgdorf","THW Kiel",2017,28,27,1,-0.06250272699507
+88,"Hannover-Burgdorf","TuS N-Lübbecke",2017,28,26,2,0.819261164511635
+89,"Hannover-Burgdorf","TVB Stuttgart",2017,27,20,7,0.649485150469408
+90,"Hannover-Burgdorf","VfL Gummersbach",2017,28,22,6,0.677462757211698
+91,"HC Erlangen","Eulen Ludwigshafen",2017,22,22,0,0.512121969877441
+92,"HC Erlangen","FRISCH AUF! Göppingen",2017,28,29,-1,-0.053831108783358
+93,"HC Erlangen","Füchse Berlin",2017,23,27,-4,-0.578511937073902
+94,"HC Erlangen","GWD Minden",2017,26,26,0,0.171717171717171
+95,"HC Erlangen","Hannover-Burgdorf",2017,34,28,6,-0.504197805997964
+96,"HC Erlangen","HSG Wetzlar",2017,25,25,0,0.051503629450398
+97,"TV 05/07 Hüttenberg","HC Erlangen",2017,24,27,-3,0.086808714388317
+98,"HC Erlangen","TV 05/07 Hüttenberg",2017,26,26,0,0.529250769757098
+99,"HC Erlangen","MT Melsungen",2017,23,23,0,-0.494270004824756
+100,"HC Erlangen","Rhein-Neckar Löwen",2017,24,25,-1,-0.817388885577477
+101,"HC Erlangen","SC DHfK Leipzig",2017,27,26,1,-0.36456685363632
+102,"HC Erlangen","SC Magdeburg",2017,31,29,2,-0.624585420930068
+103,"HC Erlangen","SG Flensburg-Handewitt",2017,20,29,-9,-0.673082093674686
+104,"HC Erlangen","TBV Lemgo Lippe",2017,24,28,-4,0.443193464005447
+105,"HC Erlangen","THW Kiel",2017,20,31,-11,-0.471646265301024
+106,"HC Erlangen","TuS N-Lübbecke",2017,22,22,0,0.48935898135658
+107,"HC Erlangen","TVB Stuttgart",2017,25,29,-4,0.430130973045088
+108,"HC Erlangen","VfL Gummersbach",2017,25,22,3,0.395627340339253
+109,"HSG Wetzlar","Eulen Ludwigshafen",2017,30,21,9,0.640913613688912
+110,"HSG Wetzlar","FRISCH AUF! Göppingen",2017,34,27,7,0.252937995716677
+111,"HSG Wetzlar","Füchse Berlin",2017,26,31,-5,-0.309817280891917
+112,"HSG Wetzlar","GWD Minden",2017,24,24,0,0.707581352013527
+113,"HSG Wetzlar","Hannover-Burgdorf",2017,29,26,3,0.043704240083676
+114,"HSG Wetzlar","HC Erlangen",2017,26,23,3,0.572070076104757
+115,"TV 05/07 Hüttenberg","HSG Wetzlar",2017,22,22,0,-0.5514854989943
+116,"HSG Wetzlar","TV 05/07 Hüttenberg",2017,23,23,0,0.764672201110371
+117,"HSG Wetzlar","MT Melsungen",2017,31,28,3,-0.099291118695849
+118,"HSG Wetzlar","Rhein-Neckar Löwen",2017,24,31,-7,-0.48495552971495
+119,"HSG Wetzlar","SC DHfK Leipzig",2017,22,23,-1,0.147178916109874
+120,"HSG Wetzlar","SC Magdeburg",2017,27,29,-2,-0.156879793405053
+121,"HSG Wetzlar","SG Flensburg-Handewitt",2017,19,24,-5,-0.533279754205752
+122,"HSG Wetzlar","TBV Lemgo Lippe",2017,23,24,-1,0.46712505708954
+123,"HSG Wetzlar","THW Kiel",2017,30,22,8,-0.476174283306475
+124,"HSG Wetzlar","TuS N-Lübbecke",2017,25,20,5,0.671671080980938
+125,"HSG Wetzlar","TVB Stuttgart",2017,29,23,6,0.645815335755783
+126,"HSG Wetzlar","VfL Gummersbach",2017,30,25,5,0.485481420798514
+127,"TV 05/07 Hüttenberg","SC Magdeburg",2017,30,37,-7,-0.709525993620139
+128,"TV 05/07 Hüttenberg","TBV Lemgo Lippe",2017,24,24,0,-0.13829253450908
+129,"TV 05/07 Hüttenberg","VfL Gummersbach",2017,22,23,-1,0.120438649238852
+130,"MT Melsungen","Eulen Ludwigshafen",2017,25,18,7,0.80320313321177
+131,"MT Melsungen","FRISCH AUF! Göppingen",2017,27,30,-3,0.574488505659573
+132,"MT Melsungen","Füchse Berlin",2017,30,24,6,0.010474134484688
+133,"MT Melsungen","GWD Minden",2017,31,26,5,0.776110080576404
+134,"MT Melsungen","Hannover-Burgdorf",2017,30,29,1,0.260817078594574
+135,"MT Melsungen","HC Erlangen",2017,32,21,11,0.730968049124258
+136,"MT Melsungen","HSG Wetzlar",2017,29,22,7,0.482385059975023
+137,"MT Melsungen","TV 05/07 Hüttenberg",2017,25,28,-3,0.826698592976731
+138,"TV 05/07 Hüttenberg","MT Melsungen",2017,27,28,-1,-0.550676019801846
+139,"MT Melsungen","Rhein-Neckar Löwen",2017,29,26,3,-0.452769003558158
+140,"MT Melsungen","SC DHfK Leipzig",2017,28,20,8,0.372655810042505
+141,"MT Melsungen","SC Magdeburg",2017,28,27,1,-0.012543266330063
+142,"MT Melsungen","SG Flensburg-Handewitt",2017,25,30,-5,-0.376215306980656
+143,"MT Melsungen","TBV Lemgo Lippe",2017,33,33,0,0.682496063036479
+144,"MT Melsungen","THW Kiel",2017,29,25,4,-0.48342278850493
+145,"MT Melsungen","TuS N-Lübbecke",2017,27,16,11,0.802425387855543
+146,"MT Melsungen","TVB Stuttgart",2017,33,24,9,0.639970154623036
+147,"MT Melsungen","VfL Gummersbach",2017,25,23,2,0.848694574284017
+148,"Rhein-Neckar Löwen","Eulen Ludwigshafen",2017,34,26,8,0.895252638739178
+149,"Rhein-Neckar Löwen","FRISCH AUF! Göppingen",2017,31,20,11,0.814949963411787
+150,"Rhein-Neckar Löwen","Füchse Berlin",2017,37,23,14,0.492439184746877
+151,"Rhein-Neckar Löwen","GWD Minden",2017,37,22,15,0.812834134743292
+152,"Rhein-Neckar Löwen","Hannover-Burgdorf",2017,35,23,12,0.479517774664643
+153,"Rhein-Neckar Löwen","HC Erlangen",2017,33,22,11,0.854006130103546
+154,"Rhein-Neckar Löwen","HSG Wetzlar",2017,34,25,9,0.820356773959409
+155,"TV 05/07 Hüttenberg","Rhein-Neckar Löwen",2017,23,36,-13,-0.848366735452443
+156,"Rhein-Neckar Löwen","TV 05/07 Hüttenberg",2017,31,21,10,0.826921434811452
+157,"Rhein-Neckar Löwen","MT Melsungen",2017,23,24,-1,0.763434751778015
+158,"Rhein-Neckar Löwen","SC DHfK Leipzig",2017,28,25,3,0.830195414965775
+159,"Rhein-Neckar Löwen","SC Magdeburg",2017,34,29,5,0.580777116031732
+160,"Rhein-Neckar Löwen","SG Flensburg-Handewitt",2017,32,27,5,0.309139582491767
+161,"Rhein-Neckar Löwen","TBV Lemgo Lippe",2017,38,17,21,0.833881437389161
+162,"Rhein-Neckar Löwen","THW Kiel",2017,30,28,2,0.531493968874934
+163,"Rhein-Neckar Löwen","TuS N-Lübbecke",2017,36,27,9,0.895616559201691
+164,"Rhein-Neckar Löwen","TVB Stuttgart",2017,33,23,10,0.887285679182513
+165,"Rhein-Neckar Löwen","VfL Gummersbach",2017,36,26,10,0.872118046361601
+166,"SC DHfK Leipzig","Eulen Ludwigshafen",2017,23,20,3,0.722877069366932
+167,"SC DHfK Leipzig","FRISCH AUF! Göppingen",2017,33,28,5,0.348089751364463
+168,"SC DHfK Leipzig","Füchse Berlin",2017,30,30,0,-0.24856813734845
+169,"SC DHfK Leipzig","GWD Minden",2017,20,17,3,0.644306699499024
+170,"SC DHfK Leipzig","Hannover-Burgdorf",2017,25,23,2,0.087618286503079
+171,"SC DHfK Leipzig","HC Erlangen",2017,34,24,10,0.596434887559388
+172,"SC DHfK Leipzig","HSG Wetzlar",2017,23,21,2,0.33524286687911
+173,"TV 05/07 Hüttenberg","SC DHfK Leipzig",2017,20,24,-4,-0.432418662202489
+174,"SC DHfK Leipzig","TV 05/07 Hüttenberg",2017,26,25,1,0.764301478497122
+175,"SC DHfK Leipzig","MT Melsungen",2017,30,27,3,0.113085853518704
+176,"SC DHfK Leipzig","SC Magdeburg",2017,22,23,-1,0.068924581554596
+177,"SC DHfK Leipzig","SG Flensburg-Handewitt",2017,25,22,3,-0.527325648852556
+178,"SC DHfK Leipzig","TBV Lemgo Lippe",2017,26,19,7,0.454870966259001
+179,"SC DHfK Leipzig","THW Kiel",2017,16,28,-12,-0.211713412332087
+180,"SC DHfK Leipzig","TuS N-Lübbecke",2017,26,26,0,0.7663315357067
+181,"SC DHfK Leipzig","TVB Stuttgart",2017,24,24,0,0.749020740675098
+182,"SC DHfK Leipzig","VfL Gummersbach",2017,27,24,3,0.536998339549134
+183,"SC Magdeburg","Eulen Ludwigshafen",2017,30,26,4,0.849810097147896
+184,"SC Magdeburg","FRISCH AUF! Göppingen",2017,30,27,3,0.584431872021404
+185,"SC Magdeburg","Füchse Berlin",2017,26,30,-4,0.203843514070007
+186,"SC Magdeburg","GWD Minden",2017,34,24,10,0.779207803424159
+187,"SC Magdeburg","Hannover-Burgdorf",2017,31,22,9,0.505205780457344
+188,"SC Magdeburg","HC Erlangen",2017,28,22,6,0.785300244861252
+189,"SC Magdeburg","HSG Wetzlar",2017,31,29,2,0.512256912609178
+190,"SC Magdeburg","TV 05/07 Hüttenberg",2017,33,26,7,0.887231936635301
+191,"SC Magdeburg","MT Melsungen",2017,33,31,2,0.389875555776349
+192,"SC Magdeburg","Rhein-Neckar Löwen",2017,29,32,-3,-0.16477234057034
+194,"SC Magdeburg","SG Flensburg-Handewitt",2017,29,22,7,-0.099321293907522
+195,"SC Magdeburg","TBV Lemgo Lippe",2017,35,27,8,0.722261125423206
+196,"SC Magdeburg","THW Kiel",2017,31,26,5,0.087268118015461
+197,"SC Magdeburg","TuS N-Lübbecke",2017,34,24,10,0.856907925501392
+198,"SC Magdeburg","TVB Stuttgart",2017,34,25,9,0.748649657747355
+199,"SC Magdeburg","VfL Gummersbach",2017,30,24,6,0.738946177207589
+200,"SG Flensburg-Handewitt","Eulen Ludwigshafen",2017,32,29,3,0.885091161526076
+201,"SG Flensburg-Handewitt","FRISCH AUF! Göppingen",2017,22,20,2,0.851653277470376
+202,"SG Flensburg-Handewitt","Füchse Berlin",2017,29,21,8,0.537645930152876
+203,"SG Flensburg-Handewitt","GWD Minden",2017,24,22,2,0.888174565201997
+204,"SG Flensburg-Handewitt","Hannover-Burgdorf",2017,27,27,0,0.509119085223888
+205,"SG Flensburg-Handewitt","HC Erlangen",2017,29,21,8,0.805506285859019
+206,"SG Flensburg-Handewitt","HSG Wetzlar",2017,34,26,8,0.804207050233187
+207,"TV 05/07 Hüttenberg","SG Flensburg-Handewitt",2017,22,30,-8,-0.865644780887734
+208,"SG Flensburg-Handewitt","TV 05/07 Hüttenberg",2017,38,23,15,0.851285964500427
+209,"SG Flensburg-Handewitt","MT Melsungen",2017,33,29,4,0.671177948394508
+210,"SG Flensburg-Handewitt","Rhein-Neckar Löwen",2017,27,22,5,0.187807446018951
+211,"SG Flensburg-Handewitt","SC DHfK Leipzig",2017,30,27,3,0.800805244525337
+212,"SG Flensburg-Handewitt","SC Magdeburg",2017,29,24,5,0.463316017779682
+213,"SG Flensburg-Handewitt","TBV Lemgo Lippe",2017,25,22,3,0.782150586627179
+214,"SG Flensburg-Handewitt","THW Kiel",2017,27,35,-8,0.381265867214968
+215,"SG Flensburg-Handewitt","TuS N-Lübbecke",2017,37,23,14,0.87761812286157
+216,"SG Flensburg-Handewitt","TVB Stuttgart",2017,27,17,10,0.810161169647869
+217,"SG Flensburg-Handewitt","VfL Gummersbach",2017,34,22,12,0.848942802879794
+218,"TBV Lemgo Lippe","Eulen Ludwigshafen",2017,29,25,4,0.588910064565685
+219,"TBV Lemgo Lippe","FRISCH AUF! Göppingen",2017,29,27,2,0.090910789650008
+220,"TBV Lemgo Lippe","Füchse Berlin",2017,22,25,-3,-0.539605339275384
+221,"TBV Lemgo Lippe","GWD Minden",2017,26,26,0,0.309042375709043
+222,"TBV Lemgo Lippe","Hannover-Burgdorf",2017,27,29,-2,-0.265773073911624
+223,"TBV Lemgo Lippe","HC Erlangen",2017,24,24,0,0.344358383922964
+224,"TBV Lemgo Lippe","HSG Wetzlar",2017,28,26,2,0.016729640455312
+225,"TBV Lemgo Lippe","TV 05/07 Hüttenberg",2017,31,30,1,0.457674575780251
+226,"TBV Lemgo Lippe","MT Melsungen",2017,26,26,0,-0.441850984318844
+227,"TBV Lemgo Lippe","Rhein-Neckar Löwen",2017,24,26,-2,-0.70916957088091
+228,"TBV Lemgo Lippe","SC DHfK Leipzig",2017,32,29,3,-0.084021283332432
+229,"TBV Lemgo Lippe","SC Magdeburg",2017,27,27,0,-0.457424853448634
+230,"TBV Lemgo Lippe","SG Flensburg-Handewitt",2017,22,32,-10,-0.6231917111951
+231,"TBV Lemgo Lippe","THW Kiel",2017,27,31,-4,-0.617450231502526
+232,"TBV Lemgo Lippe","TuS N-Lübbecke",2017,30,27,3,0.272093437080415
+233,"TBV Lemgo Lippe","TVB Stuttgart",2017,23,21,2,0.265478793632214
+234,"TBV Lemgo Lippe","VfL Gummersbach",2017,28,27,1,0.344709594734876
+235,"THW Kiel","Eulen Ludwigshafen",2017,28,21,7,0.80159934385893
+236,"THW Kiel","FRISCH AUF! Göppingen",2017,28,23,5,0.674305496631425
+237,"THW Kiel","Füchse Berlin",2017,25,20,5,0.458544333871866
+238,"THW Kiel","GWD Minden",2017,30,26,4,0.861241068882329
+239,"THW Kiel","Hannover-Burgdorf",2017,29,31,-2,0.697466609629735
+240,"THW Kiel","HC Erlangen",2017,29,24,5,0.82951949069221
+241,"THW Kiel","HSG Wetzlar",2017,25,26,-1,0.745280229758838
+242,"TV 05/07 Hüttenberg","THW Kiel",2017,25,37,-12,-0.785594175062691
+243,"THW Kiel","TV 05/07 Hüttenberg",2017,33,24,9,0.815499620631533
+244,"THW Kiel","MT Melsungen",2017,31,31,0,0.497553353729849
+245,"THW Kiel","Rhein-Neckar Löwen",2017,27,22,5,-0.188990262018876
+246,"THW Kiel","SC DHfK Leipzig",2017,29,26,3,0.659577359516206
+247,"THW Kiel","SC Magdeburg",2017,34,31,3,0.594024097709252
+248,"THW Kiel","SG Flensburg-Handewitt",2017,25,29,-4,0.352250979344543
+249,"THW Kiel","TBV Lemgo Lippe",2017,29,19,10,0.673347735961894
+250,"THW Kiel","TuS N-Lübbecke",2017,29,19,10,0.859144720947089
+251,"THW Kiel","TVB Stuttgart",2017,31,25,6,0.861255672676059
+252,"THW Kiel","VfL Gummersbach",2017,29,23,6,0.800702707406387
+253,"TuS N-Lübbecke","Eulen Ludwigshafen",2017,28,29,-1,0.334077837605269
+254,"TuS N-Lübbecke","FRISCH AUF! Göppingen",2017,25,25,0,-0.373563678707635
+255,"TuS N-Lübbecke","Füchse Berlin",2017,21,29,-8,-0.790034902586741
+256,"TuS N-Lübbecke","GWD Minden",2017,29,22,7,-0.063489076225638
+257,"TuS N-Lübbecke","Hannover-Burgdorf",2017,21,25,-4,-0.563850086764578
+258,"TuS N-Lübbecke","HC Erlangen",2017,27,26,1,0.204658901830283
+259,"TuS N-Lübbecke","HSG Wetzlar",2017,17,22,-5,-0.464183381088825
+260,"TuS N-Lübbecke","TV 05/07 Hüttenberg",2017,26,26,0,0.647006004826309
+261,"TV 05/07 Hüttenberg","TuS N-Lübbecke",2017,24,22,2,0.016736217394656
+262,"TuS N-Lübbecke","MT Melsungen",2017,19,22,-3,-0.624119131524062
+263,"TuS N-Lübbecke","Rhein-Neckar Löwen",2017,28,38,-10,-0.877764148593706
+264,"TuS N-Lübbecke","SC DHfK Leipzig",2017,17,22,-5,-0.28312026405095
+265,"TuS N-Lübbecke","SC Magdeburg",2017,20,31,-11,-0.641624365482234
+266,"TuS N-Lübbecke","SG Flensburg-Handewitt",2017,24,27,-3,-0.809569457183644
+267,"TuS N-Lübbecke","TBV Lemgo Lippe",2017,22,25,-3,-0.037757576249057
+268,"TuS N-Lübbecke","THW Kiel",2017,21,33,-12,-0.829524397776405
+269,"TuS N-Lübbecke","TVB Stuttgart",2017,24,21,3,0.127734643159334
+270,"TuS N-Lübbecke","VfL Gummersbach",2017,26,27,-1,0.016676264711369
+271,"TVB Stuttgart","Eulen Ludwigshafen",2017,25,22,3,0.487281298217953
+272,"TVB Stuttgart","FRISCH AUF! Göppingen",2017,23,30,-7,-0.16225586035918
+273,"TVB Stuttgart","Füchse Berlin",2017,24,24,0,-0.629943144790667
+274,"TVB Stuttgart","GWD Minden",2017,27,27,0,0.224508617211366
+275,"TVB Stuttgart","Hannover-Burgdorf",2017,26,33,-7,-0.58262782978406
+276,"TVB Stuttgart","HC Erlangen",2017,29,31,-2,0.211595996858938
+277,"TVB Stuttgart","HSG Wetzlar",2017,26,36,-10,-0.192692915940148
+278,"TVB Stuttgart","TV 05/07 Hüttenberg",2017,30,30,0,0.627206153073451
+279,"TV 05/07 Hüttenberg","TVB Stuttgart",2017,23,28,-5,0.104641490600566
+280,"TVB Stuttgart","MT Melsungen",2017,29,27,2,-0.544184832267328
+281,"TVB Stuttgart","Rhein-Neckar Löwen",2017,23,29,-6,-0.79460025262687
+282,"TVB Stuttgart","SC DHfK Leipzig",2017,22,27,-5,-0.398487537030972
+283,"TVB Stuttgart","SC Magdeburg",2017,31,32,-1,-0.641819193037867
+284,"TVB Stuttgart","SG Flensburg-Handewitt",2017,28,35,-7,-0.794501629226819
+285,"TVB Stuttgart","TBV Lemgo Lippe",2017,27,28,-1,0.188990262018876
+286,"TVB Stuttgart","THW Kiel",2017,24,36,-12,-0.631354406352422
+287,"TVB Stuttgart","TuS N-Lübbecke",2017,28,29,-1,0.496426138391167
+288,"TVB Stuttgart","VfL Gummersbach",2017,22,26,-4,0.381325923826958
+289,"VfL Gummersbach","Eulen Ludwigshafen",2017,31,26,5,0.520102240443161
+290,"VfL Gummersbach","FRISCH AUF! Göppingen",2017,28,26,2,-0.373219523475312
+291,"VfL Gummersbach","Füchse Berlin",2017,29,31,-2,-0.477339982777243
+292,"VfL Gummersbach","GWD Minden",2017,22,23,-1,0.340275450707057
+293,"VfL Gummersbach","Hannover-Burgdorf",2017,29,30,-1,-0.31021582733813
+294,"VfL Gummersbach","HC Erlangen",2017,23,29,-6,0.26698442057338
+295,"VfL Gummersbach","HSG Wetzlar",2017,22,33,-11,-0.175329588388562
+296,"VfL Gummersbach","TV 05/07 Hüttenberg",2017,28,25,3,0.355257464301169
+297,"VfL Gummersbach","MT Melsungen",2017,17,25,-8,-0.346660571048585
+298,"VfL Gummersbach","Rhein-Neckar Löwen",2017,26,29,-3,-0.702992946559065
+299,"VfL Gummersbach","SC DHfK Leipzig",2017,29,24,5,-0.300870029404706
+300,"VfL Gummersbach","SC Magdeburg",2017,22,30,-8,-0.469150324922177
+301,"VfL Gummersbach","SG Flensburg-Handewitt",2017,25,29,-4,-0.730076385768555
+302,"VfL Gummersbach","TBV Lemgo Lippe",2017,29,37,-8,0.10476938174681
+303,"VfL Gummersbach","THW Kiel",2017,31,27,4,-0.640729248152139
+304,"VfL Gummersbach","TuS N-Lübbecke",2017,21,22,-1,0.495961198021823
+305,"VfL Gummersbach","TVB Stuttgart",2017,25,26,-1,0.485639884594795
+306,"Bergischer HC","Eulen Ludwigshafen",2018,27,23,4,0.701444101898426
+307,"Bergischer HC","FRISCH AUF! Göppingen",2018,25,28,-3,0.267504974729309
+308,"Bergischer HC","Füchse Berlin",2018,28,26,2,0.139067537008227
+309,"Bergischer HC","GWD Minden",2018,26,21,5,0.144306224924933
+310,"Bergischer HC","Hannover-Burgdorf",2018,25,22,3,0.329269408736917
+311,"Bergischer HC","HSG Wetzlar",2018,26,22,4,0.410789601219173
+312,"Bergischer HC","MT Melsungen",2018,25,24,1,0.197683420900324
+313,"Bergischer HC","Rhein-Neckar Löwen",2018,24,30,-6,-0.55336866010598
+314,"Bergischer HC","SC DHfK Leipzig",2018,27,23,4,0.2577713523449
+315,"Bergischer HC","SC Magdeburg",2018,23,27,-4,-0.507961379818881
+316,"Bergischer HC","SG Flensburg-Handewitt",2018,24,26,-2,-0.655131574077501
+317,"Bergischer HC","TBV Lemgo Lippe",2018,31,21,10,0.162020053802886
+318,"Bergischer HC","THW Kiel",2018,23,27,-4,-0.636454660823797
+319,"Bergischer HC","TVB Stuttgart",2018,28,28,0,0.630747462293834
+320,"Bergischer HC","VfL Gummersbach",2018,30,28,2,0.65513675759904
+321,"Eulen Ludwigshafen","Bergischer HC",2018,23,22,1,-0.545237402644226
+322,"Eulen Ludwigshafen","FRISCH AUF! Göppingen",2018,23,32,-9,-0.534927704727439
+323,"Eulen Ludwigshafen","Füchse Berlin",2018,26,30,-4,-0.73707506549035
+324,"Eulen Ludwigshafen","GWD Minden",2018,31,30,1,0.340892983699504
+325,"Eulen Ludwigshafen","Hannover-Burgdorf",2018,25,26,-1,-0.287520278957678
+326,"Eulen Ludwigshafen","HSG Wetzlar",2018,25,29,-4,-0.534544223664215
+327,"Eulen Ludwigshafen","MT Melsungen",2018,22,27,-5,-0.633049814038825
+328,"Eulen Ludwigshafen","Rhein-Neckar Löwen",2018,20,28,-8,-0.836396346526432
+329,"Eulen Ludwigshafen","SC DHfK Leipzig",2018,27,24,3,-0.373691418856162
+330,"Eulen Ludwigshafen","SC Magdeburg",2018,27,38,-11,-0.826640907150233
+331,"Eulen Ludwigshafen","SG BBM Bietigheim",2018,23,24,-1,0.190202915089743
+332,"Eulen Ludwigshafen","SG Flensburg-Handewitt",2018,18,30,-12,-0.833171191766745
+333,"Eulen Ludwigshafen","TBV Lemgo Lippe",2018,19,19,0,-0.501694203176517
+334,"Eulen Ludwigshafen","THW Kiel",2018,19,26,-7,-0.858432072204225
+335,"Eulen Ludwigshafen","TVB Stuttgart",2018,23,23,0,-0.33835772500219
+336,"Eulen Ludwigshafen","VfL Gummersbach",2018,26,27,-1,0.226921112076876
+337,"FRISCH AUF! Göppingen","Bergischer HC",2018,27,30,-3,0.298985647315985
+338,"FRISCH AUF! Göppingen","Eulen Ludwigshafen",2018,30,26,4,0.771543261303985
+339,"FRISCH AUF! Göppingen","Füchse Berlin",2018,21,18,3,-0.138952164009112
+340,"FRISCH AUF! Göppingen","GWD Minden",2018,21,21,0,0.410373706805545
+341,"FRISCH AUF! Göppingen","HC Erlangen",2018,25,23,2,0.483279297775988
+342,"FRISCH AUF! Göppingen","HSG Wetzlar",2018,22,24,-2,0.563010765142471
+343,"FRISCH AUF! Göppingen","MT Melsungen",2018,27,30,-3,0.224833967614357
+344,"FRISCH AUF! Göppingen","Rhein-Neckar Löwen",2018,24,28,-4,-0.584744494737111
+345,"FRISCH AUF! Göppingen","SC DHfK Leipzig",2018,33,27,6,0.464172340336661
+346,"FRISCH AUF! Göppingen","SC Magdeburg",2018,24,31,-7,-0.272402024243851
+347,"FRISCH AUF! Göppingen","SG BBM Bietigheim",2018,31,27,4,0.784341003069144
+348,"FRISCH AUF! Göppingen","SG Flensburg-Handewitt",2018,22,28,-6,-0.602591735067082
+349,"FRISCH AUF! Göppingen","THW Kiel",2018,25,29,-4,-0.661090110680031
+350,"FRISCH AUF! Göppingen","TVB Stuttgart",2018,31,25,6,0.600042151778828
+351,"FRISCH AUF! Göppingen","VfL Gummersbach",2018,35,26,9,0.490305012449002
+352,"Füchse Berlin","Bergischer HC",2018,26,22,4,0.498715536284055
+353,"Füchse Berlin","Eulen Ludwigshafen",2018,32,20,12,0.834434068871008
+354,"Füchse Berlin","FRISCH AUF! Göppingen",2018,29,33,-4,0.5040824489988
+355,"Füchse Berlin","GWD Minden",2018,29,27,2,0.715956977150618
+356,"Füchse Berlin","HC Erlangen",2018,26,25,1,0.715635811323939
+357,"Füchse Berlin","HSG Wetzlar",2018,25,27,-2,0.676939585882078
+358,"Füchse Berlin","MT Melsungen",2018,24,26,-2,0.164606544634284
+359,"Füchse Berlin","Rhein-Neckar Löwen",2018,34,33,1,-0.088508945895247
+360,"Füchse Berlin","SC DHfK Leipzig",2018,26,23,3,0.68676068866752
+361,"Füchse Berlin","SG BBM Bietigheim",2018,30,26,4,0.81388102277572
+362,"Füchse Berlin","TBV Lemgo Lippe",2018,29,23,6,0.672644202749037
+363,"Füchse Berlin","THW Kiel",2018,29,30,-1,-0.442587015754
+364,"Füchse Berlin","TVB Stuttgart",2018,25,30,-5,0.542040618315729
+365,"Füchse Berlin","VfL Gummersbach",2018,24,19,5,0.825487593178801
+366,"GWD Minden","Bergischer HC",2018,32,35,-3,-0.072288828337875
+367,"GWD Minden","FRISCH AUF! Göppingen",2018,28,29,-1,0.223819422654534
+368,"GWD Minden","Füchse Berlin",2018,27,28,-1,-0.21784522656334
+369,"GWD Minden","Hannover-Burgdorf",2018,29,32,-3,0.244882112267021
+370,"GWD Minden","HSG Wetzlar",2018,24,21,3,0.321676323382332
+371,"GWD Minden","MT Melsungen",2018,32,27,5,-0.197062634551066
+372,"GWD Minden","Rhein-Neckar Löwen",2018,26,31,-5,-0.686850473387067
+373,"GWD Minden","SC DHfK Leipzig",2018,24,26,-2,0.298792333772632
+374,"GWD Minden","SC Magdeburg",2018,25,27,-2,-0.623121032937
+375,"GWD Minden","SG BBM Bietigheim",2018,30,26,4,0.751755311736813
+376,"GWD Minden","SG Flensburg-Handewitt",2018,28,31,-3,-0.666365074110854
+377,"GWD Minden","TBV Lemgo Lippe",2018,27,30,-3,0.357369659635583
+378,"GWD Minden","THW Kiel",2018,29,37,-8,-0.659425223800798
+379,"GWD Minden","VfL Gummersbach",2018,40,27,13,0.660393555512124
+380,"Hannover-Burgdorf","Bergischer HC",2018,29,26,3,0.710105629555598
+381,"Hannover-Burgdorf","Eulen Ludwigshafen",2018,29,23,6,0.805606344738505
+382,"Hannover-Burgdorf","FRISCH AUF! Göppingen",2018,28,30,-2,0.136127677358139
+383,"Hannover-Burgdorf","Füchse Berlin",2018,26,25,1,-0.350406522675579
+384,"Hannover-Burgdorf","HC Erlangen",2018,26,24,2,0.684947626183939
+385,"Hannover-Burgdorf","HSG Wetzlar",2018,22,25,-3,0.478437137731609
+386,"Hannover-Burgdorf","MT Melsungen",2018,29,36,-7,0.37780000496294
+387,"Hannover-Burgdorf","Rhein-Neckar Löwen",2018,28,30,-2,-0.517881687803107
+388,"Hannover-Burgdorf","SC DHfK Leipzig",2018,30,27,3,0.264285543750746
+389,"Hannover-Burgdorf","SC Magdeburg",2018,26,31,-5,-0.374144415632957
+390,"Hannover-Burgdorf","SG BBM Bietigheim",2018,26,26,0,0.772693170172254
+391,"Hannover-Burgdorf","SG Flensburg-Handewitt",2018,28,33,-5,-0.510564363130484
+392,"Hannover-Burgdorf","TBV Lemgo Lippe",2018,27,27,0,0.293047994100758
+393,"Hannover-Burgdorf","THW Kiel",2018,25,32,-7,-0.477835386037244
+394,"Hannover-Burgdorf","TVB Stuttgart",2018,33,22,11,0.488877894187888
+395,"Hannover-Burgdorf","VfL Gummersbach",2018,30,24,6,0.52676532442231
+396,"HC Erlangen","Bergischer HC",2018,26,17,9,0.034832172260924
+397,"HC Erlangen","Eulen Ludwigshafen",2018,26,22,4,0.631825932761023
+398,"HC Erlangen","GWD Minden",2018,25,29,-4,0.178836779335099
+399,"HC Erlangen","Hannover-Burgdorf",2018,25,25,0,0.225102184706561
+400,"HC Erlangen","HSG Wetzlar",2018,27,20,7,0.213048991129168
+401,"HC Erlangen","MT Melsungen",2018,24,25,-1,-0.155413069758277
+402,"HC Erlangen","Rhein-Neckar Löwen",2018,23,23,0,-0.640296669759408
+403,"HC Erlangen","SC DHfK Leipzig",2018,24,23,1,0.16766566215187
+404,"HC Erlangen","SC Magdeburg",2018,26,25,1,-0.605026612277493
+405,"HC Erlangen","SG BBM Bietigheim",2018,27,25,2,0.652868249632275
+406,"HC Erlangen","SG Flensburg-Handewitt",2018,26,27,-1,-0.730058807398154
+407,"HC Erlangen","TBV Lemgo Lippe",2018,28,25,3,0.069977969594761
+408,"HC Erlangen","THW Kiel",2018,21,30,-9,-0.722538298978913
+409,"HC Erlangen","TVB Stuttgart",2018,31,25,6,0.467011834319526
+410,"HC Erlangen","VfL Gummersbach",2018,30,22,8,0.442385203156291
+411,"HSG Wetzlar","Eulen Ludwigshafen",2018,30,19,11,0.585881269073531
+412,"HSG Wetzlar","FRISCH AUF! Göppingen",2018,26,21,5,0.072945428184599
+413,"HSG Wetzlar","Füchse Berlin",2018,24,29,-5,0.08059253458627
+414,"HSG Wetzlar","GWD Minden",2018,31,27,4,0.084501316742962
+415,"HSG Wetzlar","Hannover-Burgdorf",2018,29,28,1,0.09999579142292
+416,"HSG Wetzlar","HC Erlangen",2018,27,28,-1,0.239398995939356
+416,"HSG Wetzlar","HC Erlangen",2018,27,28,-1,0.239398995939356
+417,"HSG Wetzlar","SC DHfK Leipzig",2018,23,22,1,0.128645374391228
+418,"HSG Wetzlar","SG BBM Bietigheim",2018,24,21,3,0.593816766115978
+419,"HSG Wetzlar","SG Flensburg-Handewitt",2018,23,30,-7,-0.6749404812421
+420,"HSG Wetzlar","TBV Lemgo Lippe",2018,27,28,-1,0.204360993942786
+421,"HSG Wetzlar","THW Kiel",2018,23,27,-4,-0.763711723410049
+422,"HSG Wetzlar","TVB Stuttgart",2018,26,23,3,0.490908891331654
+423,"HSG Wetzlar","VfL Gummersbach",2018,30,23,7,0.596897819576938
+424,"MT Melsungen","Bergischer HC",2018,26,23,3,0.420935412026726
+425,"MT Melsungen","Eulen Ludwigshafen",2018,29,26,3,0.808683975230428
+426,"MT Melsungen","FRISCH AUF! Göppingen",2018,24,22,2,0.507811766179279
+427,"MT Melsungen","Füchse Berlin",2018,26,22,4,0.231156382794624
+428,"MT Melsungen","GWD Minden",2018,25,21,4,0.667932243771907
+429,"MT Melsungen","Hannover-Burgdorf",2018,28,25,3,0.546124166958961
+430,"MT Melsungen","HC Erlangen",2018,27,25,2,0.674783016971882
+431,"MT Melsungen","HSG Wetzlar",2018,26,24,2,0.436994521262719
+432,"MT Melsungen","Rhein-Neckar Löwen",2018,23,26,-3,-0.355176093916755
+433,"MT Melsungen","SC Magdeburg",2018,23,28,-5,0.200706858377441
+434,"MT Melsungen","SG BBM Bietigheim",2018,31,24,7,0.850510186291695
+435,"MT Melsungen","SG Flensburg-Handewitt",2018,18,24,-6,-0.629295209430649
+436,"MT Melsungen","TBV Lemgo Lippe",2018,31,27,4,0.840569679264209
+437,"MT Melsungen","THW Kiel",2018,25,29,-4,-0.590919694930462
+438,"MT Melsungen","TVB Stuttgart",2018,23,26,-3,0.704169044552873
+439,"Rhein-Neckar Löwen","Bergischer HC",2018,26,20,6,0.80993185940842
+440,"Rhein-Neckar Löwen","Eulen Ludwigshafen",2018,26,29,-3,0.876993825036492
+441,"Rhein-Neckar Löwen","FRISCH AUF! Göppingen",2018,33,27,6,0.715144193729314
+442,"Rhein-Neckar Löwen","Füchse Berlin",2018,28,24,4,0.825941675442455
+443,"Rhein-Neckar Löwen","GWD Minden",2018,32,28,4,0.827748749814598
+444,"Rhein-Neckar Löwen","Hannover-Burgdorf",2018,29,23,6,0.850190962836365
+445,"Rhein-Neckar Löwen","HC Erlangen",2018,29,26,3,0.871907245090425
+446,"Rhein-Neckar Löwen","HSG Wetzlar",2018,31,21,10,0.786467041763631
+447,"Rhein-Neckar Löwen","SC DHfK Leipzig",2018,23,24,-1,0.893560244598696
+448,"Rhein-Neckar Löwen","SC Magdeburg",2018,28,22,6,0.511513783305538
+449,"Rhein-Neckar Löwen","SG BBM Bietigheim",2018,30,15,15,0.885750154151899
+450,"Rhein-Neckar Löwen","SG Flensburg-Handewitt",2018,23,26,-3,-0.101906146893716
+451,"Rhein-Neckar Löwen","TBV Lemgo Lippe",2018,28,21,7,0.87302816264746
+452,"Rhein-Neckar Löwen","THW Kiel",2018,24,27,-3,0.378393956394432
+453,"Rhein-Neckar Löwen","TVB Stuttgart",2018,34,29,5,0.840662419516925
+454,"SC DHfK Leipzig","Bergischer HC",2018,25,25,0,-0.088741944994314
+455,"SC DHfK Leipzig","Eulen Ludwigshafen",2018,27,22,5,0.736820044591793
+456,"SC DHfK Leipzig","FRISCH AUF! Göppingen",2018,29,25,4,0.163142772669037
+457,"SC DHfK Leipzig","Füchse Berlin",2018,31,27,4,-0.215779183551467
+458,"SC DHfK Leipzig","GWD Minden",2018,26,25,1,0.31055012050049
+459,"SC DHfK Leipzig","Hannover-Burgdorf",2018,31,26,5,0.11289760854423
+460,"SC DHfK Leipzig","HC Erlangen",2018,26,25,1,0.252937995716677
+461,"SC DHfK Leipzig","MT Melsungen",2018,26,29,-3,-0.047609635709497
+462,"SC DHfK Leipzig","Rhein-Neckar Löwen",2018,28,26,2,-0.292784556869449
+463,"SC DHfK Leipzig","SC Magdeburg",2018,24,25,-1,-0.266457680250784
+464,"SC DHfK Leipzig","SG Flensburg-Handewitt",2018,20,21,-1,-0.639239573611043
+465,"SC DHfK Leipzig","TBV Lemgo Lippe",2018,22,22,0,0.267801164352888
+466,"SC DHfK Leipzig","THW Kiel",2018,24,25,-1,-0.693171211207573
+467,"SC DHfK Leipzig","TVB Stuttgart",2018,25,27,-2,0.501732998331407
+468,"SC DHfK Leipzig","VfL Gummersbach",2018,28,18,10,0.612233746633103
+469,"SC Magdeburg","Eulen Ludwigshafen",2018,35,26,9,0.86573452706752
+470,"SC Magdeburg","Füchse Berlin",2018,25,27,-2,0.282610540609352
+471,"SC Magdeburg","GWD Minden",2018,40,31,9,0.791965021202509
+472,"SC Magdeburg","HC Erlangen",2018,31,24,7,0.862842759760973
+473,"SC Magdeburg","HSG Wetzlar",2018,29,25,4,0.801322296342067
+474,"SC Magdeburg","MT Melsungen",2018,32,24,8,0.587894901470128
+475,"SC Magdeburg","Rhein-Neckar Löwen",2018,29,32,-3,0.298707326062327
+476,"SC Magdeburg","SC DHfK Leipzig",2018,28,20,8,0.776134885853673
+477,"SC Magdeburg","SG BBM Bietigheim",2018,23,19,4,0.865423914272356
+478,"SC Magdeburg","SG Flensburg-Handewitt",2018,24,23,1,0.043816650485053
+479,"SC Magdeburg","TBV Lemgo Lippe",2018,29,23,6,0.83294209657795
+480,"SC Magdeburg","TVB Stuttgart",2018,37,30,7,0.844082198703672
+481,"SC Magdeburg","VfL Gummersbach",2018,29,24,5,0.847096776734824
+482,"SG BBM Bietigheim","Bergischer HC",2018,21,27,-6,-0.516084584586061
+483,"SG BBM Bietigheim","Eulen Ludwigshafen",2018,27,18,9,0.187445314884525
+484,"SG BBM Bietigheim","GWD Minden",2018,28,30,-2,-0.445179747250314
+485,"SG BBM Bietigheim","Hannover-Burgdorf",2018,29,27,2,-0.250517486460768
+486,"SG BBM Bietigheim","HC Erlangen",2018,24,26,-2,-0.214554387229184
+487,"SG BBM Bietigheim","HSG Wetzlar",2018,26,26,0,-0.505346174262531
+488,"SG BBM Bietigheim","MT Melsungen",2018,24,33,-9,-0.565793598879088
+489,"SG BBM Bietigheim","SC DHfK Leipzig",2018,15,24,-9,-0.313850881851153
+490,"SG BBM Bietigheim","SC Magdeburg",2018,29,33,-4,-0.821937531495607
+491,"SG BBM Bietigheim","SG Flensburg-Handewitt",2018,20,33,-13,-0.799666861471047
+492,"SG BBM Bietigheim","TBV Lemgo Lippe",2018,25,23,2,0.323914805619204
+493,"SG BBM Bietigheim","THW Kiel",2018,21,32,-11,-0.865651569590293
+494,"SG BBM Bietigheim","TVB Stuttgart",2018,19,27,-8,-0.091185997405574
+495,"SG BBM Bietigheim","VfL Gummersbach",2018,25,25,0,0.212970042399388
+496,"SG Flensburg-Handewitt","Bergischer HC",2018,25,23,2,0.814696840724134
+497,"SG Flensburg-Handewitt","FRISCH AUF! Göppingen",2018,26,15,11,0.653773055099855
+498,"SG Flensburg-Handewitt","Füchse Berlin",2018,26,18,8,0.720385623261721
+499,"SG Flensburg-Handewitt","GWD Minden",2018,35,28,7,0.768728988244215
+500,"SG Flensburg-Handewitt","HC Erlangen",2018,28,18,10,0.862665019920109
+501,"SG Flensburg-Handewitt","HSG Wetzlar",2018,30,29,1,0.852227028371637
+502,"SG Flensburg-Handewitt","MT Melsungen",2018,29,24,5,0.744377423749219
+503,"SG Flensburg-Handewitt","Rhein-Neckar Löwen",2018,26,20,6,0.054393305439331
+504,"SG Flensburg-Handewitt","SC DHfK Leipzig",2018,27,21,6,0.806800521253635
+505,"SG Flensburg-Handewitt","SC Magdeburg",2018,26,25,1,0.24339525960175
+506,"SG Flensburg-Handewitt","SG BBM Bietigheim",2018,31,22,9,0.873948928163639
+507,"SG Flensburg-Handewitt","TBV Lemgo Lippe",2018,32,24,8,0.825406021524336
+508,"SG Flensburg-Handewitt","TVB Stuttgart",2018,29,21,8,0.883942368221057
+509,"SG Flensburg-Handewitt","VfL Gummersbach",2018,28,20,8,0.880562211040479
+510,"TBV Lemgo Lippe","Bergischer HC",2018,22,22,0,0.168936950316757
+511,"TBV Lemgo Lippe","Eulen Ludwigshafen",2018,23,22,1,0.734090879215187
+512,"TBV Lemgo Lippe","FRISCH AUF! Göppingen",2018,25,30,-5,-0.143692957592794
+513,"TBV Lemgo Lippe","Füchse Berlin",2018,34,30,4,-0.439034716342083
+514,"TBV Lemgo Lippe","GWD Minden",2018,23,25,-2,0.374062775510841
+515,"TBV Lemgo Lippe","Hannover-Burgdorf",2018,26,31,-5,-0.064488364249578
+516,"TBV Lemgo Lippe","HC Erlangen",2018,31,23,8,0.298031228784793
+517,"TBV Lemgo Lippe","HSG Wetzlar",2018,24,24,0,0.332084662806374
+518,"TBV Lemgo Lippe","MT Melsungen",2018,28,26,2,0.237666968229471
+519,"TBV Lemgo Lippe","Rhein-Neckar Löwen",2018,23,25,-2,-0.615928968817328
+520,"TBV Lemgo Lippe","SC DHfK Leipzig",2018,24,20,4,0.327668727110663
+521,"TBV Lemgo Lippe","SC Magdeburg",2018,22,23,-1,-0.733874231318043
+522,"TBV Lemgo Lippe","SG BBM Bietigheim",2018,40,27,13,0.495872459220635
+523,"TBV Lemgo Lippe","THW Kiel",2018,26,34,-8,-0.824289570278598
+524,"TBV Lemgo Lippe","TVB Stuttgart",2018,29,24,5,0.255205391589044
+525,"THW Kiel","Bergischer HC",2018,32,24,8,0.815514069951773
+526,"THW Kiel","Eulen Ludwigshafen",2018,37,21,16,0.891135867527138
+527,"THW Kiel","FRISCH AUF! Göppingen",2018,28,26,2,0.861325255413171
+528,"THW Kiel","Füchse Berlin",2018,26,22,4,0.733143402175077
+529,"THW Kiel","GWD Minden",2018,39,19,20,0.844255403834183
+530,"THW Kiel","Hannover-Burgdorf",2018,30,26,4,0.857605730636901
+531,"THW Kiel","HSG Wetzlar",2018,29,19,10,0.830624736175602
+532,"THW Kiel","Rhein-Neckar Löwen",2018,31,28,3,0.417920082628623
+533,"THW Kiel","SC DHfK Leipzig",2018,27,22,5,0.848384652543259
+534,"THW Kiel","SC Magdeburg",2018,25,28,-3,0.63674916289389
+535,"THW Kiel","SG BBM Bietigheim",2018,27,17,10,0.891783620300852
+536,"THW Kiel","SG Flensburg-Handewitt",2018,20,18,2,0.359106479812645
+537,"THW Kiel","TVB Stuttgart",2018,32,19,13,0.859640060062952
+538,"THW Kiel","VfL Gummersbach",2018,31,25,6,0.867424024255103
+539,"TVB Stuttgart","FRISCH AUF! Göppingen",2018,25,26,-1,-0.078560675134115
+540,"TVB Stuttgart","Füchse Berlin",2018,33,33,0,-0.385221600633003
+541,"TVB Stuttgart","GWD Minden",2018,30,31,-1,0.24010651916902
+542,"TVB Stuttgart","Hannover-Burgdorf",2018,37,34,3,-0.217417762601846
+543,"TVB Stuttgart","HC Erlangen",2018,27,28,-1,0.212471062504989
+544,"TVB Stuttgart","MT Melsungen",2018,30,26,4,-0.179325596414662
+545,"TVB Stuttgart","Rhein-Neckar Löwen",2018,19,26,-7,-0.78082415074656
+546,"TVB Stuttgart","SC DHfK Leipzig",2018,29,32,-3,0.258498866817758
+547,"TVB Stuttgart","SC Magdeburg",2018,27,40,-13,-0.633788311921087
+548,"TVB Stuttgart","SG BBM Bietigheim",2018,31,25,6,0.554793233808311
+549,"TVB Stuttgart","SG Flensburg-Handewitt",2018,20,30,-10,-0.763617487599492
+550,"TVB Stuttgart","TBV Lemgo Lippe",2018,25,23,2,0.016342130407564
+551,"TVB Stuttgart","THW Kiel",2018,27,30,-3,-0.752693098635071
+553,"VfL Gummersbach","Bergischer HC",2018,22,28,-6,-0.520387976851305
+554,"VfL Gummersbach","Eulen Ludwigshafen",2018,20,20,0,0.508573961999447
+555,"VfL Gummersbach","FRISCH AUF! Göppingen",2018,22,26,-4,0.175656984785615
+556,"VfL Gummersbach","Füchse Berlin",2018,20,29,-9,-0.625709579281374
+557,"VfL Gummersbach","GWD Minden",2018,19,25,-6,-0.346040514175143
+558,"VfL Gummersbach","Hannover-Burgdorf",2018,25,25,0,-0.376344688805423
+559,"VfL Gummersbach","HC Erlangen",2018,25,27,-2,-0.203393326801094
+560,"VfL Gummersbach","HSG Wetzlar",2018,19,24,-5,0.110707789188616
+561,"VfL Gummersbach","MT Melsungen",2018,23,28,-5,-0.477181894228088
+562,"VfL Gummersbach","Rhein-Neckar Löwen",2018,28,23,5,-0.834297340502834
+563,"VfL Gummersbach","SC Magdeburg",2018,18,29,-11,-0.693058326126934
+564,"VfL Gummersbach","SG BBM Bietigheim",2018,28,21,7,0.434135286279365
+565,"VfL Gummersbach","SG Flensburg-Handewitt",2018,23,33,-10,-0.821645343717774
+566,"VfL Gummersbach","TBV Lemgo Lippe",2018,25,19,6,0.366837376296269
+567,"VfL Gummersbach","THW Kiel",2018,22,35,-13,-0.834510127299902
+568,"Bergischer HC","FRISCH AUF! Göppingen",2019,25,25,0,0.247875437122707
+569,"Bergischer HC","Füchse Berlin",2019,26,26,0,-0.026973316836562
+570,"Bergischer HC","GWD Minden",2019,26,23,3,0.444670457332079
+571,"Bergischer HC","Hannover-Burgdorf",2019,28,27,1,-0.080540652760629
+572,"Bergischer HC","HC Erlangen",2019,24,24,0,0.316219556462068
+573,"Bergischer HC","HSG Nordhorn-Lingen",2019,31,18,13,0.712791105458359
+574,"Bergischer HC","HSG Wetzlar",2019,33,30,3,0.426240314603525
+575,"Bergischer HC","MT Melsungen",2019,24,24,0,0.078174696908938
+576,"Bergischer HC","Rhein-Neckar Löwen",2019,26,29,-3,-0.344188769589445
+577,"Bergischer HC","SC Magdeburg",2019,23,24,-1,-0.446223067371189
+578,"Bergischer HC","SG Flensburg-Handewitt",2019,20,20,0,-0.44088760943512
+579,"Bergischer HC","TBV Lemgo Lippe",2019,34,33,1,0.386179007264789
+580,"Bergischer HC","THW Kiel",2019,29,34,-5,-0.583867875380313
+581,"Eulen Ludwigshafen","FRISCH AUF! Göppingen",2019,24,23,1,-0.20462853644107
+582,"Eulen Ludwigshafen","Füchse Berlin",2019,19,26,-7,-0.48456594867905
+583,"Eulen Ludwigshafen","Hannover-Burgdorf",2019,24,26,-2,-0.603565895360716
+584,"Eulen Ludwigshafen","HC Erlangen",2019,19,23,-4,-0.262573636757977
+585,"Eulen Ludwigshafen","HSG Nordhorn-Lingen",2019,19,12,7,0.210131035180521
+586,"Eulen Ludwigshafen","HSG Wetzlar",2019,25,31,-6,-0.408853493302994
+587,"Eulen Ludwigshafen","MT Melsungen",2019,25,24,1,-0.384610415564806
+588,"Eulen Ludwigshafen","Rhein-Neckar Löwen",2019,23,26,-3,-0.832506815844624
+589,"Eulen Ludwigshafen","SC DHfK Leipzig",2019,34,27,7,-0.409703220374658
+590,"Eulen Ludwigshafen","SC Magdeburg",2019,17,20,-3,-0.760910413145171
+591,"Eulen Ludwigshafen","TBV Lemgo Lippe",2019,29,36,-7,-0.02643461056748
+592,"Eulen Ludwigshafen","TVB Stuttgart",2019,23,27,-4,0.029621503017005
+593,"FRISCH AUF! Göppingen","Bergischer HC",2019,28,22,6,0.230540457640636
+594,"FRISCH AUF! Göppingen","Eulen Ludwigshafen",2019,29,21,8,0.739717714072836
+595,"FRISCH AUF! Göppingen","Füchse Berlin",2019,24,28,-4,0.08657726858482
+596,"FRISCH AUF! Göppingen","GWD Minden",2019,26,23,3,0.418686654554733
+597,"FRISCH AUF! Göppingen","Hannover-Burgdorf",2019,24,27,-3,0.167080599200021
+598,"FRISCH AUF! Göppingen","HBW Balingen-Weilstetten",2019,26,32,-6,0.611454303830433
+599,"FRISCH AUF! Göppingen","HSG Nordhorn-Lingen",2019,28,26,2,0.781359266883871
+600,"FRISCH AUF! Göppingen","HSG Wetzlar",2019,26,20,6,0.223170157094307
+601,"FRISCH AUF! Göppingen","SG Flensburg-Handewitt",2019,28,26,2,-0.437747612701639
+602,"FRISCH AUF! Göppingen","TBV Lemgo Lippe",2019,34,27,7,0.527214669105265
+603,"FRISCH AUF! Göppingen","THW Kiel",2019,26,27,-1,-0.563335788286279
+604,"FRISCH AUF! Göppingen","TVB Stuttgart",2019,31,22,9,0.586313661447678
+605,"Füchse Berlin","Bergischer HC",2019,27,24,3,0.575280279770961
+606,"Füchse Berlin","Eulen Ludwigshafen",2019,29,19,10,0.820574984101203
+607,"Füchse Berlin","GWD Minden",2019,25,29,-4,0.733098168661412
+608,"Füchse Berlin","HBW Balingen-Weilstetten",2019,33,27,6,0.697268713331547
+609,"Füchse Berlin","HC Erlangen",2019,30,22,8,0.591417130165994
+610,"Füchse Berlin","HSG Nordhorn-Lingen",2019,30,32,-2,0.82284392010844
+611,"Füchse Berlin","HSG Wetzlar",2019,32,27,5,0.566469415524825
+612,"Füchse Berlin","MT Melsungen",2019,27,22,5,0.361692570299165
+613,"Füchse Berlin","Rhein-Neckar Löwen",2019,23,22,1,-0.153417131440939
+614,"Füchse Berlin","SC DHfK Leipzig",2019,29,28,1,0.455517190839278
+615,"Füchse Berlin","SC Magdeburg",2019,25,24,1,0.278929291368448
+616,"Füchse Berlin","SG Flensburg-Handewitt",2019,33,35,-2,-0.169039356260722
+617,"Füchse Berlin","THW Kiel",2019,29,28,1,-0.54160430331158
+618,"Füchse Berlin","TVB Stuttgart",2019,36,27,9,0.758152073205513
+619,"GWD Minden","Bergischer HC",2019,26,23,3,-0.020620748894118
+620,"GWD Minden","Eulen Ludwigshafen",2019,29,23,6,0.344417106184514
+621,"GWD Minden","FRISCH AUF! Göppingen",2019,27,26,1,0.03529834925583
+621,"GWD Minden","FRISCH AUF! Göppingen",2019,27,26,1,0.03529834925583
+622,"GWD Minden","Füchse Berlin",2019,30,25,5,-0.396180103360143
+623,"GWD Minden","Hannover-Burgdorf",2019,32,32,0,-0.298261446093778
+624,"GWD Minden","HBW Balingen-Weilstetten",2019,30,29,1,0.412192894175337
+625,"GWD Minden","HC Erlangen",2019,26,29,-3,0.260304897546058
+626,"GWD Minden","MT Melsungen",2019,27,29,-2,-0.236718610066272
+627,"GWD Minden","Rhein-Neckar Löwen",2019,24,28,-4,-0.604739096409559
+628,"GWD Minden","SC DHfK Leipzig",2019,21,25,-4,-0.024652396255876
+629,"GWD Minden","SG Flensburg-Handewitt",2019,23,27,-4,-0.578886926132093
+630,"GWD Minden","TBV Lemgo Lippe",2019,32,31,1,0.201334301967517
+631,"GWD Minden","THW Kiel",2019,26,29,-3,-0.733105568716241
+633,"Hannover-Burgdorf","Eulen Ludwigshafen",2019,25,23,2,0.75947552912277
+634,"Hannover-Burgdorf","FRISCH AUF! Göppingen",2019,29,32,-3,0.544048062097932
+635,"Hannover-Burgdorf","Füchse Berlin",2019,31,28,3,0.070394914980732
+636,"Hannover-Burgdorf","GWD Minden",2019,36,30,6,0.696266919562031
+637,"Hannover-Burgdorf","HBW Balingen-Weilstetten",2019,31,23,8,0.685710010521724
+638,"Hannover-Burgdorf","HC Erlangen",2019,29,25,4,0.553853754940711
+639,"Hannover-Burgdorf","HSG Nordhorn-Lingen",2019,30,29,1,0.812964920104504
+640,"Hannover-Burgdorf","Rhein-Neckar Löwen",2019,29,29,0,-0.128423381182524
+641,"Hannover-Burgdorf","SC Magdeburg",2019,31,28,3,-0.088281205149304
+642,"Hannover-Burgdorf","SG Flensburg-Handewitt",2019,23,22,1,-0.335354787207064
+643,"Hannover-Burgdorf","THW Kiel",2019,25,32,-7,-0.30002024413087
+644,"Hannover-Burgdorf","TVB Stuttgart",2019,32,19,13,0.603391238346198
+645,"HBW Balingen-Weilstetten","Bergischer HC",2019,29,27,2,0.0491421309044699
+646,"HBW Balingen-Weilstetten","Eulen Ludwigshafen",2019,25,25,0,0.465357126246104
+647,"HBW Balingen-Weilstetten","Füchse Berlin",2019,31,30,1,-0.566198856368682
+648,"HBW Balingen-Weilstetten","GWD Minden",2019,26,26,0,0.156231426639067
+649,"HBW Balingen-Weilstetten","Hannover-Burgdorf",2019,33,35,-2,-0.195452209919703
+650,"HBW Balingen-Weilstetten","HC Erlangen",2019,30,32,-2,0.131060560019659
+651,"HBW Balingen-Weilstetten","HSG Nordhorn-Lingen",2019,24,23,1,0.407882323640178
+652,"HBW Balingen-Weilstetten","HSG Wetzlar",2019,33,34,-1,-0.274938077009682
+653,"HBW Balingen-Weilstetten","MT Melsungen",2019,35,23,12,-0.458439251530569
+654,"HBW Balingen-Weilstetten","SC DHfK Leipzig",2019,26,24,2,-0.064282854500021
+655,"HBW Balingen-Weilstetten","SC Magdeburg",2019,32,34,-2,-0.561049868089196
+656,"HBW Balingen-Weilstetten","TBV Lemgo Lippe",2019,29,31,-2,0.147157190635451
+657,"HBW Balingen-Weilstetten","THW Kiel",2019,20,32,-12,-0.731151329307419
+658,"HBW Balingen-Weilstetten","TVB Stuttgart",2019,25,25,0,0.191989945663694
+659,"HC Erlangen","Bergischer HC",2019,28,26,2,0.166324913785068
+660,"HC Erlangen","Eulen Ludwigshafen",2019,23,27,-4,0.485639884594795
+661,"HC Erlangen","FRISCH AUF! Göppingen",2019,23,26,-3,-0.00824640620273198
+662,"HC Erlangen","Füchse Berlin",2019,34,29,5,-0.355896422019117
+663,"HC Erlangen","HBW Balingen-Weilstetten",2019,32,27,5,0.414831311030692
+664,"HC Erlangen","HSG Nordhorn-Lingen",2019,26,25,1,0.756772038517112
+665,"HC Erlangen","HSG Wetzlar",2019,25,31,-6,0.220994475138122
+666,"HC Erlangen","MT Melsungen",2019,25,30,-5,-0.08646517739816
+667,"HC Erlangen","Rhein-Neckar Löwen",2019,29,29,0,-0.537065685495672
+668,"HC Erlangen","SC DHfK Leipzig",2019,25,21,4,-0.0394340700958991
+669,"HC Erlangen","SC Magdeburg",2019,27,32,-5,-0.42203604696026
+670,"HC Erlangen","TBV Lemgo Lippe",2019,26,26,0,0.375038367414659
+671,"HC Erlangen","THW Kiel",2019,27,31,-4,-0.650545726670714
+672,"HC Erlangen","TVB Stuttgart",2019,29,23,6,0.53409127159701
+673,"HSG Nordhorn-Lingen","Bergischer HC",2019,21,26,-5,-0.53767585763498
+674,"HSG Nordhorn-Lingen","Eulen Ludwigshafen",2019,19,21,-2,-0.089480227570251
+675,"HSG Nordhorn-Lingen","FRISCH AUF! Göppingen",2019,20,30,-10,-0.511063251734245
+676,"HSG Nordhorn-Lingen","Füchse Berlin",2019,24,34,-10,-0.631127845987048
+677,"HSG Nordhorn-Lingen","GWD Minden",2019,25,26,-1,-0.208475019618101
+678,"HSG Nordhorn-Lingen","Hannover-Burgdorf",2019,24,31,-7,-0.651770598793241
+679,"HSG Nordhorn-Lingen","HSG Wetzlar",2019,25,31,-6,-0.574391673261673
+680,"HSG Nordhorn-Lingen","MT Melsungen",2019,24,31,-7,-0.669505891362236
+681,"HSG Nordhorn-Lingen","Rhein-Neckar Löwen",2019,17,27,-10,-0.833634703269002
+682,"HSG Nordhorn-Lingen","SC DHfK Leipzig",2019,33,30,3,-0.382284069869631
+683,"HSG Nordhorn-Lingen","SC Magdeburg",2019,21,27,-6,-0.767892205113722
+684,"HSG Nordhorn-Lingen","SG Flensburg-Handewitt",2019,20,29,-9,-0.829528623127548
+685,"HSG Nordhorn-Lingen","TBV Lemgo Lippe",2019,24,29,-5,-0.172116521983199
+686,"HSG Wetzlar","Bergischer HC",2019,27,23,4,0.194339850592997
+687,"HSG Wetzlar","Eulen Ludwigshafen",2019,26,23,3,0.638407195908777
+688,"HSG Wetzlar","FRISCH AUF! Göppingen",2019,31,30,1,0.223882787466674
+689,"HSG Wetzlar","GWD Minden",2019,26,23,3,0.409167281256759
+690,"HSG Wetzlar","Hannover-Burgdorf",2019,25,25,0,-0.0727997122092
+691,"HSG Wetzlar","HSG Nordhorn-Lingen",2019,34,27,7,0.712830215988079
+692,"HSG Wetzlar","MT Melsungen",2019,26,31,-5,-0.049081012723125
+693,"HSG Wetzlar","Rhein-Neckar Löwen",2019,27,27,0,-0.317393468356369
+694,"HSG Wetzlar","SC Magdeburg",2019,29,28,1,-0.489303043670049
+695,"HSG Wetzlar","SG Flensburg-Handewitt",2019,26,27,-1,-0.662822895167865
+696,"HSG Wetzlar","TBV Lemgo Lippe",2019,27,32,-5,0.407409329113267
+697,"HSG Wetzlar","THW Kiel",2019,26,30,-4,-0.521211370533226
+698,"HSG Wetzlar","TVB Stuttgart",2019,27,28,-1,0.535672404567663
+699,"MT Melsungen","Bergischer HC",2019,28,25,3,0.478249569643892
+700,"MT Melsungen","Eulen Ludwigshafen",2019,25,25,0,0.812300943746459
+701,"MT Melsungen","FRISCH AUF! Göppingen",2019,29,17,12,0.521472392638037
+702,"MT Melsungen","Hannover-Burgdorf",2019,31,25,6,0.237717908082409
+703,"MT Melsungen","HBW Balingen-Weilstetten",2019,36,23,13,0.60769577034627
+704,"MT Melsungen","HC Erlangen",2019,28,27,1,0.684424616192101
+705,"MT Melsungen","HSG Wetzlar",2019,28,26,2,0.462010205514723
+707,"MT Melsungen","SC DHfK Leipzig",2019,31,34,-3,0.554727504387335
+709,"MT Melsungen","SG Flensburg-Handewitt",2019,18,24,-6,-0.38353765323993
+710,"MT Melsungen","TBV Lemgo Lippe",2019,25,23,2,0.695919212716901
+711,"MT Melsungen","TVB Stuttgart",2019,21,26,-5,0.709405446454512
+712,"Rhein-Neckar Löwen","Bergischer HC",2019,30,24,6,0.65778473968424
+713,"Rhein-Neckar Löwen","FRISCH AUF! Göppingen",2019,28,21,7,0.732881672355644
+714,"Rhein-Neckar Löwen","Hannover-Burgdorf",2019,30,23,7,0.421763460162966
+715,"Rhein-Neckar Löwen","HBW Balingen-Weilstetten",2019,37,26,11,0.845226335662296
+716,"Rhein-Neckar Löwen","HSG Nordhorn-Lingen",2019,32,28,4,0.87106550242234
+717,"Rhein-Neckar Löwen","HSG Wetzlar",2019,29,26,3,0.632841506071906
+718,"Rhein-Neckar Löwen","MT Melsungen",2019,30,33,-3,0.493620283494675
+719,"Rhein-Neckar Löwen","SC DHfK Leipzig",2019,26,23,3,0.575008838433437
+720,"Rhein-Neckar Löwen","SG Flensburg-Handewitt",2019,22,24,-2,0.195454744877814
+721,"Rhein-Neckar Löwen","TBV Lemgo Lippe",2019,29,29,0,0.643830814768655
+722,"Rhein-Neckar Löwen","THW Kiel",2019,26,25,1,-0.189908067608298
+723,"Rhein-Neckar Löwen","TVB Stuttgart",2019,33,32,1,0.821097130024109
+724,"SC DHfK Leipzig","Bergischer HC",2019,34,32,2,0.208073199706797
+725,"SC DHfK Leipzig","Eulen Ludwigshafen",2019,32,27,5,0.651603787120666
+726,"SC DHfK Leipzig","FRISCH AUF! Göppingen",2019,26,24,2,0.230889330467578
+727,"SC DHfK Leipzig","Füchse Berlin",2019,24,23,1,-0.062051836387791
+728,"SC DHfK Leipzig","GWD Minden",2019,31,28,3,0.499945838599026
+729,"SC DHfK Leipzig","Hannover-Burgdorf",2019,30,27,3,0.045431457287269
+730,"SC DHfK Leipzig","HBW Balingen-Weilstetten",2019,27,26,1,0.614445034519384
+731,"SC DHfK Leipzig","HC Erlangen",2019,26,20,6,0.371479408063186
+732,"SC DHfK Leipzig","HSG Wetzlar",2019,26,29,-3,0.375574725657722
+733,"SC DHfK Leipzig","Rhein-Neckar Löwen",2019,28,29,-1,-0.409463153382362
+734,"SC DHfK Leipzig","SC Magdeburg",2019,25,26,-1,-0.243023267053968
+735,"SC DHfK Leipzig","TBV Lemgo Lippe",2019,34,32,2,0.558578673726516
+736,"SC DHfK Leipzig","TVB Stuttgart",2019,31,28,3,0.633459644460838
+737,"SC Magdeburg","FRISCH AUF! Göppingen",2019,30,21,9,0.694246555527429
+738,"SC Magdeburg","Füchse Berlin",2019,27,29,-2,0.285514353556434
+739,"SC Magdeburg","GWD Minden",2019,31,29,2,0.77320936743917
+740,"SC Magdeburg","Hannover-Burgdorf",2019,30,30,0,0.382613505147636
+741,"SC Magdeburg","HBW Balingen-Weilstetten",2019,38,26,12,0.857346847278768
+742,"SC Magdeburg","HC Erlangen",2019,24,20,4,0.776620347634691
+743,"SC Magdeburg","HSG Nordhorn-Lingen",2019,39,27,12,0.870315498898606
+744,"SC Magdeburg","HSG Wetzlar",2019,34,27,7,0.586884395188319
+745,"SC Magdeburg","MT Melsungen",2019,26,25,1,0.579417523103769
+746,"SC Magdeburg","Rhein-Neckar Löwen",2019,28,32,-4,0.193676659779346
+747,"SC Magdeburg","SC DHfK Leipzig",2019,28,26,2,0.607627932501029
+748,"SC Magdeburg","SG Flensburg-Handewitt",2019,26,25,1,0.084611347279967
+749,"SC Magdeburg","THW Kiel",2019,32,31,1,-0.00838882642912803
+750,"SC Magdeburg","TVB Stuttgart",2019,32,28,4,0.843651973822573
+751,"SG Flensburg-Handewitt","Bergischer HC",2019,29,23,6,0.721841347670365
+752,"SG Flensburg-Handewitt","Eulen Ludwigshafen",2019,28,26,2,0.874178728242831
+753,"SG Flensburg-Handewitt","FRISCH AUF! Göppingen",2019,28,22,6,0.647846781194093
+754,"SG Flensburg-Handewitt","Füchse Berlin",2019,27,23,4,0.473436332607811
+755,"SG Flensburg-Handewitt","GWD Minden",2019,27,22,5,0.777650144008248
+756,"SG Flensburg-Handewitt","HBW Balingen-Weilstetten",2019,32,25,7,0.818591670244741
+757,"SG Flensburg-Handewitt","HC Erlangen",2019,24,21,3,0.789004471894682
+758,"SG Flensburg-Handewitt","HSG Nordhorn-Lingen",2019,29,27,2,0.866220489081978
+759,"SG Flensburg-Handewitt","HSG Wetzlar",2019,31,28,3,0.651234004729704
+760,"SG Flensburg-Handewitt","MT Melsungen",2019,30,23,7,0.544062553137805
+761,"SG Flensburg-Handewitt","Rhein-Neckar Löwen",2019,30,26,4,0.3234764422239
+762,"SG Flensburg-Handewitt","SC DHfK Leipzig",2019,30,22,8,0.745255228841125
+763,"SG Flensburg-Handewitt","SC Magdeburg",2019,29,22,7,0.33648792505945
+764,"TBV Lemgo Lippe","Eulen Ludwigshafen",2019,27,19,8,0.520884150932032
+765,"TBV Lemgo Lippe","Füchse Berlin",2019,26,30,-4,-0.449718620014681
+766,"TBV Lemgo Lippe","GWD Minden",2019,31,26,5,0.273920154548615
+767,"TBV Lemgo Lippe","Hannover-Burgdorf",2019,26,36,-10,-0.080475118903368
+768,"TBV Lemgo Lippe","HBW Balingen-Weilstetten",2019,27,24,3,0.320678540245656
+769,"TBV Lemgo Lippe","HC Erlangen",2019,34,32,2,0.210077047549769
+770,"TBV Lemgo Lippe","HSG Nordhorn-Lingen",2019,31,25,6,0.725497355389249
+771,"TBV Lemgo Lippe","HSG Wetzlar",2019,32,27,5,0.204602301150575
+772,"TBV Lemgo Lippe","Rhein-Neckar Löwen",2019,29,25,4,-0.49196305556973
+773,"TBV Lemgo Lippe","SC DHfK Leipzig",2019,26,27,-1,0.039181058831918
+774,"TBV Lemgo Lippe","SC Magdeburg",2019,24,32,-8,-0.555086870359021
+775,"TBV Lemgo Lippe","SG Flensburg-Handewitt",2019,18,27,-9,-0.529040585908502
+776,"TBV Lemgo Lippe","THW Kiel",2019,27,30,-3,-0.753664344890042
+777,"TBV Lemgo Lippe","TVB Stuttgart",2019,27,23,4,0.358563446313524
+778,"THW Kiel","Eulen Ludwigshafen",2019,30,27,3,0.86695620768635
+779,"THW Kiel","FRISCH AUF! Göppingen",2019,30,24,6,0.816606376293845
+780,"THW Kiel","GWD Minden",2019,29,27,2,0.843476833360443
+781,"THW Kiel","Hannover-Burgdorf",2019,32,23,9,0.657055214723926
+782,"THW Kiel","HBW Balingen-Weilstetten",2019,36,26,10,0.841754476746208
+783,"THW Kiel","HC Erlangen",2019,29,15,14,0.795231390159842
+784,"THW Kiel","HSG Nordhorn-Lingen",2019,31,23,8,0.877222392727757
+785,"THW Kiel","HSG Wetzlar",2019,20,27,-7,0.751382945866035
+786,"THW Kiel","MT Melsungen",2019,38,26,12,0.625914276674546
+787,"THW Kiel","Rhein-Neckar Löwen",2019,27,21,6,0.545580674120623
+788,"THW Kiel","SC DHfK Leipzig",2019,27,26,1,0.666708027875218
+789,"THW Kiel","SG Flensburg-Handewitt",2019,28,24,4,0.366261481074322
+790,"THW Kiel","TBV Lemgo Lippe",2019,31,24,7,0.725173101102062
+791,"THW Kiel","TVB Stuttgart",2019,35,23,12,0.864853766914579
+792,"TVB Stuttgart","Bergischer HC",2019,25,31,-6,0.047655981651173
+793,"TVB Stuttgart","FRISCH AUF! Göppingen",2019,29,26,3,-0.008280649829708
+794,"TVB Stuttgart","Füchse Berlin",2019,32,33,-1,-0.311226564264739
+795,"TVB Stuttgart","GWD Minden",2019,24,24,0,0.084151587796789
+796,"TVB Stuttgart","Hannover-Burgdorf",2019,23,28,-5,-0.520542322794249
+797,"TVB Stuttgart","HBW Balingen-Weilstetten",2019,32,25,7,0.395900498733042
+798,"TVB Stuttgart","HC Erlangen",2019,30,24,6,0.097546724338958
+799,"TVB Stuttgart","HSG Nordhorn-Lingen",2019,29,24,5,0.54213883968974
+800,"TVB Stuttgart","MT Melsungen",2019,31,28,3,-0.238230935825829
+801,"TVB Stuttgart","SC DHfK Leipzig",2019,25,25,0,-0.051503629450398
+802,"TVB Stuttgart","SC Magdeburg",2019,27,29,-2,-0.48540016663634
+803,"TVB Stuttgart","SG Flensburg-Handewitt",2019,23,23,0,-0.63100798161446
+804,"TVB Stuttgart","TBV Lemgo Lippe",2019,26,26,0,0.215402843601896
+805,"TVB Stuttgart","THW Kiel",2019,21,29,-8,-0.655762435029852
+806,"Bergischer HC","Eulen Ludwigshafen",2020,28,19,9,0.752730057158834
+807,"Bergischer HC","FRISCH AUF! Göppingen",2020,28,28,0,0.058726080632993
+808,"Bergischer HC","Füchse Berlin",2020,29,31,-2,-0.05053946621238
+809,"Bergischer HC","GWD Minden",2020,25,24,1,0.413039311803861
+810,"Bergischer HC","Hannover-Burgdorf",2020,27,23,4,0.321163907961021
+811,"Bergischer HC","HBW Balingen-Weilstetten",2020,30,22,8,0.5757589063552
+812,"Bergischer HC","HC Erlangen",2020,29,25,4,0.297241379310345
+813,"Bergischer HC","HSC 2000 Coburg",2020,28,23,5,0.757995111012343
+814,"Bergischer HC","HSG Nordhorn-Lingen",2020,25,25,0,0.79482970957203
+815,"Bergischer HC","HSG Wetzlar",2020,20,22,-2,0.239884983755365
+816,"Bergischer HC","MT Melsungen",2020,23,25,-2,-0.059169475722584
+817,"Bergischer HC","Rhein-Neckar Löwen",2020,26,28,-2,-0.405827761103657
+818,"Bergischer HC","SC DHfK Leipzig",2020,29,30,-1,0.188616502977342
+819,"Bergischer HC","SC Magdeburg",2020,21,25,-4,-0.315342732072403
+820,"Bergischer HC","SG Flensburg-Handewitt",2020,25,30,-5,-0.463270003249701
+821,"Bergischer HC","TBV Lemgo Lippe",2020,33,26,7,0.38058120618424
+822,"Bergischer HC","THW Kiel",2020,27,32,-5,-0.63854594261241
+824,"Bergischer HC","TVB Stuttgart",2020,30,31,-1,0.459866363592203
+825,"Eulen Ludwigshafen","Bergischer HC",2020,28,22,6,-0.37173861778868
+826,"Eulen Ludwigshafen","FRISCH AUF! Göppingen",2020,25,27,-2,-0.315982624651602
+827,"Eulen Ludwigshafen","Füchse Berlin",2020,23,34,-11,-0.622945320362295
+828,"Eulen Ludwigshafen","GWD Minden",2020,30,24,6,-0.062714767492579
+829,"Eulen Ludwigshafen","Hannover-Burgdorf",2020,26,27,-1,-0.398921362301954
+830,"Eulen Ludwigshafen","HBW Balingen-Weilstetten",2020,26,22,4,0.223936748670017
+831,"Eulen Ludwigshafen","HC Erlangen",2020,26,30,-4,-0.369248009575161
+832,"Eulen Ludwigshafen","HSC 2000 Coburg",2020,22,19,3,0.481200351359609
+833,"Eulen Ludwigshafen","HSG Nordhorn-Lingen",2020,26,28,-2,0.33483990867095
+834,"Eulen Ludwigshafen","HSG Wetzlar",2020,27,27,0,-0.493299565083961
+835,"Eulen Ludwigshafen","MT Melsungen",2020,27,30,-3,-0.502752842699215
+836,"Eulen Ludwigshafen","Rhein-Neckar Löwen",2020,24,26,-2,-0.742647213257069
+837,"Eulen Ludwigshafen","SC DHfK Leipzig",2020,27,27,0,-0.30460359136596
+838,"Eulen Ludwigshafen","SC Magdeburg",2020,22,28,-6,-0.675196594256812
+839,"Eulen Ludwigshafen","SG Flensburg-Handewitt",2020,20,29,-9,-0.806771419548376
+840,"Eulen Ludwigshafen","TBV Lemgo Lippe",2020,24,25,-1,-0.23210341279787
+841,"Eulen Ludwigshafen","THW Kiel",2020,20,29,-9,-0.804366090489635
+842,"Eulen Ludwigshafen","TuSEM Essen",2020,25,26,-1,0.374412737080216
+843,"Eulen Ludwigshafen","TVB Stuttgart",2020,28,24,4,-0.016709604026077
+844,"FRISCH AUF! Göppingen","Bergischer HC",2020,26,26,0,0.226070539448686
+845,"FRISCH AUF! Göppingen","Eulen Ludwigshafen",2020,24,22,2,0.739479965048497
+846,"FRISCH AUF! Göppingen","Füchse Berlin",2020,25,24,1,0.096946219248377
+847,"FRISCH AUF! Göppingen","GWD Minden",2020,33,29,4,0.516722925664422
+848,"FRISCH AUF! Göppingen","Hannover-Burgdorf",2020,31,24,7,0.380105518775469
+849,"FRISCH AUF! Göppingen","HBW Balingen-Weilstetten",2020,28,23,5,0.563725619572963
+850,"FRISCH AUF! Göppingen","HC Erlangen",2020,27,27,0,0.310219922380337
+851,"FRISCH AUF! Göppingen","HSC 2000 Coburg",2020,37,29,8,0.780590717299578
+852,"FRISCH AUF! Göppingen","HSG Nordhorn-Lingen",2020,26,26,0,0.747954034358312
+853,"FRISCH AUF! Göppingen","MT Melsungen",2020,23,30,-7,0.081282955910827
+854,"FRISCH AUF! Göppingen","Rhein-Neckar Löwen",2020,34,32,2,-0.442156193784504
+855,"FRISCH AUF! Göppingen","SC DHfK Leipzig",2020,30,33,-3,0.277592725043425
+856,"FRISCH AUF! Göppingen","SC Magdeburg",2020,21,29,-8,-0.278259011160014
+857,"FRISCH AUF! Göppingen","SG Flensburg-Handewitt",2020,28,28,0,-0.504530187134833
+858,"FRISCH AUF! Göppingen","TBV Lemgo Lippe",2020,28,28,0,0.410316705858809
+859,"FRISCH AUF! Göppingen","THW Kiel",2020,28,31,-3,-0.527864209101323
+860,"FRISCH AUF! Göppingen","TuSEM Essen",2020,35,27,8,0.737670472359789
+861,"FRISCH AUF! Göppingen","TVB Stuttgart",2020,27,17,10,0.359122575403676
+862,"Füchse Berlin","Bergischer HC",2020,29,27,2,0.584671715070317
+863,"Füchse Berlin","Eulen Ludwigshafen",2020,28,21,7,0.800357101716392
+864,"Füchse Berlin","FRISCH AUF! Göppingen",2020,34,27,7,0.411488075243534
+865,"Füchse Berlin","GWD Minden",2020,28,25,3,0.418808023353421
+866,"Füchse Berlin","Hannover-Burgdorf",2020,31,27,4,0.429446988376188
+867,"Füchse Berlin","HBW Balingen-Weilstetten",2020,36,30,6,0.721137300412181
+868,"Füchse Berlin","HC Erlangen",2020,30,22,8,0.66057378204928
+869,"Füchse Berlin","HSC 2000 Coburg",2020,32,20,12,0.826497968716591
+870,"Füchse Berlin","HSG Nordhorn-Lingen",2020,29,25,4,0.835179478637461
+871,"Füchse Berlin","HSG Wetzlar",2020,35,28,7,0.403345204273538
+872,"Füchse Berlin","MT Melsungen",2020,32,30,2,0.317324412226273
+873,"Füchse Berlin","Rhein-Neckar Löwen",2020,23,29,-6,-0.071706583313999
+874,"Füchse Berlin","SC DHfK Leipzig",2020,27,27,0,0.495915258931044
+875,"Füchse Berlin","SC Magdeburg",2020,22,32,-10,-0.00614937479987898
+876,"Füchse Berlin","SG Flensburg-Handewitt",2020,29,33,-4,-0.311519390614895
+877,"Füchse Berlin","TBV Lemgo Lippe",2020,30,24,6,0.608308184374114
+878,"Füchse Berlin","THW Kiel",2020,26,27,-1,-0.485604215815994
+879,"Füchse Berlin","TuSEM Essen",2020,30,23,7,0.811001950530712
+880,"Füchse Berlin","TVB Stuttgart",2020,31,25,6,0.570196212125824
+881,"GWD Minden","Bergischer HC",2020,29,36,-7,-0.099484855375303
+883,"GWD Minden","FRISCH AUF! Göppingen",2020,24,23,1,-0.056645704413714
+884,"GWD Minden","Füchse Berlin",2020,31,26,5,-0.376500461680517
+885,"GWD Minden","Hannover-Burgdorf",2020,27,27,0,0.144266026046276
+886,"GWD Minden","HBW Balingen-Weilstetten",2020,20,27,-7,0.325803649000869
+887,"GWD Minden","HC Erlangen",2020,30,29,1,-0.054535284795376
+888,"GWD Minden","HSC 2000 Coburg",2020,30,21,9,0.547808200683523
+890,"GWD Minden","HSG Wetzlar",2020,23,29,-6,-0.112062896033795
+891,"GWD Minden","MT Melsungen",2020,30,30,0,-0.459219115410876
+892,"GWD Minden","Rhein-Neckar Löwen",2020,26,26,0,-0.582749951653452
+893,"GWD Minden","SC DHfK Leipzig",2020,23,20,3,-0.073612860906052
+894,"GWD Minden","SC Magdeburg",2020,25,35,-10,-0.484568160010434
+895,"GWD Minden","SG Flensburg-Handewitt",2020,28,29,-1,-0.673900478167201
+896,"GWD Minden","TBV Lemgo Lippe",2020,28,23,5,0.223920326023531
+897,"GWD Minden","THW Kiel",2020,30,35,-5,-0.730997207556392
+898,"GWD Minden","TuSEM Essen",2020,30,29,1,0.656014814210432
+899,"GWD Minden","TVB Stuttgart",2020,26,27,-1,0.24562096086905
+901,"Hannover-Burgdorf","Bergischer HC",2020,30,29,1,0.290688162174026
+902,"Hannover-Burgdorf","FRISCH AUF! Göppingen",2020,31,25,6,0.038000200814069
+903,"Hannover-Burgdorf","Füchse Berlin",2020,27,27,0,-0.198879178063914
+904,"Hannover-Burgdorf","GWD Minden",2020,26,24,2,0.444528949572707
+905,"Hannover-Burgdorf","HBW Balingen-Weilstetten",2020,25,29,-4,0.545844916890547
+906,"Hannover-Burgdorf","HC Erlangen",2020,27,26,1,0.579942388738398
+907,"Hannover-Burgdorf","HSC 2000 Coburg",2020,27,23,4,0.755652246325519
+908,"Hannover-Burgdorf","HSG Nordhorn-Lingen",2020,31,22,9,0.664866000420155
+909,"Hannover-Burgdorf","HSG Wetzlar",2020,25,24,1,-0.146108539409553
+910,"Hannover-Burgdorf","MT Melsungen",2020,31,23,8,-0.196609802719371
+911,"Hannover-Burgdorf","Rhein-Neckar Löwen",2020,36,30,6,-0.502635447667539
+912,"Hannover-Burgdorf","SC DHfK Leipzig",2020,31,28,3,0.060443329062033
+913,"Hannover-Burgdorf","SC Magdeburg",2020,27,29,-2,-0.429148389617979
+914,"Hannover-Burgdorf","SG Flensburg-Handewitt",2020,26,33,-7,-0.466887655833394
+915,"Hannover-Burgdorf","TBV Lemgo Lippe",2020,31,23,8,0.476956876847977
+916,"Hannover-Burgdorf","THW Kiel",2020,29,35,-6,-0.737643231400933
+917,"Hannover-Burgdorf","TuSEM Essen",2020,30,26,4,0.6852958180767
+918,"Hannover-Burgdorf","TVB Stuttgart",2020,23,22,1,0.424657534246576
+919,"HBW Balingen-Weilstetten","Bergischer HC",2020,27,25,2,-0.203132323946282
+920,"HBW Balingen-Weilstetten","Eulen Ludwigshafen",2020,26,27,-1,0.196889245936862
+921,"HBW Balingen-Weilstetten","FRISCH AUF! Göppingen",2020,30,31,-1,-0.324993005315959
+922,"HBW Balingen-Weilstetten","Füchse Berlin",2020,19,28,-9,-0.507042680944226
+923,"HBW Balingen-Weilstetten","GWD Minden",2020,29,29,0,0.204938271604939
+924,"HBW Balingen-Weilstetten","Hannover-Burgdorf",2020,30,26,4,0.161687263157102
+925,"HBW Balingen-Weilstetten","HC Erlangen",2020,23,29,-6,-0.253143913311347
+926,"HBW Balingen-Weilstetten","HSC 2000 Coburg",2020,34,26,8,0.48307997861126
+927,"HBW Balingen-Weilstetten","HSG Nordhorn-Lingen",2020,35,24,11,0.425463162429987
+928,"HBW Balingen-Weilstetten","HSG Wetzlar",2020,30,28,2,-0.071296999719017
+929,"HBW Balingen-Weilstetten","MT Melsungen",2020,23,25,-2,-0.492465931420599
+930,"HBW Balingen-Weilstetten","Rhein-Neckar Löwen",2020,32,30,2,-0.653144176630607
+931,"HBW Balingen-Weilstetten","SC Magdeburg",2020,26,39,-13,-0.453705789592251
+932,"HBW Balingen-Weilstetten","SG Flensburg-Handewitt",2020,25,32,-7,-0.633554831960631
+933,"HBW Balingen-Weilstetten","TBV Lemgo Lippe",2020,25,26,-1,0.05494676999675
+934,"HBW Balingen-Weilstetten","THW Kiel",2020,22,33,-11,-0.828503880996715
+935,"HBW Balingen-Weilstetten","TuSEM Essen",2020,31,28,3,0.43436878266175
+936,"HBW Balingen-Weilstetten","TVB Stuttgart",2020,28,30,-2,0.093807750952302
+937,"HC Erlangen","Bergischer HC",2020,20,25,-5,0.121237012756956
+938,"HC Erlangen","Eulen Ludwigshafen",2020,19,24,-5,0.579178519738484
+940,"HC Erlangen","Füchse Berlin",2020,30,27,3,-0.431768046283612
+941,"HC Erlangen","GWD Minden",2020,21,21,0,0.482727839626732
+942,"HC Erlangen","Hannover-Burgdorf",2020,21,21,0,0.122611067868721
+944,"HC Erlangen","HSC 2000 Coburg",2020,33,28,5,0.484736993566793
+945,"HC Erlangen","HSG Nordhorn-Lingen",2020,35,29,6,0.64946502273982
+946,"HC Erlangen","HSG Wetzlar",2020,28,36,-8,0.075046064479862
+947,"HC Erlangen","MT Melsungen",2020,31,21,10,-0.249208104511461
+948,"HC Erlangen","Rhein-Neckar Löwen",2020,20,26,-6,-0.38496700972466
+949,"HC Erlangen","SC DHfK Leipzig",2020,30,22,8,0.276154519463483
+950,"HC Erlangen","SC Magdeburg",2020,30,28,2,-0.675063419047355
+951,"HC Erlangen","SG Flensburg-Handewitt",2020,26,27,-1,-0.755103918487081
+952,"HC Erlangen","TBV Lemgo Lippe",2020,31,35,-4,-0.26757806127443
+953,"HC Erlangen","THW Kiel",2020,25,30,-5,-0.576107093766809
+954,"HC Erlangen","TuSEM Essen",2020,29,24,5,0.671499250573676
+955,"HC Erlangen","TVB Stuttgart",2020,34,25,9,0.326412740066119
+956,"HSC 2000 Coburg","Bergischer HC",2020,24,27,-3,-0.531686499840701
+957,"HSC 2000 Coburg","Eulen Ludwigshafen",2020,23,23,0,0.00836081859725801
+958,"HSC 2000 Coburg","FRISCH AUF! Göppingen",2020,21,29,-8,-0.507041097496629
+959,"HSC 2000 Coburg","Füchse Berlin",2020,25,32,-7,-0.724062414453873
+960,"HSC 2000 Coburg","GWD Minden",2020,24,28,-4,-0.170512099043332
+961,"HSC 2000 Coburg","Hannover-Burgdorf",2020,26,33,-7,-0.534884356157087
+962,"HSC 2000 Coburg","HBW Balingen-Weilstetten",2020,27,27,0,-0.359054026775104
+963,"HSC 2000 Coburg","HC Erlangen",2020,27,26,1,-0.592944764587332
+964,"HSC 2000 Coburg","HSG Nordhorn-Lingen",2020,26,29,-3,0.149117014923803
+965,"HSC 2000 Coburg","HSG Wetzlar",2020,30,30,0,-0.546873405961415
+966,"HSC 2000 Coburg","MT Melsungen",2020,25,30,-5,-0.581337732358145
+967,"HSC 2000 Coburg","Rhein-Neckar Löwen",2020,27,31,-4,-0.794446212621044
+968,"HSC 2000 Coburg","SC DHfK Leipzig",2020,22,29,-7,-0.439266623645969
+969,"HSC 2000 Coburg","SC Magdeburg",2020,26,28,-2,-0.744133255751861
+970,"HSC 2000 Coburg","SG Flensburg-Handewitt",2020,25,29,-4,-0.798358584914827
+971,"HSC 2000 Coburg","TBV Lemgo Lippe",2020,23,27,-4,-0.520631811809132
+972,"HSC 2000 Coburg","THW Kiel",2020,32,37,-5,-0.868584173010077
+973,"HSC 2000 Coburg","TuSEM Essen",2020,30,32,-2,0.119593254357149
+974,"HSC 2000 Coburg","TVB Stuttgart",2020,28,26,2,-0.397331829581373
+976,"HSG Nordhorn-Lingen","Eulen Ludwigshafen",2020,27,24,3,-0.113830879835672
+977,"HSG Nordhorn-Lingen","FRISCH AUF! Göppingen",2020,20,29,-9,-0.389380681143271
+978,"HSG Nordhorn-Lingen","Füchse Berlin",2020,20,25,-5,-0.628438348234196
+979,"HSG Nordhorn-Lingen","GWD Minden",2020,20,22,-2,-0.122733612273361
+980,"HSG Nordhorn-Lingen","Hannover-Burgdorf",2020,20,22,-2,-0.461394117763248
+981,"HSG Nordhorn-Lingen","HBW Balingen-Weilstetten",2020,29,27,2,-0.092020664146483
+982,"HSG Nordhorn-Lingen","HC Erlangen",2020,29,31,-2,-0.041726002837369
+983,"HSG Nordhorn-Lingen","HSC 2000 Coburg",2020,28,26,2,0.341628324834083
+984,"HSG Nordhorn-Lingen","HSG Wetzlar",2020,29,30,-1,-0.580143866180852
+985,"HSG Nordhorn-Lingen","MT Melsungen",2020,21,29,-8,-0.525063369218463
+986,"HSG Nordhorn-Lingen","Rhein-Neckar Löwen",2020,24,29,-5,-0.766969934628567
+987,"HSG Nordhorn-Lingen","SC DHfK Leipzig",2020,24,28,-4,-0.626286068976825
+988,"HSG Nordhorn-Lingen","SC Magdeburg",2020,26,33,-7,-0.76896541315368
+989,"HSG Nordhorn-Lingen","SG Flensburg-Handewitt",2020,28,38,-10,-0.766940967904109
+990,"HSG Nordhorn-Lingen","TBV Lemgo Lippe",2020,25,32,-7,-0.23709991158267
+991,"HSG Nordhorn-Lingen","THW Kiel",2020,29,35,-6,-0.838158767786509
+992,"HSG Nordhorn-Lingen","TuSEM Essen",2020,22,19,3,0.267903101088323
+993,"HSG Nordhorn-Lingen","TVB Stuttgart",2020,26,29,-3,-0.213108439844079
+994,"HSG Wetzlar","Bergischer HC",2020,30,22,8,0.109595792339325
+995,"HSG Wetzlar","Eulen Ludwigshafen",2020,29,11,18,0.739843600223149
+996,"HSG Wetzlar","FRISCH AUF! Göppingen",2020,31,32,-1,0.148373082158274
+997,"HSG Wetzlar","Füchse Berlin",2020,29,27,2,0.056989446398815
+998,"HSG Wetzlar","GWD Minden",2020,28,25,3,0.439306479492955
+999,"HSG Wetzlar","Hannover-Burgdorf",2020,26,23,3,0.212059641774249
+1000,"HSG Wetzlar","HBW Balingen-Weilstetten",2020,36,26,10,0.570595891370489
+1001,"HSG Wetzlar","HC Erlangen",2020,27,28,-1,0.381727676927225
+1002,"HSG Wetzlar","HSC 2000 Coburg",2020,31,22,9,0.743309121815481
+1003,"HSG Wetzlar","HSG Nordhorn-Lingen",2020,35,26,9,0.706297921741007
+1004,"HSG Wetzlar","MT Melsungen",2020,25,33,-8,0.154768420114803
+1005,"HSG Wetzlar","Rhein-Neckar Löwen",2020,34,32,2,-0.336677814938685
+1006,"HSG Wetzlar","SC DHfK Leipzig",2020,29,26,3,0.018871021544945
+1007,"HSG Wetzlar","SC Magdeburg",2020,24,24,0,-0.358677018669881
+1008,"HSG Wetzlar","SG Flensburg-Handewitt",2020,27,29,-2,-0.548356939063303
+1009,"HSG Wetzlar","TBV Lemgo Lippe",2020,21,26,-5,0.455914303155214
+1010,"HSG Wetzlar","THW Kiel",2020,31,22,9,-0.506072874493927
+1011,"HSG Wetzlar","TuSEM Essen",2020,26,30,-4,0.787873696946576
+1012,"HSG Wetzlar","TVB Stuttgart",2020,30,25,5,0.374587814724645
+1013,"MT Melsungen","Bergischer HC",2020,32,31,1,0.315391084945332
+1014,"MT Melsungen","Eulen Ludwigshafen",2020,25,23,2,0.528394607963481
+1015,"MT Melsungen","FRISCH AUF! Göppingen",2020,31,23,8,0.294636369423815
+1016,"MT Melsungen","Füchse Berlin",2020,32,35,-3,-0.023181369541441
+1017,"MT Melsungen","GWD Minden",2020,24,24,0,0.618662910492067
+1018,"MT Melsungen","Hannover-Burgdorf",2020,20,28,-8,0.544258103732576
+1019,"MT Melsungen","HBW Balingen-Weilstetten",2020,24,25,-1,0.677491414991405
+1020,"MT Melsungen","HC Erlangen",2020,31,28,3,0.417744487587283
+1021,"MT Melsungen","HSC 2000 Coburg",2020,27,32,-5,0.826360468449427
+1022,"MT Melsungen","HSG Nordhorn-Lingen",2020,33,28,5,0.779049514804677
+1023,"MT Melsungen","HSG Wetzlar",2020,30,28,2,0.106469118787148
+1024,"MT Melsungen","Rhein-Neckar Löwen",2020,25,26,-1,-0.193729090484712
+1025,"MT Melsungen","SC DHfK Leipzig",2020,31,28,3,0.373683602771363
+1026,"MT Melsungen","SC Magdeburg",2020,23,27,-4,-0.133771335681387
+1027,"MT Melsungen","SG Flensburg-Handewitt",2020,30,32,-2,-0.467112444311483
+1028,"MT Melsungen","TBV Lemgo Lippe",2020,27,20,7,0.555303002010269
+1029,"MT Melsungen","THW Kiel",2020,25,32,-7,-0.540556603529807
+1030,"MT Melsungen","TuSEM Essen",2020,34,31,3,0.740313361707964
+1031,"MT Melsungen","TVB Stuttgart",2020,28,30,-2,0.510385778127335
+1032,"Rhein-Neckar Löwen","Bergischer HC",2020,24,23,1,0.666289392350455
+1033,"Rhein-Neckar Löwen","Eulen Ludwigshafen",2020,31,27,4,0.842341658380804
+1034,"Rhein-Neckar Löwen","FRISCH AUF! Göppingen",2020,31,31,0,0.6577615079056
+1035,"Rhein-Neckar Löwen","Füchse Berlin",2020,24,27,-3,0.397401593800396
+1036,"Rhein-Neckar Löwen","GWD Minden",2020,29,27,2,0.725352416632856
+1037,"Rhein-Neckar Löwen","Hannover-Burgdorf",2020,33,28,5,0.592398352360898
+1038,"Rhein-Neckar Löwen","HBW Balingen-Weilstetten",2020,35,27,8,0.830156972888423
+1039,"Rhein-Neckar Löwen","HC Erlangen",2020,26,30,-4,0.606387579632905
+1040,"Rhein-Neckar Löwen","HSC 2000 Coburg",2020,39,24,15,0.85634052556079
+1041,"Rhein-Neckar Löwen","HSG Nordhorn-Lingen",2020,30,26,4,0.868556240115857
+1042,"Rhein-Neckar Löwen","HSG Wetzlar",2020,37,24,13,0.597379717624873
+1043,"Rhein-Neckar Löwen","MT Melsungen",2020,31,22,9,0.384669002746473
+1044,"Rhein-Neckar Löwen","SC DHfK Leipzig",2020,23,28,-5,0.525940599584281
+1045,"Rhein-Neckar Löwen","SC Magdeburg",2020,22,27,-5,0.156640061882493
+1046,"Rhein-Neckar Löwen","SG Flensburg-Handewitt",2020,31,30,1,0.200338816728954
+1047,"Rhein-Neckar Löwen","TBV Lemgo Lippe",2020,26,18,8,0.721084975361648
+1048,"Rhein-Neckar Löwen","THW Kiel",2020,25,25,0,-0.408884862881886
+1049,"Rhein-Neckar Löwen","TuSEM Essen",2020,33,27,6,0.864226779006469
+1050,"Rhein-Neckar Löwen","TVB Stuttgart",2020,30,19,11,0.727726402864374
+1051,"SC DHfK Leipzig","Bergischer HC",2020,27,25,2,0.315782917410621
+1052,"SC DHfK Leipzig","Eulen Ludwigshafen",2020,27,19,8,0.707213528503105
+1053,"SC DHfK Leipzig","FRISCH AUF! Göppingen",2020,22,24,-2,0.392810432810433
+1054,"SC DHfK Leipzig","Füchse Berlin",2020,24,24,0,0.139888686705906
+1055,"SC DHfK Leipzig","GWD Minden",2020,24,21,3,0.403706007820832
+1056,"SC DHfK Leipzig","Hannover-Burgdorf",2020,29,26,3,0.229801523083157
+1057,"SC DHfK Leipzig","HBW Balingen-Weilstetten",2020,26,18,8,0.458699472759227
+1058,"SC DHfK Leipzig","HC Erlangen",2020,30,25,5,0.3609170596913
+1059,"SC DHfK Leipzig","HSC 2000 Coburg",2020,35,29,6,0.726186689548551
+1060,"SC DHfK Leipzig","HSG Nordhorn-Lingen",2020,24,21,3,0.743238579663973
+1061,"SC DHfK Leipzig","HSG Wetzlar",2020,32,28,4,0.326679058907303
+1062,"SC DHfK Leipzig","MT Melsungen",2020,29,33,-4,-0.100083612040133
+1063,"SC DHfK Leipzig","Rhein-Neckar Löwen",2020,26,33,-7,-0.36045862397081
+1064,"SC DHfK Leipzig","SC Magdeburg",2020,33,29,4,-0.329837219461472
+1065,"SC DHfK Leipzig","SG Flensburg-Handewitt",2020,24,29,-5,-0.464962765647178
+1066,"SC DHfK Leipzig","TBV Lemgo Lippe",2020,32,32,0,-0.19668665602485
+1067,"SC DHfK Leipzig","THW Kiel",2020,26,33,-7,-0.608738673669683
+1068,"SC DHfK Leipzig","TuSEM Essen",2020,26,23,3,0.724056838790681
+1069,"SC DHfK Leipzig","TVB Stuttgart",2020,23,25,-2,0.440626288436773
+1070,"SC Magdeburg","Bergischer HC",2020,27,30,-3,0.685155721561865
+1071,"SC Magdeburg","Eulen Ludwigshafen",2020,37,29,8,0.781658486620289
+1072,"SC Magdeburg","FRISCH AUF! Göppingen",2020,27,22,5,0.616193217369541
+1073,"SC Magdeburg","Füchse Berlin",2020,29,24,5,0.590734578960839
+1074,"SC Magdeburg","GWD Minden",2020,29,28,1,0.758296076696871
+1075,"SC Magdeburg","Hannover-Burgdorf",2020,33,25,8,0.56551937027319
+1076,"SC Magdeburg","HBW Balingen-Weilstetten",2020,26,28,-2,0.852923418977067
+1077,"SC Magdeburg","HC Erlangen",2020,36,26,10,0.652048369879076
+1078,"SC Magdeburg","HSC 2000 Coburg",2020,43,22,21,0.85018523492654
+1079,"SC Magdeburg","HSG Nordhorn-Lingen",2020,28,20,8,0.814160458891868
+1080,"SC Magdeburg","HSG Wetzlar",2020,27,27,0,0.71461672893617
+1081,"SC Magdeburg","MT Melsungen",2020,31,27,4,0.562862551603019
+1082,"SC Magdeburg","Rhein-Neckar Löwen",2020,31,33,-2,0.00842740630123601
+1083,"SC Magdeburg","SC DHfK Leipzig",2020,33,34,-1,0.614098700320211
+1084,"SC Magdeburg","SG Flensburg-Handewitt",2020,29,32,-3,-0.020903209397701
+1085,"SC Magdeburg","TBV Lemgo Lippe",2020,30,28,2,0.632272119621726
+1087,"SC Magdeburg","TuSEM Essen",2020,34,28,6,0.823193715433121
+1088,"SC Magdeburg","TVB Stuttgart",2020,29,30,-1,0.734728907838054
+1089,"SG Flensburg-Handewitt","Bergischer HC",2020,28,22,6,0.690426159526445
+1090,"SG Flensburg-Handewitt","Eulen Ludwigshafen",2020,35,29,6,0.867449752134354
+1091,"SG Flensburg-Handewitt","FRISCH AUF! Göppingen",2020,30,23,7,0.579178519738484
+1092,"SG Flensburg-Handewitt","Füchse Berlin",2020,29,33,-4,0.475609325270017
+1093,"SG Flensburg-Handewitt","GWD Minden",2020,29,24,5,0.778415593863953
+1094,"SG Flensburg-Handewitt","Hannover-Burgdorf",2020,28,24,4,0.707643826129693
+1095,"SG Flensburg-Handewitt","HBW Balingen-Weilstetten",2020,38,26,12,0.795852057788146
+1096,"SG Flensburg-Handewitt","HC Erlangen",2020,33,23,10,0.697133347244948
+1097,"SG Flensburg-Handewitt","HSC 2000 Coburg",2020,32,22,10,0.855741058096088
+1098,"SG Flensburg-Handewitt","HSG Nordhorn-Lingen",2020,32,26,6,0.871177720337137
+1099,"SG Flensburg-Handewitt","HSG Wetzlar",2020,32,24,8,0.650902887291127
+1100,"SG Flensburg-Handewitt","MT Melsungen",2020,36,20,16,0.569925990852247
+1101,"SG Flensburg-Handewitt","Rhein-Neckar Löwen",2020,26,26,0,0.52532084706117
+1102,"SG Flensburg-Handewitt","SC DHfK Leipzig",2020,29,23,6,0.783961777853004
+1103,"SG Flensburg-Handewitt","SC Magdeburg",2020,33,30,3,0.367302146747837
+1104,"SG Flensburg-Handewitt","TBV Lemgo Lippe",2020,27,27,0,0.824589268873778
+1105,"SG Flensburg-Handewitt","THW Kiel",2020,31,28,3,-0.252152813125362
+1106,"SG Flensburg-Handewitt","TuSEM Essen",2020,34,28,6,0.872809789392844
+1107,"SG Flensburg-Handewitt","TVB Stuttgart",2020,34,30,4,0.727983951855567
+1108,"TBV Lemgo Lippe","Bergischer HC",2020,31,23,8,0.183755475377394
+1109,"TBV Lemgo Lippe","Eulen Ludwigshafen",2020,23,22,1,0.648363076277348
+1110,"TBV Lemgo Lippe","FRISCH AUF! Göppingen",2020,26,26,0,-0.014783313613504
+1111,"TBV Lemgo Lippe","Füchse Berlin",2020,23,28,-5,-0.508545994065282
+1112,"TBV Lemgo Lippe","GWD Minden",2020,29,27,2,0.255010455798804
+1113,"TBV Lemgo Lippe","Hannover-Burgdorf",2020,24,26,-2,0.093155663234403
+1114,"TBV Lemgo Lippe","HBW Balingen-Weilstetten",2020,26,32,-6,0.573269102430825
+1115,"TBV Lemgo Lippe","HC Erlangen",2020,24,23,1,-0.057127206361486
+1116,"TBV Lemgo Lippe","HSC 2000 Coburg",2020,32,26,6,0.683456878930483
+1117,"TBV Lemgo Lippe","HSG Nordhorn-Lingen",2020,36,29,7,0.553382053959009
+1118,"TBV Lemgo Lippe","HSG Wetzlar",2020,28,27,1,-0.031572284320386
+1119,"TBV Lemgo Lippe","MT Melsungen",2020,28,30,-2,0.259698442531133
+1120,"TBV Lemgo Lippe","Rhein-Neckar Löwen",2020,28,34,-6,-0.473841057485083
+1121,"TBV Lemgo Lippe","SC DHfK Leipzig",2020,28,22,6,-0.110628637596367
+1122,"TBV Lemgo Lippe","SC Magdeburg",2020,32,27,5,-0.367343264233156
+1123,"TBV Lemgo Lippe","SG Flensburg-Handewitt",2020,22,33,-11,-0.569104508753849
+1124,"TBV Lemgo Lippe","THW Kiel",2020,25,30,-5,-0.670570059849144
+1125,"TBV Lemgo Lippe","TuSEM Essen",2020,31,23,8,0.751483765855929
+1126,"TBV Lemgo Lippe","TVB Stuttgart",2020,35,29,6,0.307092735870518
+1127,"THW Kiel","Bergischer HC",2020,33,30,3,0.825334788020455
+1128,"THW Kiel","Eulen Ludwigshafen",2020,29,19,10,0.871952243887688
+1129,"THW Kiel","FRISCH AUF! Göppingen",2020,31,23,8,0.75978877869475
+1130,"THW Kiel","Füchse Berlin",2020,32,26,6,0.498673479414366
+1131,"THW Kiel","GWD Minden",2020,41,26,15,0.822656776803776
+1132,"THW Kiel","Hannover-Burgdorf",2020,34,31,3,0.612763245150366
+1134,"THW Kiel","HC Erlangen",2020,36,30,6,0.792560198969121
+1135,"THW Kiel","HSC 2000 Coburg",2020,41,26,15,0.887555753630997
+1136,"THW Kiel","HSG Nordhorn-Lingen",2020,32,22,10,0.865718065627275
+1137,"THW Kiel","HSG Wetzlar",2020,23,19,4,0.798190178555956
+1138,"THW Kiel","MT Melsungen",2020,29,28,1,0.63408815310803
+1139,"THW Kiel","Rhein-Neckar Löwen",2020,32,23,9,0.40652249234856
+1140,"THW Kiel","SC DHfK Leipzig",2020,31,21,10,0.787511765253457
+1141,"THW Kiel","SC Magdeburg",2020,24,24,0,0.358884518274012
+1142,"THW Kiel","SG Flensburg-Handewitt",2020,29,21,8,0.471808872817658
+1143,"THW Kiel","TBV Lemgo Lippe",2020,33,23,10,0.73242588504898
+1144,"THW Kiel","TuSEM Essen",2020,37,25,12,0.879635790785614
+1145,"THW Kiel","TVB Stuttgart",2020,33,28,5,0.839936854445062
+1146,"TuSEM Essen","Bergischer HC",2020,21,32,-11,-0.477697164272488
+1147,"TuSEM Essen","Eulen Ludwigshafen",2020,27,29,-2,-0.350660131071608
+1148,"TuSEM Essen","FRISCH AUF! Göppingen",2020,27,32,-5,-0.642658423493045
+1149,"TuSEM Essen","Füchse Berlin",2020,23,24,-1,-0.687859151485511
+1150,"TuSEM Essen","GWD Minden",2020,29,20,9,-0.210759994594907
+1151,"TuSEM Essen","Hannover-Burgdorf",2020,25,26,-1,-0.604069680856193
+1152,"TuSEM Essen","HBW Balingen-Weilstetten",2020,33,27,6,-0.102106276061157
+1153,"TuSEM Essen","HC Erlangen",2020,20,26,-6,-0.486056731921694
+1154,"TuSEM Essen","HSC 2000 Coburg",2020,29,27,2,0.219888243099292
+1155,"TuSEM Essen","HSG Nordhorn-Lingen",2020,26,33,-7,0.234832141671176
+1156,"TuSEM Essen","HSG Wetzlar",2020,29,36,-7,-0.565544930786813
+1157,"TuSEM Essen","MT Melsungen",2020,27,35,-8,-0.694272620784612
+1158,"TuSEM Essen","Rhein-Neckar Löwen",2020,23,33,-10,-0.687517752805823
+1159,"TuSEM Essen","SC DHfK Leipzig",2020,24,25,-1,-0.355276767135956
+1160,"TuSEM Essen","SC Magdeburg",2020,26,31,-5,-0.684436174454592
+1161,"TuSEM Essen","SG Flensburg-Handewitt",2020,28,29,-1,-0.788760517885206
+1162,"TuSEM Essen","TBV Lemgo Lippe",2020,37,39,-2,-0.420101902422931
+1163,"TuSEM Essen","THW Kiel",2020,27,31,-4,-0.820517310643908
+1164,"TuSEM Essen","TVB Stuttgart",2020,26,20,6,-0.395073712309652
+1165,"TVB Stuttgart","Bergischer HC",2020,26,30,-4,0.204687110446273
+1166,"TVB Stuttgart","Eulen Ludwigshafen",2020,26,29,-3,0.556069446140634
+1167,"TVB Stuttgart","Füchse Berlin",2020,25,28,-3,-0.514381834933244
+1168,"TVB Stuttgart","GWD Minden",2020,30,26,4,0.44087770035919
+1169,"TVB Stuttgart","Hannover-Burgdorf",2020,31,25,6,-0.145111856553322
+1170,"TVB Stuttgart","HBW Balingen-Weilstetten",2020,27,23,4,0.364730320177638
+1171,"TVB Stuttgart","HC Erlangen",2020,25,27,-2,0.458861613164284
+1172,"TVB Stuttgart","HSC 2000 Coburg",2020,23,29,-6,0.736053861685388
+1173,"TVB Stuttgart","HSG Nordhorn-Lingen",2020,36,24,12,0.645167612048999
+1174,"TVB Stuttgart","HSG Wetzlar",2020,24,31,-7,-0.204371273155504
+1175,"TVB Stuttgart","MT Melsungen",2020,26,26,0,-0.241341530220951
+1176,"TVB Stuttgart","Rhein-Neckar Löwen",2020,32,28,4,-0.533243693863282
+1177,"TVB Stuttgart","SC DHfK Leipzig",2020,29,24,5,-0.073368151540808
+1178,"TVB Stuttgart","SC Magdeburg",2020,22,31,-9,-0.627458242621885
+1179,"TVB Stuttgart","SG Flensburg-Handewitt",2020,30,32,-2,-0.648031697626017
+1180,"TVB Stuttgart","TBV Lemgo Lippe",2020,26,26,0,0.142385233257089
+1181,"TVB Stuttgart","THW Kiel",2020,27,34,-7,-0.488476777166474
+1182,"TVB Stuttgart","TuSEM Essen",2020,30,23,7,0.566770888837504
+1183,"Bergischer HC","FRISCH AUF! Göppingen",2021,33,27,6,-0.046012448374149
+1184,"Bergischer HC","Füchse Berlin",2021,23,28,-5,-0.249448807463789
+1185,"Bergischer HC","GWD Minden",2021,25,26,-1,0.422313517147366
+1186,"Bergischer HC","Handball Sport Verein Hamburg",2021,31,26,5,0.475510689967144
+1187,"Bergischer HC","Hannover-Burgdorf",2021,25,23,2,0.363641443947924
+1188,"Bergischer HC","HBW Balingen-Weilstetten",2021,29,21,8,0.501279855624919
+1189,"Bergischer HC","HC Erlangen",2021,25,25,0,0.205353630463969
+1190,"Bergischer HC","HSG Wetzlar",2021,17,27,-10,0.020842581665025
+1191,"Bergischer HC","MT Melsungen",2021,24,31,-7,0.150538917392515
+1192,"Bergischer HC","Rhein-Neckar Löwen",2021,25,25,0,-0.350710184041166
+1193,"Bergischer HC","SC DHfK Leipzig",2021,30,19,11,0.062411833726648
+1194,"Bergischer HC","SC Magdeburg",2021,24,27,-3,-0.712402369001903
+1195,"Bergischer HC","SG Flensburg-Handewitt",2021,24,29,-5,-0.479063484916704
+1196,"Bergischer HC","TBV Lemgo Lippe",2021,31,27,4,0.195620299152784
+1197,"Bergischer HC","THW Kiel",2021,24,26,-2,-0.626467342229356
+1198,"Bergischer HC","TuS N-Lübbecke",2021,26,22,4,0.694249242940145
+1199,"Bergischer HC","TVB Stuttgart",2021,26,24,2,0.404159413650939
+1200,"FRISCH AUF! Göppingen","Bergischer HC",2021,27,23,4,0.331888068425647
+1201,"FRISCH AUF! Göppingen","Füchse Berlin",2021,23,31,-8,-0.060960915535201
+1202,"FRISCH AUF! Göppingen","GWD Minden",2021,33,22,11,0.677889754286684
+1203,"FRISCH AUF! Göppingen","Handball Sport Verein Hamburg",2021,24,28,-4,0.508514319905558
+1204,"FRISCH AUF! Göppingen","Hannover-Burgdorf",2021,31,24,7,0.397987473046514
+1205,"FRISCH AUF! Göppingen","HBW Balingen-Weilstetten",2021,27,28,-1,0.681871515317615
+1206,"FRISCH AUF! Göppingen","HC Erlangen",2021,33,25,8,0.430563478939045
+1207,"FRISCH AUF! Göppingen","HSG Wetzlar",2021,33,25,8,0.256834257967115
+1208,"FRISCH AUF! Göppingen","MT Melsungen",2021,26,26,0,0.022926194971968
+1209,"FRISCH AUF! Göppingen","Rhein-Neckar Löwen",2021,30,28,2,0.024992172930591
+1210,"FRISCH AUF! Göppingen","SC DHfK Leipzig",2021,29,28,1,0.19735013710031
+1211,"FRISCH AUF! Göppingen","SC Magdeburg",2021,24,25,-1,-0.452602230483271
+1212,"FRISCH AUF! Göppingen","SG Flensburg-Handewitt",2021,29,30,-1,-0.272721294076827
+1213,"FRISCH AUF! Göppingen","TBV Lemgo Lippe",2021,33,33,0,0.181697326818051
+1214,"FRISCH AUF! Göppingen","THW Kiel",2021,26,38,-12,-0.527651742264735
+1215,"FRISCH AUF! Göppingen","TuS N-Lübbecke",2021,27,24,3,0.766106773034991
+1216,"FRISCH AUF! Göppingen","TVB Stuttgart",2021,33,32,1,0.489493627282122
+1217,"Füchse Berlin","Bergischer HC",2021,32,16,16,0.649553965730436
+1218,"Füchse Berlin","FRISCH AUF! Göppingen",2021,37,31,6,0.577735262123323
+1219,"Füchse Berlin","GWD Minden",2021,35,24,11,0.761637632865808
+1220,"Füchse Berlin","Handball Sport Verein Hamburg",2021,34,30,4,-0.6222919468101
+1221,"Füchse Berlin","Hannover-Burgdorf",2021,32,32,0,0.594383775351014
+1222,"Füchse Berlin","HBW Balingen-Weilstetten",2021,26,26,0,0.823246517834474
+1223,"Füchse Berlin","HC Erlangen",2021,35,30,5,0.621388824097831
+1224,"Füchse Berlin","HSG Wetzlar",2021,28,24,4,0.545104600505532
+1225,"Füchse Berlin","MT Melsungen",2021,28,28,0,0.357517013817282
+1226,"Füchse Berlin","Rhein-Neckar Löwen",2021,23,20,3,0.246408463687547
+1227,"Füchse Berlin","SC DHfK Leipzig",2021,34,25,9,0.607874648453194
+1228,"Füchse Berlin","SC Magdeburg",2021,29,33,-4,-0.193330302251567
+1229,"Füchse Berlin","SG Flensburg-Handewitt",2021,22,28,-6,0.38993698497334
+1230,"Füchse Berlin","TBV Lemgo Lippe",2021,29,24,5,0.548370828541906
+1231,"Füchse Berlin","THW Kiel",2021,28,28,0,-0.255464468416877
+1232,"Füchse Berlin","TuS N-Lübbecke",2021,30,22,8,0.826953228473858
+1233,"Füchse Berlin","TVB Stuttgart",2021,29,22,7,0.715423207638777
+1234,"GWD Minden","Bergischer HC",2021,25,21,4,-0.00420200555112699
+1235,"GWD Minden","FRISCH AUF! Göppingen",2021,30,33,-3,-0.423538946941847
+1236,"GWD Minden","Füchse Berlin",2021,25,31,-6,-0.722935521448048
+1237,"GWD Minden","Handball Sport Verein Hamburg",2021,23,27,-4,-0.198983911939034
+1238,"GWD Minden","Hannover-Burgdorf",2021,26,26,0,-0.063764246842591
+1239,"GWD Minden","HBW Balingen-Weilstetten",2021,23,23,0,0.331266346803388
+1240,"GWD Minden","HC Erlangen",2021,22,21,1,0.252085156304916
+1241,"GWD Minden","HSG Wetzlar",2021,23,24,-1,-0.234947128720067
+1242,"GWD Minden","MT Melsungen",2021,22,26,-4,-0.469652902204258
+1243,"GWD Minden","Rhein-Neckar Löwen",2021,31,33,-2,-0.342756353627682
+1244,"GWD Minden","SC DHfK Leipzig",2021,23,23,0,-0.365967808752059
+1245,"GWD Minden","SC Magdeburg",2021,26,31,-5,-0.617137196631996
+1246,"GWD Minden","SG Flensburg-Handewitt",2021,18,31,-13,-0.677505192517724
+1247,"GWD Minden","TBV Lemgo Lippe",2021,29,32,-3,-0.447162766022567
+1248,"GWD Minden","THW Kiel",2021,26,30,-4,-0.742650877282545
+1249,"GWD Minden","TuS N-Lübbecke",2021,18,23,-5,0.128645374391228
+1250,"GWD Minden","TVB Stuttgart",2021,25,26,-1,0.080051055130248
+1251,"Handball Sport Verein Hamburg","Bergischer HC",2021,26,27,-1,0.251018697800769
+1252,"Handball Sport Verein Hamburg","FRISCH AUF! Göppingen",2021,27,28,-1,-0.219159893398079
+1253,"Handball Sport Verein Hamburg","Füchse Berlin",2021,27,30,-3,-0.060978275578502
+1254,"Handball Sport Verein Hamburg","GWD Minden",2021,31,27,4,0.681267173104897
+1255,"Handball Sport Verein Hamburg","Hannover-Burgdorf",2021,25,22,3,0.292588918675362
+1256,"Handball Sport Verein Hamburg","HBW Balingen-Weilstetten",2021,29,34,-5,0.601439086924158
+1257,"Handball Sport Verein Hamburg","HC Erlangen",2021,30,29,1,0.267105534784503
+1258,"Handball Sport Verein Hamburg","HSG Wetzlar",2021,31,23,8,0.170365574864958
+1259,"Handball Sport Verein Hamburg","MT Melsungen",2021,26,25,1,-0.066820369261986
+1260,"Handball Sport Verein Hamburg","Rhein-Neckar Löwen",2021,31,27,4,-0.610442329227324
+1260,"Handball Sport Verein Hamburg","Rhein-Neckar Löwen",2021,32,27,5,-0.610442329227324
+1261,"Handball Sport Verein Hamburg","SC DHfK Leipzig",2021,24,33,-9,0.099321293907522
+1262,"Handball Sport Verein Hamburg","SC Magdeburg",2021,22,31,-9,-0.622632427619071
+1263,"Handball Sport Verein Hamburg","SG Flensburg-Handewitt",2021,27,33,-6,-0.258774665884377
+1264,"Handball Sport Verein Hamburg","TBV Lemgo Lippe",2021,28,28,0,0.144306224924933
+1265,"Handball Sport Verein Hamburg","THW Kiel",2021,23,32,-9,-0.481775882427262
+1266,"Handball Sport Verein Hamburg","TuS N-Lübbecke",2021,32,24,8,0.612330645520269
+1267,"Handball Sport Verein Hamburg","TVB Stuttgart",2021,27,32,-5,0.388635330275282
+1268,"Hannover-Burgdorf","Bergischer HC",2021,27,20,7,0.081585299384879
+1269,"Hannover-Burgdorf","FRISCH AUF! Göppingen",2021,32,34,-2,0.041407416286191
+1270,"Hannover-Burgdorf","Füchse Berlin",2021,22,25,-3,-0.551676075448167
+1271,"Hannover-Burgdorf","GWD Minden",2021,30,29,1,0.585378481404591
+1273,"Hannover-Burgdorf","HBW Balingen-Weilstetten",2021,31,26,5,0.528394607963481
+1274,"Hannover-Burgdorf","HC Erlangen",2021,28,27,1,0.155512677116519
+1275,"Hannover-Burgdorf","HSG Wetzlar",2021,22,28,-6,0.039822538088348
+1276,"Hannover-Burgdorf","MT Melsungen",2021,23,25,-2,-0.187275536255699
+1277,"Hannover-Burgdorf","Rhein-Neckar Löwen",2021,24,28,-4,-0.502767074053875
+1278,"Hannover-Burgdorf","SC DHfK Leipzig",2021,26,26,0,0.142872391107964
+1279,"Hannover-Burgdorf","SC Magdeburg",2021,27,31,-4,-0.530429027102008
+1280,"Hannover-Burgdorf","SG Flensburg-Handewitt",2021,26,31,-5,-0.486218636689817
+1281,"Hannover-Burgdorf","TBV Lemgo Lippe",2021,27,31,-4,0.237717813034873
+1282,"Hannover-Burgdorf","THW Kiel",2021,26,29,-3,-0.74165520289101
+1283,"Hannover-Burgdorf","TuS N-Lübbecke",2021,22,21,1,0.399665805863588
+1284,"Hannover-Burgdorf","TVB Stuttgart",2021,33,23,10,0.285610317403078
+1285,"HBW Balingen-Weilstetten","Bergischer HC",2021,30,28,2,-0.445336836974719
+1286,"HBW Balingen-Weilstetten","FRISCH AUF! Göppingen",2021,26,30,-4,-0.451884804495434
+1287,"HBW Balingen-Weilstetten","Füchse Berlin",2021,23,23,0,-0.615148805722314
+1288,"HBW Balingen-Weilstetten","GWD Minden",2021,27,21,6,0.182304326689353
+1289,"HBW Balingen-Weilstetten","Handball Sport Verein Hamburg",2021,23,28,-5,-0.347036154550614
+1290,"HBW Balingen-Weilstetten","Hannover-Burgdorf",2021,28,26,2,-0.170439078489691
+1291,"HBW Balingen-Weilstetten","HC Erlangen",2021,23,25,-2,-0.334316493827471
+1292,"HBW Balingen-Weilstetten","HSG Wetzlar",2021,24,28,-4,-0.457912075428831
+1293,"HBW Balingen-Weilstetten","MT Melsungen",2021,25,34,-9,-0.569304139969221
+1294,"HBW Balingen-Weilstetten","Rhein-Neckar Löwen",2021,22,31,-9,-0.506106056880583
+1295,"HBW Balingen-Weilstetten","SC DHfK Leipzig",2021,25,28,-3,-0.32272927601266
+1296,"HBW Balingen-Weilstetten","SC Magdeburg",2021,17,27,-10,-0.649601492736239
+1297,"HBW Balingen-Weilstetten","SG Flensburg-Handewitt",2021,23,23,0,-0.719124515871688
+1298,"HBW Balingen-Weilstetten","TBV Lemgo Lippe",2021,29,32,-3,-0.310104894248518
+1299,"HBW Balingen-Weilstetten","THW Kiel",2021,25,30,-5,-0.785702826186465
+1300,"HBW Balingen-Weilstetten","TuS N-Lübbecke",2021,26,21,5,0.477958236658933
+1301,"HBW Balingen-Weilstetten","TVB Stuttgart",2021,25,27,-2,-0.056262125458073
+1302,"HC Erlangen","Bergischer HC",2021,30,23,7,0.116634365091593
+1303,"HC Erlangen","FRISCH AUF! Göppingen",2021,23,24,-1,0.039938811825551
+1304,"HC Erlangen","Füchse Berlin",2021,25,31,-6,-0.410636487845119
+1305,"HC Erlangen","GWD Minden",2021,30,22,8,0.550721866335213
+1306,"HC Erlangen","Handball Sport Verein Hamburg",2021,23,22,1,0.122198692141212
+1307,"HC Erlangen","Hannover-Burgdorf",2021,31,35,-4,0.302382908792112
+1308,"HC Erlangen","HBW Balingen-Weilstetten",2021,33,26,7,0.515699840340606
+1309,"HC Erlangen","HSG Wetzlar",2021,24,27,-3,0.00208150188778
+1310,"HC Erlangen","MT Melsungen",2021,32,30,2,0.078352421050356
+1311,"HC Erlangen","Rhein-Neckar Löwen",2021,36,26,10,-0.305550183716883
+1312,"HC Erlangen","SC DHfK Leipzig",2021,19,15,4,0.220675944333996
+1314,"HC Erlangen","SG Flensburg-Handewitt",2021,26,30,-4,-0.52884836411003
+1315,"HC Erlangen","TBV Lemgo Lippe",2021,24,27,-3,0.200202189307812
+1316,"HC Erlangen","THW Kiel",2021,20,30,-10,-0.692465317198793
+1317,"HC Erlangen","TuS N-Lübbecke",2021,29,22,7,0.600150030809899
+1318,"HC Erlangen","TVB Stuttgart",2021,27,32,-5,0.366576819407009
+1319,"HSG Wetzlar","Bergischer HC",2021,23,27,-4,0.394039507192512
+1320,"HSG Wetzlar","FRISCH AUF! Göppingen",2021,28,28,0,-0.033626696784367
+1321,"HSG Wetzlar","Füchse Berlin",2021,28,30,-2,-0.168733368813198
+1322,"HSG Wetzlar","GWD Minden",2021,30,28,2,0.497880577267047
+1323,"HSG Wetzlar","Handball Sport Verein Hamburg",2021,26,25,1,0.284098000379846
+1324,"HSG Wetzlar","Hannover-Burgdorf",2021,38,16,22,0.220076151925275
+1325,"HSG Wetzlar","HBW Balingen-Weilstetten",2021,32,21,11,0.60643739557011
+1326,"HSG Wetzlar","HC Erlangen",2021,26,30,-4,0.388704609787652
+1327,"HSG Wetzlar","MT Melsungen",2021,31,28,3,0.014539185208314
+1328,"HSG Wetzlar","Rhein-Neckar Löwen",2021,29,30,-1,-0.209216076016871
+1329,"HSG Wetzlar","SC DHfK Leipzig",2021,24,27,-3,0.144587841406024
+1330,"HSG Wetzlar","SC Magdeburg",2021,26,29,-3,-0.407411706557229
+1331,"HSG Wetzlar","SG Flensburg-Handewitt",2021,29,29,0,-0.368314905668474
+1332,"HSG Wetzlar","TBV Lemgo Lippe",2021,27,25,2,0.206696213945901
+1333,"HSG Wetzlar","THW Kiel",2021,29,27,2,-0.552077004253142
+1334,"HSG Wetzlar","TuS N-Lübbecke",2021,29,25,4,0.546068650258066
+1335,"HSG Wetzlar","TVB Stuttgart",2021,34,34,0,0.431440197691831
+1336,"MT Melsungen","Bergischer HC",2021,26,24,2,0.471976572000562
+1337,"MT Melsungen","FRISCH AUF! Göppingen",2021,23,25,-2,0.312556998922203
+1338,"MT Melsungen","Füchse Berlin",2021,25,33,-8,-0.062844334583237
+1339,"MT Melsungen","GWD Minden",2021,25,29,-4,0.731546779501646
+1340,"MT Melsungen","Handball Sport Verein Hamburg",2021,26,22,4,0.407180412994724
+1341,"MT Melsungen","Hannover-Burgdorf",2021,22,29,-7,0.376289865829749
+1342,"MT Melsungen","HBW Balingen-Weilstetten",2021,28,20,8,0.704565608848697
+1343,"MT Melsungen","HC Erlangen",2021,30,28,2,0.60607704829083
+1344,"MT Melsungen","HSG Wetzlar",2021,27,22,5,0.25923320436159
+1345,"MT Melsungen","Rhein-Neckar Löwen",2021,24,24,0,0.154044136384486
+1346,"MT Melsungen","SC DHfK Leipzig",2021,22,22,0,0.436048613773418
+1347,"MT Melsungen","SC Magdeburg",2021,24,27,-3,-0.400196727513478
+1348,"MT Melsungen","SG Flensburg-Handewitt",2021,26,32,-6,-0.366539077690681
+1349,"MT Melsungen","TBV Lemgo Lippe",2021,18,23,-5,0.291068207184398
+1350,"MT Melsungen","THW Kiel",2021,25,32,-7,-0.565671475344925
+1351,"MT Melsungen","TuS N-Lübbecke",2021,23,22,1,0.661379677569194
+1352,"MT Melsungen","TVB Stuttgart",2021,29,23,6,0.455488648726818
+1353,"Rhein-Neckar Löwen","Bergischer HC",2021,24,22,2,0.477741513931665
+1354,"Rhein-Neckar Löwen","FRISCH AUF! Göppingen",2021,37,32,5,0.410867852865328
+1355,"Rhein-Neckar Löwen","Füchse Berlin",2021,24,29,-5,-0.380095398495626
+1356,"Rhein-Neckar Löwen","GWD Minden",2021,31,27,4,0.736514514444068
+1357,"Rhein-Neckar Löwen","Handball Sport Verein Hamburg",2021,28,34,-6,0.428228239906806
+1358,"Rhein-Neckar Löwen","Hannover-Burgdorf",2021,25,31,-6,0.458114126677172
+1359,"Rhein-Neckar Löwen","HBW Balingen-Weilstetten",2021,34,23,11,0.790088129362789
+1360,"Rhein-Neckar Löwen","HC Erlangen",2021,25,26,-1,0.507811766179279
+1361,"Rhein-Neckar Löwen","HSG Wetzlar",2021,27,30,-3,0.20308843483904
+1362,"Rhein-Neckar Löwen","MT Melsungen",2021,29,26,3,0.079665610167456
+1363,"Rhein-Neckar Löwen","SC DHfK Leipzig",2021,28,27,1,0.425153163573274
+1364,"Rhein-Neckar Löwen","SC Magdeburg",2021,25,28,-3,0.037952469718359
+1365,"Rhein-Neckar Löwen","SG Flensburg-Handewitt",2021,29,28,1,-0.379799980196059
+1366,"Rhein-Neckar Löwen","TBV Lemgo Lippe",2021,30,33,-3,0.387331678013009
+1368,"Rhein-Neckar Löwen","TuS N-Lübbecke",2021,35,25,10,0.67084812004968
+1369,"Rhein-Neckar Löwen","TVB Stuttgart",2021,28,23,5,0.55714480456181
+1370,"SC DHfK Leipzig","Bergischer HC",2021,22,25,-3,0.309774517135216
+1371,"SC DHfK Leipzig","FRISCH AUF! Göppingen",2021,29,20,9,0.014702885715629
+1372,"SC DHfK Leipzig","Füchse Berlin",2021,25,30,-5,-0.196271069093462
+1373,"SC DHfK Leipzig","GWD Minden",2021,25,26,-1,0.576142592294051
+1374,"SC DHfK Leipzig","Handball Sport Verein Hamburg",2021,27,27,0,0.285803716435234
+1375,"SC DHfK Leipzig","Hannover-Burgdorf",2021,32,25,7,0.427703042946551
+1376,"SC DHfK Leipzig","HBW Balingen-Weilstetten",2021,31,24,7,0.681772073706276
+1377,"SC DHfK Leipzig","HC Erlangen",2021,24,16,8,0.354483178952581
+1378,"SC DHfK Leipzig","HSG Wetzlar",2021,30,26,4,0.113946072817396
+1379,"SC DHfK Leipzig","MT Melsungen",2021,22,26,-4,-0.075410877457324
+1380,"SC DHfK Leipzig","Rhein-Neckar Löwen",2021,28,31,-3,0.261327125459338
+1381,"SC DHfK Leipzig","SC Magdeburg",2021,31,36,-5,-0.357818711158389
+1382,"SC DHfK Leipzig","SG Flensburg-Handewitt",2021,24,24,0,-0.446501902935433
+1383,"SC DHfK Leipzig","TBV Lemgo Lippe",2021,29,24,5,0.429389396389703
+1384,"SC DHfK Leipzig","THW Kiel",2021,19,31,-12,-0.526112232945522
+1385,"SC DHfK Leipzig","TuS N-Lübbecke",2021,25,21,4,0.629082311216197
+1386,"SC DHfK Leipzig","TVB Stuttgart",2021,33,24,9,0.479379380015376
+1387,"SC Magdeburg","Bergischer HC",2021,38,25,13,0.805455029352292
+1388,"SC Magdeburg","FRISCH AUF! Göppingen",2021,37,26,11,0.632627646326276
+1389,"SC Magdeburg","Füchse Berlin",2021,28,27,1,0.378541636703581
+1390,"SC Magdeburg","GWD Minden",2021,28,19,9,0.823416774256497
+1391,"SC Magdeburg","Handball Sport Verein Hamburg",2021,34,26,8,0.609718084417873
+1392,"SC Magdeburg","Hannover-Burgdorf",2021,29,22,7,0.714101137284084
+1394,"SC Magdeburg","HC Erlangen",2021,27,27,0,0.739249108103517
+1395,"SC Magdeburg","HSG Wetzlar",2021,30,26,4,0.686832901511093
+1396,"SC Magdeburg","MT Melsungen",2021,33,26,7,0.786798505804645
+1397,"SC Magdeburg","Rhein-Neckar Löwen",2021,37,34,3,0.710293387571069
+1398,"SC Magdeburg","SC DHfK Leipzig",2021,30,28,2,0.618728812357272
+1399,"SC Magdeburg","SG Flensburg-Handewitt",2021,33,28,5,0.407659634219117
+1400,"SC Magdeburg","TBV Lemgo Lippe",2021,29,25,4,0.59710124729984
+1402,"SC Magdeburg","TuS N-Lübbecke",2021,37,20,17,0.874946452072435
+1403,"SC Magdeburg","TVB Stuttgart",2021,33,29,4,0.740660354972908
+1404,"SG Flensburg-Handewitt","Bergischer HC",2021,21,24,-3,0.646717111534795
+1405,"SG Flensburg-Handewitt","FRISCH AUF! Göppingen",2021,26,21,5,0.519187177559582
+1406,"SG Flensburg-Handewitt","Füchse Berlin",2021,28,22,6,0.302836278055618
+1407,"SG Flensburg-Handewitt","GWD Minden",2021,31,30,1,0.82887922719651
+1408,"SG Flensburg-Handewitt","Handball Sport Verein Hamburg",2021,33,23,10,0.74136955103572
+1409,"SG Flensburg-Handewitt","Hannover-Burgdorf",2021,30,20,10,0.72351429003478
+1410,"SG Flensburg-Handewitt","HBW Balingen-Weilstetten",2021,35,21,14,0.83464505185656
+1411,"SG Flensburg-Handewitt","HC Erlangen",2021,27,26,1,0.752009486005198
+1412,"SG Flensburg-Handewitt","HSG Wetzlar",2021,27,25,2,0.405522366997507
+1413,"SG Flensburg-Handewitt","MT Melsungen",2021,27,24,3,0.499911646243747
+1414,"SG Flensburg-Handewitt","Rhein-Neckar Löwen",2021,31,26,5,0.474931114635704
+1415,"SG Flensburg-Handewitt","SC DHfK Leipzig",2021,31,20,11,0.597468882774203
+1416,"SG Flensburg-Handewitt","SC Magdeburg",2021,30,26,4,-0.033545251372405
+1417,"SG Flensburg-Handewitt","TBV Lemgo Lippe",2021,27,19,8,0.616579807654337
+1418,"SG Flensburg-Handewitt","THW Kiel",2021,27,28,-1,-0.076772592930457
+1419,"SG Flensburg-Handewitt","TuS N-Lübbecke",2021,30,19,11,0.861242104020308
+1420,"SG Flensburg-Handewitt","TVB Stuttgart",2021,30,29,1,0.664989573334216
+1421,"TBV Lemgo Lippe","Bergischer HC",2021,27,27,0,0.513895907023749
+1422,"TBV Lemgo Lippe","FRISCH AUF! Göppingen",2021,34,26,8,0.054809531139526
+1423,"TBV Lemgo Lippe","Füchse Berlin",2021,27,28,-1,-0.366019815414187
+1424,"TBV Lemgo Lippe","GWD Minden",2021,20,32,-12,0.570115135971668
+1425,"TBV Lemgo Lippe","Handball Sport Verein Hamburg",2021,28,24,4,0.488868415054219
+1427,"TBV Lemgo Lippe","HBW Balingen-Weilstetten",2021,38,28,10,0.561556620645253
+1428,"TBV Lemgo Lippe","HC Erlangen",2021,27,33,-6,0.348013484030774
+1429,"TBV Lemgo Lippe","HSG Wetzlar",2021,29,27,2,0.112047177759057
+1430,"TBV Lemgo Lippe","MT Melsungen",2021,26,26,0,0.014690103509215
+1431,"TBV Lemgo Lippe","Rhein-Neckar Löwen",2021,24,23,1,-0.084934685160287
+1432,"TBV Lemgo Lippe","SC DHfK Leipzig",2021,26,27,-1,0.260168692267045
+1433,"TBV Lemgo Lippe","SC Magdeburg",2021,25,44,-19,-0.547495227712268
+1434,"TBV Lemgo Lippe","SG Flensburg-Handewitt",2021,30,25,5,-0.433599416187496
+1435,"TBV Lemgo Lippe","THW Kiel",2021,21,21,0,-0.658906948553851
+1436,"TBV Lemgo Lippe","TuS N-Lübbecke",2021,27,22,5,0.623958354766363
+1437,"TBV Lemgo Lippe","TVB Stuttgart",2021,33,29,4,0.430694444693394
+1438,"THW Kiel","Bergischer HC",2021,24,23,1,0.765368941298882
+1439,"THW Kiel","FRISCH AUF! Göppingen",2021,42,35,7,0.589564689822539
+1440,"THW Kiel","Füchse Berlin",2021,27,31,-4,0.497174884220295
+1441,"THW Kiel","GWD Minden",2021,34,25,9,0.873987223091401
+1442,"THW Kiel","Handball Sport Verein Hamburg",2021,29,22,7,0.791821264104141
+1443,"THW Kiel","Hannover-Burgdorf",2021,31,23,8,0.770548920417427
+1444,"THW Kiel","HBW Balingen-Weilstetten",2021,33,24,9,0.849731248701319
+1445,"THW Kiel","HC Erlangen",2021,34,23,11,0.785047112371032
+1446,"THW Kiel","HSG Wetzlar",2021,27,24,3,0.726305788946753
+1447,"THW Kiel","MT Melsungen",2021,27,25,2,0.761672890348179
+1448,"THW Kiel","Rhein-Neckar Löwen",2021,32,29,3,0.674127970895716
+1449,"THW Kiel","SC DHfK Leipzig",2021,32,28,4,0.713495068392026
+1450,"THW Kiel","SC Magdeburg",2021,27,29,-2,0.112474437627812
+1451,"THW Kiel","SG Flensburg-Handewitt",2021,33,23,10,0.569561438572429
+1452,"THW Kiel","TBV Lemgo Lippe",2021,32,19,13,0.716171617161717
+1453,"THW Kiel","TuS N-Lübbecke",2021,32,23,9,0.893803298818093
+1455,"TuS N-Lübbecke","Bergischer HC",2021,20,24,-4,-0.389176224523433
+1456,"TuS N-Lübbecke","FRISCH AUF! Göppingen",2021,22,27,-5,-0.680661526138212
+1457,"TuS N-Lübbecke","Füchse Berlin",2021,26,31,-5,-0.649151380403534
+1458,"TuS N-Lübbecke","GWD Minden",2021,19,21,-2,0.021051524987187
+1459,"TuS N-Lübbecke","Handball Sport Verein Hamburg",2021,29,27,2,-0.398303079276212
+1460,"TuS N-Lübbecke","Hannover-Burgdorf",2021,20,20,0,-0.34610929767295
+1461,"TuS N-Lübbecke","HBW Balingen-Weilstetten",2021,33,27,6,-0.066467321657411
+1462,"TuS N-Lübbecke","HC Erlangen",2021,20,21,-1,-0.37188686701719
+1463,"TuS N-Lübbecke","HSG Wetzlar",2021,25,28,-3,-0.319927204116179
+1464,"TuS N-Lübbecke","MT Melsungen",2021,23,30,-7,-0.446622391832284
+1465,"TuS N-Lübbecke","Rhein-Neckar Löwen",2021,22,29,-7,-0.546772697895299
+1466,"TuS N-Lübbecke","SC DHfK Leipzig",2021,23,28,-5,-0.033351651475242
+1467,"TuS N-Lübbecke","SC Magdeburg",2021,20,30,-10,-0.710020828511919
+1468,"TuS N-Lübbecke","SG Flensburg-Handewitt",2021,17,34,-17,-0.704930969562734
+1469,"TuS N-Lübbecke","TBV Lemgo Lippe",2021,25,28,-3,-0.460754318328371
+1470,"TuS N-Lübbecke","THW Kiel",2021,29,25,4,-0.811206654235503
+1471,"TuS N-Lübbecke","TVB Stuttgart",2021,27,23,4,-0.193029490616622
+1472,"TVB Stuttgart","Bergischer HC",2021,27,26,1,-0.194350787093893
+1473,"TVB Stuttgart","FRISCH AUF! Göppingen",2021,27,34,-7,-0.203878960049762
+1474,"TVB Stuttgart","Füchse Berlin",2021,32,32,0,-0.423224635151177
+1476,"TVB Stuttgart","Handball Sport Verein Hamburg",2021,26,33,-7,0.050213311593228
+1477,"TVB Stuttgart","Hannover-Burgdorf",2021,22,34,-12,0.26016392376244
+1478,"TVB Stuttgart","HBW Balingen-Weilstetten",2021,27,26,1,0.375284015519402
+1480,"TVB Stuttgart","HSG Wetzlar",2021,26,26,0,-0.185032894736842
+1481,"TVB Stuttgart","MT Melsungen",2021,27,25,2,-0.16309588620042
+1482,"TVB Stuttgart","Rhein-Neckar Löwen",2021,35,30,5,-0.516057091882248
+1483,"TVB Stuttgart","SC DHfK Leipzig",2021,29,25,4,-0.20766570885891
+1484,"TVB Stuttgart","SC Magdeburg",2021,27,30,-3,-0.742198339722033
+1485,"TVB Stuttgart","SG Flensburg-Handewitt",2021,26,28,-2,-0.497785334474058
+1486,"TVB Stuttgart","TBV Lemgo Lippe",2021,37,40,-3,-0.1051920437683
+1487,"TVB Stuttgart","THW Kiel",2021,29,42,-13,-0.671993185983625
+1488,"TVB Stuttgart","TuS N-Lübbecke",2021,29,31,-2,0.635703317375475
+1489,"ASV Hamm-Westfalen","Füchse Berlin",2022,29,32,-3,-0.827609564945045
+1490,"ASV Hamm-Westfalen","GWD Minden",2022,31,26,5,-0.222558020881902
+1491,"ASV Hamm-Westfalen","Handball Sport Verein Hamburg",2022,27,34,-7,-0.536535958791367
+1492,"ASV Hamm-Westfalen","SC DHfK Leipzig",2022,28,33,-5,-0.515072230975873
+1493,"ASV Hamm-Westfalen","SC Magdeburg",2022,27,36,-9,-0.768407113213942
+1494,"ASV Hamm-Westfalen","SG Flensburg-Handewitt",2022,29,37,-8,-0.823601128174728
+1495,"ASV Hamm-Westfalen","TVB Stuttgart",2022,26,27,-1,-0.330811931922162
+1496,"ASV Hamm-Westfalen","VfL Gummersbach",2022,22,21,1,-0.489768629946238
+1497,"Bergischer HC","ASV Hamm-Westfalen",2022,34,24,10,0.65791937319065
+1498,"Bergischer HC","Füchse Berlin",2022,34,30,4,-0.485797021511307
+1499,"Bergischer HC","GWD Minden",2022,34,32,2,0.540292722955563
+1500,"Bergischer HC","Handball Sport Verein Hamburg",2022,37,34,3,0.153867116399123
+1501,"Bergischer HC","HC Erlangen",2022,29,30,-1,0.329942520533015
+1502,"Bergischer HC","MT Melsungen",2022,28,27,1,-0.014578994346921
+1504,"Bergischer HC","THW Kiel",2022,26,29,-3,-0.613190160234902
+1505,"Bergischer HC","TVB Stuttgart",2022,25,25,0,0.445100975283533
+1506,"FRISCH AUF! Göppingen","ASV Hamm-Westfalen",2022,39,31,8,0.726854001110535
+1507,"FRISCH AUF! Göppingen","Bergischer HC",2022,36,28,8,0.345855303356039
+1508,"FRISCH AUF! Göppingen","Füchse Berlin",2022,25,19,6,-0.475098986990281
+1509,"FRISCH AUF! Göppingen","HC Erlangen",2022,30,25,5,0.35956380783967
+1510,"FRISCH AUF! Göppingen","HSG Wetzlar",2022,25,28,-3,0.500588466065123
+1511,"FRISCH AUF! Göppingen","Rhein-Neckar Löwen",2022,25,27,-2,-0.449221471810856
+1512,"FRISCH AUF! Göppingen","SC DHfK Leipzig",2022,34,30,4,0.309424520433695
+1513,"FRISCH AUF! Göppingen","SG Flensburg-Handewitt",2022,27,27,0,-0.320970042796005
+1514,"FRISCH AUF! Göppingen","THW Kiel",2022,27,34,-7,-0.589314175767521
+1515,"Füchse Berlin","GWD Minden",2022,42,35,7,0.853015766099557
+1516,"Füchse Berlin","Handball Sport Verein Hamburg",2022,36,32,4,0.648455546456041
+1517,"Füchse Berlin","HC Erlangen",2022,39,30,9,0.739209564372448
+1518,"Füchse Berlin","HSG Wetzlar",2022,29,25,4,0.792226233201355
+1519,"Füchse Berlin","MT Melsungen",2022,35,25,10,0.657240329385318
+1520,"Füchse Berlin","Rhein-Neckar Löwen",2022,38,24,14,0.391377012418287
+1521,"Füchse Berlin","SC DHfK Leipzig",2022,28,22,6,0.617247489663319
+1522,"Füchse Berlin","SG Flensburg-Handewitt",2022,37,33,4,0.123889565611828
+1523,"Füchse Berlin","VfL Gummersbach",2022,38,33,5,0.721721146665135
+1524,"GWD Minden","FRISCH AUF! Göppingen",2022,27,27,0,-0.454961258367666
+1525,"GWD Minden","Handball Sport Verein Hamburg",2022,31,35,-4,-0.146830486734625
+1526,"GWD Minden","MT Melsungen",2022,21,28,-7,-0.499010818483353
+1527,"GWD Minden","Rhein-Neckar Löwen",2022,29,40,-11,-0.761535793573153
+1528,"GWD Minden","SC Magdeburg",2022,30,43,-13,-0.790676252989013
+1529,"GWD Minden","SG Flensburg-Handewitt",2022,27,41,-14,-0.767797035920623
+1530,"GWD Minden","TBV Lemgo Lippe",2022,36,35,1,-0.227682346820781
+1531,"GWD Minden","TVB Stuttgart",2022,23,29,-6,-0.010494505494506
+1532,"GWD Minden","VfL Gummersbach",2022,38,38,0,-0.315930995949155
+1533,"Handball Sport Verein Hamburg","FRISCH AUF! Göppingen",2022,31,28,3,0.306429124709528
+1534,"Handball Sport Verein Hamburg","Hannover-Burgdorf",2022,32,26,6,0.261858578733909
+1536,"Handball Sport Verein Hamburg","HSG Wetzlar",2022,24,21,3,0.470802356493642
+1537,"Handball Sport Verein Hamburg","MT Melsungen",2022,33,28,5,0.220469486386695
+1538,"Handball Sport Verein Hamburg","SC DHfK Leipzig",2022,28,31,-3,0.326979509556253
+1539,"Handball Sport Verein Hamburg","TBV Lemgo Lippe",2022,28,32,-4,0.263983633543108
+1540,"Handball Sport Verein Hamburg","THW Kiel",2022,30,34,-4,-0.53985959931697
+1541,"Handball Sport Verein Hamburg","TVB Stuttgart",2022,27,27,0,0.619343907804092
+1542,"Hannover-Burgdorf","ASV Hamm-Westfalen",2022,30,26,4,0.730978045457646
+1543,"Hannover-Burgdorf","Bergischer HC",2022,30,32,-2,0.420360824742268
+1544,"Hannover-Burgdorf","FRISCH AUF! Göppingen",2022,28,23,5,0.214399657614193
+1545,"Hannover-Burgdorf","Füchse Berlin",2022,32,33,-1,-0.433299939891806
+1546,"Hannover-Burgdorf","GWD Minden",2022,32,19,13,0.720698254364089
+1547,"Hannover-Burgdorf","MT Melsungen",2022,26,26,0,0.254234877469456
+1549,"Hannover-Burgdorf","VfL Gummersbach",2022,28,27,1,0.297937158410829
+1550,"HC Erlangen","ASV Hamm-Westfalen",2022,37,27,10,0.73389882795666
+1551,"HC Erlangen","GWD Minden",2022,29,28,1,0.656505534850086
+1552,"HC Erlangen","Hannover-Burgdorf",2022,33,29,4,0.071696448843989
+1553,"HC Erlangen","SC DHfK Leipzig",2022,36,32,4,-0.054501253637727
+1554,"HC Erlangen","SC Magdeburg",2022,23,37,-14,-0.464658688958147
+1555,"HC Erlangen","SG Flensburg-Handewitt",2022,28,33,-5,-0.572937275476575
+1556,"HC Erlangen","TBV Lemgo Lippe",2022,31,31,0,0.221038536807875
+1557,"HC Erlangen","TVB Stuttgart",2022,31,28,3,0.406703650798924
+1558,"HSG Wetzlar","ASV Hamm-Westfalen",2022,28,24,4,0.63914633970012
+1559,"HSG Wetzlar","Bergischer HC",2022,22,28,-6,0.217378051878117
+1560,"HSG Wetzlar","GWD Minden",2022,25,27,-2,0.493436884707942
+1561,"HSG Wetzlar","Hannover-Burgdorf",2022,24,31,-7,0.331926863572433
+1563,"HSG Wetzlar","MT Melsungen",2022,25,27,-2,-0.143178410794603
+1564,"HSG Wetzlar","SC Magdeburg",2022,30,35,-5,-0.638271948988996
+1565,"HSG Wetzlar","TBV Lemgo Lippe",2022,26,24,2,0.00418052098704597
+1566,"MT Melsungen","ASV Hamm-Westfalen",2022,30,29,1,0.794814558351219
+1567,"MT Melsungen","FRISCH AUF! Göppingen",2022,26,23,3,0.243187789436167
+1568,"MT Melsungen","HC Erlangen",2022,31,18,13,0.345936750621609
+1569,"MT Melsungen","Rhein-Neckar Löwen",2022,25,34,-9,-0.361504210201473
+1571,"MT Melsungen","SC Magdeburg",2022,27,26,1,-0.486419410405662
+1572,"MT Melsungen","TBV Lemgo Lippe",2022,20,19,1,0.357767428161184
+1573,"MT Melsungen","THW Kiel",2022,19,23,-4,-0.443260957181501
+1574,"Rhein-Neckar Löwen","ASV Hamm-Westfalen",2022,37,27,10,0.846147804225047
+1575,"Rhein-Neckar Löwen","Bergischer HC",2022,39,29,10,0.596162603226958
+1576,"Rhein-Neckar Löwen","Handball Sport Verein Hamburg",2022,32,35,-3,0.505871806364859
+1577,"Rhein-Neckar Löwen","HC Erlangen",2022,40,23,17,0.708226231568296
+1578,"Rhein-Neckar Löwen","HSG Wetzlar",2022,34,24,10,0.77218200246145
+1579,"Rhein-Neckar Löwen","SC Magdeburg",2022,35,37,-2,0.203439542033389
+1580,"Rhein-Neckar Löwen","THW Kiel",2022,27,31,-4,-0.212184533225524
+1581,"Rhein-Neckar Löwen","TVB Stuttgart",2022,41,27,14,0.784859455574063
+1582,"Rhein-Neckar Löwen","VfL Gummersbach",2022,37,42,-5,0.554283550876181
+1583,"SC DHfK Leipzig","GWD Minden",2022,31,31,0,0.623065759080968
+1584,"SC DHfK Leipzig","Hannover-Burgdorf",2022,29,31,-2,0.268738482196072
+1585,"SC DHfK Leipzig","HSG Wetzlar",2022,38,29,9,0.436826078274761
+1586,"SC DHfK Leipzig","Rhein-Neckar Löwen",2022,37,29,8,-0.351589843492043
+1587,"SC DHfK Leipzig","SC Magdeburg",2022,33,31,2,-0.421152628245725
+1588,"SC DHfK Leipzig","TBV Lemgo Lippe",2022,30,33,-3,0.302257303749338
+1589,"SC DHfK Leipzig","TVB Stuttgart",2022,25,30,-5,0.503510842307125
+1590,"SC DHfK Leipzig","VfL Gummersbach",2022,30,34,-4,0.337121893538965
+1591,"SC Magdeburg","Bergischer HC",2022,22,21,1,0.745002835270768
+1592,"SC Magdeburg","FRISCH AUF! Göppingen",2022,32,29,3,0.724607475336946
+1593,"SC Magdeburg","Füchse Berlin",2022,34,29,5,0.054194893173528
+1594,"SC Magdeburg","Handball Sport Verein Hamburg",2022,32,28,4,0.664507535547908
+1595,"SC Magdeburg","Hannover-Burgdorf",2022,31,30,1,0.654901971164409
+1596,"SC Magdeburg","SG Flensburg-Handewitt",2022,30,28,2,0.204626860607706
+1597,"SC Magdeburg","TVB Stuttgart",2022,31,27,4,0.781008087394892
+1599,"SG Flensburg-Handewitt","Bergischer HC",2022,30,17,13,0.657410596577075
+1600,"SG Flensburg-Handewitt","Handball Sport Verein Hamburg",2022,34,32,2,0.621691290545862
+1601,"SG Flensburg-Handewitt","Hannover-Burgdorf",2022,30,35,-5,0.611842105263158
+1602,"SG Flensburg-Handewitt","HSG Wetzlar",2022,34,24,10,0.763197649755904
+1603,"SG Flensburg-Handewitt","MT Melsungen",2022,37,25,12,0.561486472192113
+1604,"SG Flensburg-Handewitt","Rhein-Neckar Löwen",2022,34,31,3,0.366474592394483
+1605,"SG Flensburg-Handewitt","SC DHfK Leipzig",2022,30,27,3,0.721294497806501
+1606,"SG Flensburg-Handewitt","TBV Lemgo Lippe",2022,33,27,6,0.646512278420484
+1607,"SG Flensburg-Handewitt","VfL Gummersbach",2022,31,26,5,0.671034571109607
+1608,"TBV Lemgo Lippe","ASV Hamm-Westfalen",2022,30,25,5,0.767180887583834
+1609,"TBV Lemgo Lippe","Bergischer HC",2022,38,28,10,0.2598897854753
+1610,"TBV Lemgo Lippe","FRISCH AUF! Göppingen",2022,36,33,3,0.221875
+1611,"TBV Lemgo Lippe","Füchse Berlin",2022,35,32,3,-0.347878852376148
+1612,"TBV Lemgo Lippe","Hannover-Burgdorf",2022,35,30,5,0.213771586523988
+1613,"TBV Lemgo Lippe","Rhein-Neckar Löwen",2022,33,30,3,-0.364083926889163
+1614,"TBV Lemgo Lippe","SC Magdeburg",2022,28,34,-6,-0.414847161572053
+1615,"TBV Lemgo Lippe","THW Kiel",2022,22,28,-6,-0.573200659373595
+1616,"TBV Lemgo Lippe","TVB Stuttgart",2022,29,24,5,0.481455563331001
+1617,"THW Kiel","ASV Hamm-Westfalen",2022,40,29,11,0.881520242560421
+1618,"THW Kiel","Füchse Berlin",2022,36,29,7,0.272093437080415
+1619,"THW Kiel","GWD Minden",2022,36,29,7,0.867342149926482
+1620,"THW Kiel","Hannover-Burgdorf",2022,33,23,10,0.660402680071486
+1621,"THW Kiel","HC Erlangen",2022,35,26,9,0.794026924972625
+1622,"THW Kiel","HSG Wetzlar",2022,38,23,15,0.788687694009348
+1623,"THW Kiel","SC DHfK Leipzig",2022,31,34,-3,0.730271328281355
+1624,"THW Kiel","SC Magdeburg",2022,34,34,0,0.283775389568319
+1625,"THW Kiel","SG Flensburg-Handewitt",2022,29,19,10,0.349408077994429
+1626,"TVB Stuttgart","FRISCH AUF! Göppingen",2022,24,24,0,-0.185306124546228
+1627,"TVB Stuttgart","Füchse Berlin",2022,32,28,4,-0.567878424392509
+1628,"TVB Stuttgart","Hannover-Burgdorf",2022,31,34,-3,-0.315892734637518
+1629,"TVB Stuttgart","HSG Wetzlar",2022,28,30,-2,0.293862160911535
+1630,"TVB Stuttgart","MT Melsungen",2022,23,26,-3,-0.324879201569852
+1631,"TVB Stuttgart","SG Flensburg-Handewitt",2022,30,32,-2,-0.529580384538821
+1633,"TVB Stuttgart","VfL Gummersbach",2022,31,30,1,-0.067926612259926
+1635,"VfL Gummersbach","FRISCH AUF! Göppingen",2022,35,32,3,0.2304411001812
+1636,"VfL Gummersbach","Handball Sport Verein Hamburg",2022,31,30,1,0.170875278761229
+1637,"VfL Gummersbach","HC Erlangen",2022,32,31,1,0.35495268651261
+1638,"VfL Gummersbach","HSG Wetzlar",2022,37,30,7,0.354620130820244
+1639,"VfL Gummersbach","MT Melsungen",2022,31,23,8,0.072218411304705
+1640,"VfL Gummersbach","TBV Lemgo Lippe",2022,28,29,-1,0.222211790053147
+1642,"ASV Hamm-Westfalen","Bergischer HC",2022,27,31,-4,-0.614811698597559
+1643,"ASV Hamm-Westfalen","FRISCH AUF! Göppingen",2022,32,28,4,-0.606927247405772
+1644,"ASV Hamm-Westfalen","Hannover-Burgdorf",2022,29,29,0,-0.634056188132975
+1646,"ASV Hamm-Westfalen","HSG Wetzlar",2022,23,29,-6,-0.487826550559801
+1647,"ASV Hamm-Westfalen","MT Melsungen",2022,18,27,-9,-0.613460164991564
+1648,"ASV Hamm-Westfalen","Rhein-Neckar Löwen",2022,30,35,-5,-0.738011661976734
+1649,"ASV Hamm-Westfalen","TBV Lemgo Lippe",2022,25,30,-5,-0.460150719342316
+1650,"ASV Hamm-Westfalen","THW Kiel",2022,24,36,-12,-0.867756932624224
+1651,"Bergischer HC","FRISCH AUF! Göppingen",2022,28,26,2,0.255276468312533
+1652,"Bergischer HC","Hannover-Burgdorf",2022,22,23,-1,0.077826603078076
+1653,"Bergischer HC","HSG Wetzlar",2022,24,23,1,0.110459513426139
+1654,"Bergischer HC","Rhein-Neckar Löwen",2022,26,27,-1,-0.515090510641246
+1656,"Bergischer HC","SG Flensburg-Handewitt",2022,18,31,-13,-0.368384277383716
+1657,"Bergischer HC","TBV Lemgo Lippe",2022,32,28,4,0.172932330827068
+1658,"Bergischer HC","VfL Gummersbach",2022,30,30,0,0.256834257967115
+1659,"FRISCH AUF! Göppingen","GWD Minden",2022,26,29,-3,0.545996477256372
+1660,"FRISCH AUF! Göppingen","Handball Sport Verein Hamburg",2022,26,26,0,0.075572643260871
+1661,"FRISCH AUF! Göppingen","Hannover-Burgdorf",2022,33,29,4,0.138092104553448
+1662,"FRISCH AUF! Göppingen","MT Melsungen",2022,23,29,-6,0.132309888167125
+1663,"FRISCH AUF! Göppingen","SC Magdeburg",2022,26,31,-5,-0.440122600890316
+1664,"FRISCH AUF! Göppingen","TBV Lemgo Lippe",2022,34,31,3,0.403377714692309
+1665,"FRISCH AUF! Göppingen","TVB Stuttgart",2022,24,25,-1,0.592586121008415
+1666,"FRISCH AUF! Göppingen","VfL Gummersbach",2022,29,28,1,0.446355010532293
+1667,"Füchse Berlin","ASV Hamm-Westfalen",2022,37,26,11,0.849816521972613
+1668,"Füchse Berlin","Bergischer HC",2022,29,27,2,0.716066610847521
+1669,"Füchse Berlin","FRISCH AUF! Göppingen",2022,34,27,7,0.642342998362986
+1670,"Füchse Berlin","Hannover-Burgdorf",2022,32,30,2,0.518596563804894
+1671,"Füchse Berlin","SC Magdeburg",2022,31,32,-1,0.03189205284521
+1672,"Füchse Berlin","TBV Lemgo Lippe",2022,32,26,6,0.691832725231546
+1673,"Füchse Berlin","THW Kiel",2022,34,26,8,0.020934087764245
+1674,"Füchse Berlin","TVB Stuttgart",2022,31,21,10,0.7981132285622
+1675,"GWD Minden","ASV Hamm-Westfalen",2022,32,23,9,0.511441520142117
+1676,"GWD Minden","Bergischer HC",2022,25,28,-3,-0.040093927999112
+1677,"GWD Minden","Füchse Berlin",2022,32,27,5,-0.788479226385543
+1678,"GWD Minden","Hannover-Burgdorf",2022,33,35,-2,-0.530928678673336
+1679,"GWD Minden","HC Erlangen",2022,25,32,-7,-0.495363872854433
+1680,"GWD Minden","HSG Wetzlar",2022,26,29,-3,-0.206041094593315
+1681,"GWD Minden","SC DHfK Leipzig",2022,28,29,-1,-0.577775367647497
+1682,"GWD Minden","THW Kiel",2022,18,34,-16,-0.848623720702652
+1683,"Handball Sport Verein Hamburg","ASV Hamm-Westfalen",2022,31,25,6,0.761386992369298
+1684,"Handball Sport Verein Hamburg","Bergischer HC",2022,33,23,10,0.190603533405895
+1685,"Handball Sport Verein Hamburg","Füchse Berlin",2022,28,37,-9,-0.327754749638892
+1686,"Handball Sport Verein Hamburg","GWD Minden",2022,27,21,6,0.715618506424664
+1687,"Handball Sport Verein Hamburg","Rhein-Neckar Löwen",2022,40,36,4,-0.361945704581622
+1688,"Handball Sport Verein Hamburg","SC Magdeburg",2022,28,30,-2,-0.528759314394295
+1689,"Handball Sport Verein Hamburg","SG Flensburg-Handewitt",2022,30,31,-1,-0.493451846248404
+1690,"Handball Sport Verein Hamburg","VfL Gummersbach",2022,34,31,3,0.224939701369272
+1691,"Hannover-Burgdorf","Handball Sport Verein Hamburg",2022,28,27,1,0.3960585348228
+1692,"Hannover-Burgdorf","HC Erlangen",2022,29,28,1,0.346391907112505
+1693,"Hannover-Burgdorf","HSG Wetzlar",2022,23,26,-3,0.450083658672615
+1694,"Hannover-Burgdorf","SC DHfK Leipzig",2022,25,22,3,0.367671484322652
+1695,"Hannover-Burgdorf","SC Magdeburg",2022,34,31,3,-0.513131196011363
+1696,"Hannover-Burgdorf","SG Flensburg-Handewitt",2022,25,35,-10,-0.53014688631903
+1697,"Hannover-Burgdorf","TBV Lemgo Lippe",2022,29,24,5,0.38755980861244
+1698,"Hannover-Burgdorf","THW Kiel",2022,27,29,-2,-0.639632352079156
+1699,"Hannover-Burgdorf","TVB Stuttgart",2022,27,21,6,0.416963183501561
+1700,"HC Erlangen","Bergischer HC",2022,30,27,3,0.403595347197744
+1701,"HC Erlangen","FRISCH AUF! Göppingen",2022,34,28,6,-0.074720122167615
+1702,"HC Erlangen","Füchse Berlin",2022,28,30,-2,-0.45893045908492
+1703,"HC Erlangen","Handball Sport Verein Hamburg",2022,35,29,6,0.226563149326045
+1704,"HC Erlangen","HSG Wetzlar",2022,31,27,4,0.14391714329881
+1705,"HC Erlangen","MT Melsungen",2022,34,34,0,0.075220919313284
+1706,"HC Erlangen","Rhein-Neckar Löwen",2022,30,33,-3,-0.398197337790247
+1707,"HC Erlangen","THW Kiel",2022,27,33,-6,-0.485233593143281
+1709,"HSG Wetzlar","FRISCH AUF! Göppingen",2022,25,25,0,-0.00630936172861896
+1710,"HSG Wetzlar","Füchse Berlin",2022,25,37,-12,-0.498788825054192
+1711,"HSG Wetzlar","Handball Sport Verein Hamburg",2022,28,30,-2,0.152307085039959
+1712,"HSG Wetzlar","Rhein-Neckar Löwen",2022,23,29,-6,-0.354744861479795
+1713,"HSG Wetzlar","SC DHfK Leipzig",2022,24,25,-1,0.238272402551593
+1714,"HSG Wetzlar","SG Flensburg-Handewitt",2022,22,27,-5,-0.466491839634967
+1715,"HSG Wetzlar","THW Kiel",2022,25,31,-6,-0.528238126599225
+1716,"HSG Wetzlar","TVB Stuttgart",2022,32,24,8,0.374447678072457
+1717,"HSG Wetzlar","VfL Gummersbach",2022,29,30,-1,0.398398918750325
+1718,"MT Melsungen","Bergischer HC",2022,22,22,0,0.410599011574559
+1719,"MT Melsungen","Füchse Berlin",2022,29,32,-3,-0.5381178703353
+1720,"MT Melsungen","GWD Minden",2022,31,28,3,0.709192247933412
+1721,"MT Melsungen","Handball Sport Verein Hamburg",2022,30,27,3,0.396613320864006
+1722,"MT Melsungen","Hannover-Burgdorf",2022,28,31,-3,0.350045690414804
+1723,"MT Melsungen","HSG Wetzlar",2022,21,19,2,0.408332400641692
+1724,"MT Melsungen","SG Flensburg-Handewitt",2022,25,25,0,-0.318734207676573
+1725,"MT Melsungen","TVB Stuttgart",2022,33,26,7,0.641158105791087
+1726,"MT Melsungen","VfL Gummersbach",2022,28,22,6,0.401883866787012
+1727,"Rhein-Neckar Löwen","FRISCH AUF! Göppingen",2022,36,33,3,0.593445989747
+1728,"Rhein-Neckar Löwen","Füchse Berlin",2022,32,34,-2,0.0408380280096829
+1729,"Rhein-Neckar Löwen","GWD Minden",2022,37,25,12,0.87500819926622
+1730,"Rhein-Neckar Löwen","Hannover-Burgdorf",2022,32,31,1,0.58500274134368
+1731,"Rhein-Neckar Löwen","MT Melsungen",2022,36,25,11,0.072147001934236
+1732,"Rhein-Neckar Löwen","SC DHfK Leipzig",2022,30,24,6,0.556288134573691
+1733,"Rhein-Neckar Löwen","SG Flensburg-Handewitt",2022,28,27,1,-0.178607130956348
+1734,"Rhein-Neckar Löwen","TBV Lemgo Lippe",2022,37,28,9,0.629914957091855
+1735,"SC DHfK Leipzig","ASV Hamm-Westfalen",2022,33,23,10,0.745936298675626
+1736,"SC DHfK Leipzig","Bergischer HC",2022,26,32,-6,0.43073226669579
+1737,"SC DHfK Leipzig","FRISCH AUF! Göppingen",2022,25,26,-1,0.106987083668699
+1738,"SC DHfK Leipzig","Füchse Berlin",2022,26,31,-5,-0.368517122937503
+1739,"SC DHfK Leipzig","Handball Sport Verein Hamburg",2022,22,23,-1,0.137941281350292
+1740,"SC DHfK Leipzig","HC Erlangen",2022,32,28,4,-0.044251668663358
+1741,"SC DHfK Leipzig","MT Melsungen",2022,40,33,7,-0.181777467173258
+1742,"SC DHfK Leipzig","SG Flensburg-Handewitt",2022,31,30,1,-0.333945234817194
+1743,"SC DHfK Leipzig","THW Kiel",2022,22,32,-10,-0.550580160156889
+1744,"SC Magdeburg","ASV Hamm-Westfalen",2022,31,22,9,0.845029295124013
+1745,"SC Magdeburg","GWD Minden",2022,38,25,13,0.864145819343397
+1746,"SC Magdeburg","HC Erlangen",2022,31,28,3,0.752593921679891
+1747,"SC Magdeburg","HSG Wetzlar",2022,32,28,4,0.772004885531701
+1748,"SC Magdeburg","MT Melsungen",2022,27,23,4,0.702062761722587
+1749,"SC Magdeburg","Rhein-Neckar Löwen",2022,31,32,-1,0.398197337790247
+1750,"SC Magdeburg","SC DHfK Leipzig",2022,32,24,8,0.720136366674837
+1751,"SC Magdeburg","TBV Lemgo Lippe",2022,37,33,4,0.671906820312242
+1753,"SG Flensburg-Handewitt","ASV Hamm-Westfalen",2022,37,23,14,0.858596474970484
+1754,"SG Flensburg-Handewitt","FRISCH AUF! Göppingen",2022,27,24,3,0.632529151550439
+1755,"SG Flensburg-Handewitt","Füchse Berlin",2022,31,31,0,0.291596546425697
+1756,"SG Flensburg-Handewitt","GWD Minden",2022,36,23,13,0.86174046175794
+1757,"SG Flensburg-Handewitt","HC Erlangen",2022,31,29,2,0.538268977213451
+1758,"SG Flensburg-Handewitt","SC Magdeburg",2022,34,34,0,0.177492057884893
+1759,"SG Flensburg-Handewitt","THW Kiel",2022,36,23,13,-0.0583312655256
+1760,"SG Flensburg-Handewitt","TVB Stuttgart",2022,29,25,4,0.774539877300614
+1761,"TBV Lemgo Lippe","GWD Minden",2022,30,27,3,0.52335576212516
+1763,"TBV Lemgo Lippe","HC Erlangen",2022,34,27,7,0.065018849891148
+1764,"TBV Lemgo Lippe","HSG Wetzlar",2022,34,29,5,0.342287280867225
+1765,"TBV Lemgo Lippe","MT Melsungen",2022,28,28,0,-0.052198073192385
+1766,"TBV Lemgo Lippe","SC DHfK Leipzig",2022,29,28,1,0.152458566065379
+1767,"TBV Lemgo Lippe","SG Flensburg-Handewitt",2022,26,21,5,-0.567984441704764
+1768,"TBV Lemgo Lippe","VfL Gummersbach",2022,26,30,-4,0.374304048971134
+1769,"THW Kiel","Bergischer HC",2022,35,29,6,0.856012658227848
+1770,"THW Kiel","FRISCH AUF! Göppingen",2022,30,26,4,0.724629746022756
+1771,"THW Kiel","Handball Sport Verein Hamburg",2022,40,28,12,0.792462769536908
+1772,"THW Kiel","MT Melsungen",2022,24,22,2,0.635223383866571
+1773,"THW Kiel","Rhein-Neckar Löwen",2022,32,28,4,0.421645665074699
+1775,"THW Kiel","TVB Stuttgart",2022,36,23,13,0.788375318192785
+1776,"THW Kiel","VfL Gummersbach",2022,31,28,3,0.63701208676017
+1777,"TVB Stuttgart","ASV Hamm-Westfalen",2022,29,20,9,0.547595682041217
+1778,"TVB Stuttgart","Bergischer HC",2022,26,26,0,0.05232027279265
+1779,"TVB Stuttgart","GWD Minden",2022,27,23,4,0.322803790635371
+1780,"TVB Stuttgart","Handball Sport Verein Hamburg",2022,22,28,-6,-0.284578087588749
+1781,"TVB Stuttgart","HC Erlangen",2022,26,29,-3,-0.087037766789123
+1782,"TVB Stuttgart","Rhein-Neckar Löwen",2022,30,43,-13,-0.628614850031038
+1783,"TVB Stuttgart","SC DHfK Leipzig",2022,26,33,-7,-0.11424612339162
+1784,"TVB Stuttgart","SC Magdeburg",2022,28,32,-4,-0.715912802893451
+1785,"TVB Stuttgart","TBV Lemgo Lippe",2022,32,28,4,-0.080378853793769
+1786,"VfL Gummersbach","ASV Hamm-Westfalen",2022,29,28,1,0.61814203904659
+1787,"VfL Gummersbach","Füchse Berlin",2022,28,30,-2,-0.469732552509262
+1788,"VfL Gummersbach","GWD Minden",2022,26,22,4,0.638147875123018
+1789,"VfL Gummersbach","Hannover-Burgdorf",2022,27,34,-7,0.268194131303302
+1790,"VfL Gummersbach","Rhein-Neckar Löwen",2022,29,32,-3,-0.316124954670259
+1791,"VfL Gummersbach","SC DHfK Leipzig",2022,36,36,0,0.137704607017507
+1792,"VfL Gummersbach","SC Magdeburg",2022,28,30,-2,-0.658150134139649
+1793,"VfL Gummersbach","SG Flensburg-Handewitt",2022,31,29,2,-0.53950848674876
