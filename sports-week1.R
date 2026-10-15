@@ -1,7 +1,7 @@
-
 # load libraries -----
 library(readr)
 library(dplyr)
+library(purrr)
 
 # read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -39,4 +39,12 @@ tennis <- tennis %>%
   mutate(across(c(player.1, player.2, year, tournament, surface, win), as.factor)) %>%
   mutate(across(c(sets.1, sets.2, rank, points), as.integer))
 
+
+# check for missing values ----
+check_for_na <- function(df) {
+  df %>% 
+    summarise(across(everything(), function(x) sum(is.na(x))))
+}
+
+map(list(football_train, football_test, handball_long, handball_wide, tennis), check_for_na)
 
