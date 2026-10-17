@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+
+presentations/**
+!presentations/**/
+
+!presentations/**/*.pdf
+!presentations/**/*.tex
