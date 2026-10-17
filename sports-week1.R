@@ -5,6 +5,7 @@ library(purrr)
 library(ggplot2)
 library(forcats)
 library(gridExtra)
+library(stringr)
 
 # read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -127,8 +128,29 @@ handball_long %>%
   geom_violin(aes(y = team, x = goals))+
   labs(title = "Goal Distribution over Matches Sorted by Median")
 
-
-
-
+# average score diff between unique combinations of teams ???
+handball_wide %>%
+  mutate(hometeam = as.character(hometeam), 
+         awayteam = as.character(awayteam),
+         team1 = if_else(hometeam < awayteam, hometeam, awayteam),
+         team2 = if_else(hometeam < awayteam, awayteam, hometeam), 
+         team_matchup = paste(team1, team2, sep = " - "),
+         team1_scorediff = if_else(team1 == hometeam, scorediff, -scorediff)
+  ) %>%
+  group_by(team_matchup, team1, team2) %>% 
+  summarize(mean_scorediff = mean(team1_scorediff), games = n()) -> tmp
+tmp %>% mutate(team3 = team1, 
+               team1 = team2, 
+               team2 = team3, 
+               mean_scorediff = -mean_scorediff) %>% 
+  rbind(tmp) %>% 
+  ggplot()+
+  geom_tile(aes(y = team1, x = team2, fill = mean_scorediff))+
+  scale_fill_gradient2(low = "red", high ="blue",
+                       mid = "white")+
+  theme(axis.text.x=element_text(angle = -90))+
+  labs(fill = "Team 1 Average Score\n Difference over Team 2",
+       title = "Avg. Goal Differences for Handball Matchups", 
+       caption = "Note: Score diff of team1 - team2 is consistent among the unique pairs of teams")
 
   
