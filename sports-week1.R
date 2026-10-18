@@ -5,7 +5,7 @@ library(purrr)
 library(ggplot2)
 library(forcats)
 library(gridExtra)
-library(stringr)
+library(broom)
 
 # read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -176,7 +176,29 @@ tmp %>% mutate(team3 = team1,
 
 # Linear Regression: Handball----
 
-# TBD
+# fitting model
+handball_wide %>%
+  mutate(season = as.numeric(season)) %>%
+  lm(formula = scorediff ~ bet.probs.diff + season) -> hb.lm
+tidy(hb.lm)
+glance(hb.lm)
+
+# checking assumptions
+plot(hb.lm)
+
+# Predict goal differences
+predict(hb.lm) -> hb.lm.pred
+
+data_frame(actual_scorediff = handball_wide$scorediff, 
+           predicted_scorediff = hb.lm.pred) %>%
+  mutate(pred_error = actual_scorediff - predicted_scorediff, 
+         abs_pred_error = abs(pred_error)) -> hb.lm.comparison
+
+# boxplot 
+ggplot(data = hb.lm.comparison)+
+  geom_boxplot(aes(x = abs_pred_error))+
+  geom_vline(aes(xintercept = mean(hb.lm.comparison$abs_pred_error), color = "red") )+
+  labs(caption = "Red line is mean absolute error.")
 
 # Poisson Regression: Football-----
 
