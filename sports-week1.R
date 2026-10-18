@@ -52,7 +52,7 @@ check_for_na <- function(df) {
 
 map(list(football_train, football_test, handball_long, handball_wide, tennis), check_for_na)
 
-# Visualizing handball long----
+# Visualizing handball----
 
 # How each team's {goals, betting probabilities} changes over time
 plot_season <- function(df, variable, var_name) {
@@ -154,3 +154,35 @@ tmp %>% mutate(team3 = team1,
        caption = "Note: Score diff of team1 - team2 is consistent among the unique pairs of teams")
 
   
+# Visualizing Euro (football data) avg number of goals per team and match----
+
+# TBD:  
+
+# Visualizing tennis data share of won matches ----
+
+# TBD: 
+
+# Visualizing (handball: scorediff vs regressors) -----
+
+# TBD
+
+# Visualizing (football: Goals vs regressors)-----
+
+# TBD
+
+# Visualizing (tennis: win vs regressors)-----
+
+#TBD
+
+# Linear Regression: Handball----
+
+# TBD
+
+# Poisson Regression: Football-----
+
+# TBD
+
+# Logistic Regression: Tennis----
+
+#TBD
+
