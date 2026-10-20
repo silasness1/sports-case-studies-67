@@ -10,14 +10,19 @@ library(car)
 library(MASS)
 library(brms)
 
-# read in the csv----
+# README: 
+# This script is part of Case Studies at TU Dortmund -- week 1 of the sports project
+# We're provided 3 sports datasets and are working on EDA and setting up 
+# linear models as baselines. The 3 datasets have different response types {ordinal, binary, }
+
+# Section 1: Read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
 football_train = read_csv("raw-data/EuroTraining.csv")
 handball_long = read_csv("raw-data/handball_long.csv")
 handball_wide = read_csv("raw-data/handball_wide.csv")
 tennis = read_csv("raw-data/SlamsData.csv")
 
-# look at read in types----
+# Section 2: Look at read in types----
 str(football_test)
 str(football_train)
 
@@ -47,7 +52,7 @@ tennis <- tennis %>%
   mutate(across(c(sets.1, sets.2, rank, points), as.integer))
 
 
-# check for missing values ----
+# Section 3: Check for missing values ----
 check_for_na <- function(df) {
   df %>% 
     summarise(across(everything(), function(x) sum(is.na(x))))
@@ -55,7 +60,7 @@ check_for_na <- function(df) {
 
 map(list(football_train, football_test, handball_long, handball_wide, tennis), check_for_na)
 
-# Visualizing handball----
+# Section 4: Visualizing handball----
 
 # How each team's {goals, betting probabilities} changes over time
 plot_season <- function(df, variable, var_name) {
@@ -157,19 +162,19 @@ tmp %>% mutate(team3 = team1,
        caption = "Note: Score diff of team1 - team2 is consistent among the unique pairs of teams")
 
   
-# Visualizing Euro (football data) avg number of goals per team and match----
+# Section 5: Visualizing Euro (football data) avg number of goals per team and match----
 
 # TBD:  
 
-# Visualizing tennis data share of won matches ----
+# Section 6: Visualizing tennis data share of won matches ----
 
 # TBD: 
 
-# Visualizing (handball: scorediff vs regressors) -----
+# Section 7: Visualizing (handball: scorediff vs regressors) -----
 
 # TBD
 
-# Visualizing (football: Goals vs regressors)-----
+# Section 8: Visualizing (football: Goals vs regressors)-----
 
 scatterplotMatrix(football_train) #pre-built correlogram
 
@@ -188,11 +193,11 @@ plot_vs_goals <- function(var,df) {
 }
 map(to_plot, function(x) {plot_vs_goals(x, football_train)})
 
-# Visualizing (tennis: win vs regressors)-----
+# Section 9: Visualizing (tennis: win vs regressors)-----
 
 #TBD
 
-# Linear Regression: Handball----
+# Section 10: Linear Regression: Handball----
 
 # fitting model
 handball_wide %>%
@@ -264,7 +269,8 @@ ggplot(data = hb.lm.comparison)+
   labs(caption = "Red line is mean absolute error.")+
   labs(title = "Plain lm() Absolute Prediction Error")
 
-#    observation: we have a skewed distribution of absolute prediction error 
+#        observation: we have a skewed distribution of absolute prediction error 
+
 
 # Model Improvement: how might we change the model accordingly to better address this issue? 
 #        Idea 1: change the assumption about normally distributed errors to something with fatter tails, t()
@@ -362,13 +368,34 @@ lm(data = hb_lm_dat, formula = scorediff ~ poly(bet.probs.diff, 3) + season) -> 
 summary(poly_mod)
 plot(poly_mod)
 
+# checking the absolute pred errors: polynomial model
+#        Conclusion: no better than the plain linear model
+predict(poly_mod)-> poly_mod_pred
+
+data_frame(poly_mod_pred = poly_mod_pred, 
+           actual = handball_wide$scorediff) %>%
+  mutate(pred_error = actual - poly_mod_pred, 
+         abs_pred_error = abs(pred_error)) -> poly_compare
+
+ggplot(data = poly_compare)+
+  geom_boxplot(aes(x = abs_pred_error))+
+  geom_vline(aes(xintercept = mean(.data[["abs_pred_error"]]), color = "red") )+
+  labs(caption = "Red line is mean absolute error.")+
+  labs(title = "Polynomial Model Absolute Prediction errors")
+
+# model comparison between polynomial and plain linear
+lm(hb_lm_dat, formula = scorediff ~ poly(bet.probs.diff,3)*season) -> poly_interact_mod
+plot(poly_interact_mod)
+rbind(poly = glance(poly_mod),
+      linear=glance(hb.lm),
+      poly_interactions = glance(poly_interact_mod))
 
 
-# Poisson Regression: Football-----
+# Section 11: Poisson Regression: Football-----
 
 # TBD
 
-# Logistic Regression: Tennis----
+# Section 12: Logistic Regression: Tennis----
 
 #TBD
 
