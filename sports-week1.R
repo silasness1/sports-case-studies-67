@@ -171,7 +171,22 @@ tmp %>% mutate(team3 = team1,
 
 # Visualizing (football: Goals vs regressors)-----
 
-# TBD
+scatterplotMatrix(football_train) #pre-built correlogram
+
+to_plot = c("Team", "Opponent", "Year", "GroupStage", "GDP", "MarketValue", "UefaPoints", "CLPlayers")
+
+plot_vs_goals <- function(var,df) {
+  df %>%
+    ggplot()+
+    geom_jitter(aes(x=.data[[var]], y = Goals, color = .data[[var]]),
+                height = .1)+
+    # for explanation about .data[[var]] syntax see https://dplyr.tidyverse.org/articles/programming.html#indirection
+    theme(axis.text.x = element_text(angle = -90), 
+          legend.position = "None")+
+    labs(title = paste("Handball Train:", var, "vs Goals"), 
+         caption = "Jitter applied to make discrete units visible")
+}
+map(to_plot, function(x) {plot_vs_goals(x, football_train)})
 
 # Visualizing (tennis: win vs regressors)-----
 
