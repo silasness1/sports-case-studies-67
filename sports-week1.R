@@ -9,6 +9,8 @@ library(broom)
 library(car)
 library(MASS)
 library(brms)
+library(corrplot)
+library(stringr)
 
 # README: 
 # This script is part of Case Studies at TU Dortmund -- week 1 of the sports project
@@ -176,7 +178,13 @@ tmp %>% mutate(team3 = team1,
 
 # Section 8: Visualizing (football: Goals vs regressors)-----
 
+# correlograms
 scatterplotMatrix(football_train) #pre-built correlogram
+
+football_train %>%
+  mutate(across(everything(), as.numeric)) %>%   #https://dplyr.tidyverse.org/reference/across.html
+  cor() %>%
+  corrplot() # https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html
 
 to_plot = c("Team", "Opponent", "Year", "GroupStage", "GDP", "MarketValue", "UefaPoints", "CLPlayers")
 
@@ -393,7 +401,67 @@ rbind(poly = glance(poly_mod),
 
 # Section 11: Poisson Regression: Football-----
 
-# TBD
+# CARS(fox) textbook Notes on Poisson regression
+#                  : - poisson's default link function is log(though sqrt and identity are possible)
+#                     - GLMs are typically fit by MLE using iterative weighted least squares 
+#                     - eta = log(mu(x))
+#                     - hat_eta = b_0 +... + b_k x_k 
+#                     - Variance has a dispersion factor? var(y|x) = psi*V[mu(x)]
+
+# Poisson distribution Wiki Notes: https://en.wikipedia.org/wiki/Poisson_distribution
+#           Key assumptions: 1) number of events in a fixed interval of time if occuring 
+#                              with a known constat mean rate and independently of 
+#                              time since last event
+#                            Are goals happening with a fixed known constant mean rate? 
+#                            Are goals happening independent of the last goal time? 
+
+# Initial Poisson Fit
+glm(data = football_train,
+    formula = Goals ~ Team + Opponent + Year + GroupStage + GDP
+    + MarketValue + FifaRank + UefaPoints + CLPlayers, 
+    family = poisson(),
+    ) -> pois_football
+
+summary(pois_football)
+data_frame(coef_name = names(pois_football$coefficients),
+           coef_value = pois_football$coefficients, 
+           multiplicative_event_expect = exp(pois_football$coefficients)) %>%
+  mutate(coef_category = case_when(
+    str_detect(coef_name,"Year") ~ "Year", 
+    str_detect(coef_name,"Team") ~ "Team",
+    str_detect(coef_name, "Opponent") ~ "Opponent",
+    .default = "Other"),
+    coef_name = fct_reorder(factor(coef_name), rank(coef_category) + rank(multiplicative_event_expect)/1000))%>%
+  ggplot()+
+  geom_col(aes(y = coef_name,
+               x = multiplicative_event_expect, 
+               fill = coef_category))+
+  labs(title = "Football Pois. Reg.: Interpreting a Unit increase in X_i for Expected # of Goal", 
+       x = "Multiplicative Factor: exp(beta_i)",
+       y = "Poisson Regressor Coefficient", 
+       fill = "Regressor Category if Discrete")+
+  geom_vline(xintercept = 1)
+
+# multicolinearity
+#        https://en.wikipedia.org/wiki/Variance_inflation_factor
+#        Appears GDP, MarketValue and UefaPoints might be collinear
+#        Look at Section 8: correlograms....
+#                       MarketValue & FifaRank are strongly negatively correlated
+#                       MarketValue & UefaPoints are stronly positively correlated
+#                       Market Value & CLPlayers are strongly positively correlated
+#                       FifaRank & UefaPoints are strongly negtaively correlated
+#                       FifaRank & CLPlayers are moderately negatively correlated
+#                       UefaPoints & CLPlayers are strongly positively correlated 
+vif(pois_football)
+
+# Checking model assumptions for poisson regression
+plot(pois_football)
+
+
+# Alternative model Ideas
+#     Idea 1: when maybe to use multinomial? 
+#     Idea 2: try a sqrt link or identity link instead
+#     Idea 3: 
 
 # Section 12: Logistic Regression: Tennis----
 
