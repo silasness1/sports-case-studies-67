@@ -352,7 +352,7 @@ ggplot(data = hb_lm_comparison)+
 
 # Section 8: Handball Model Improvement -----
 
-#   how might we change the model accordingly to better address this issue? 
+#   How might we change the model accordingly to better address this issue? 
 #        Idea 1: change the assumption about normally distributed errors to something with fatter tails, t()
 #        Idea 2: log-transform the y data first? 
 #               BUT we have negative response values here... so yjPower family?
