@@ -9,6 +9,7 @@ Nick, Rohit, Sriram, Silas
 - docs: contains explanations from course materials like exercise sheet 1 for the first week
 
 - presentations: please make a new subfolder for different presentations so it's cleaner when compiling latex
+    - Note: See the designated file for links to presentations hosted in google slides
 
 - renv: it's an environment managment package for R
 
