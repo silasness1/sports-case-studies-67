@@ -11,7 +11,7 @@ library(readr)
 library(dplyr)
 library(rpart)
 library(rpart.plot)
-
+library(ggplot2)
 
 # Section 1: Read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -58,12 +58,16 @@ football_train <- clean_football_types(football_train)
 # Use formula scorediff ~ bet.probs.diff + season
 handball_mod1 = rpart(data = handball_wide, scorediff ~ bet.probs.diff + season)
 rpart.plot(handball_mod1)
+summary(handball_mod1)
 
 # handball evaluating predictions
 handball_mod1_pred = predict(handball_mod1)
 handball_mod1_mae = mean(abs(handball_mod1_pred - handball_wide$scorediff))
 football_mod1_rmse = sqrt(mean((handball_mod1_pred - handball_wide$scorediff)^2))
 
+# identifying poorly predicted outcomes handball
+handball_wide$handball_mod1_pred = handball_mod1_pred
+handball_wide$residual = handball_wide$handball_mod1_pred - handball_wide$scorediff
 
 # Section 3: Fit Regresion tree to football_train----
 # Use Formula Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers
@@ -76,6 +80,9 @@ football_mod1_pred = predict(football_mod1)
 football_mod1_mae = mean(abs(football_mod1_pred - football_train$Goals))
 football_mod1_rmse = sqrt(mean((football_mod1_pred - football_train$Goals)^2))
 
+# identifying poorly predicted outcomes football
+football_train$football_mod1_pred = football_mod1_pred
+football_train$residual = football_train$football_mod1_pred - football_train$Goals
 
 # Section 4: Fit Classification Tree to tennis data----
 # Use formula win ~ rank + points + elo + age.30
@@ -85,8 +92,153 @@ tennis_mod1 = rpart(data = tennis,
                     win ~ rank + points + elo + age.30)
 rpart.plot(tennis_mod1)
 
-# tennis evaluating predictions
+# tennis evaluating predictions tennis
 tennis_mod1_pred = predict(tennis_mod1)
 tennis_mod1_pred_ratio = sum(((tennis_mod1_pred[,"win"] >= .5) & (tennis$win == "win")) | 
                              ((tennis_mod1_pred[,"win"] < .5)  & (tennis$win == "loss")) )/nrow(tennis_mod1_pred)
 
+# identifying poorly predicted outcomes football
+tennis$tennis_mod1_pred_win = tennis_mod1_pred[,"win"]
+tennis$tennis_mod1_pred_loss = tennis_mod1_pred[,"loss"]
+tennis$pred_correct = ((tennis$tennis_mod1_pred_win >= .5) & (tennis$win == "win")) | 
+  ((tennis$tennis_mod1_pred_win < .5)  & (tennis$win == "loss")) 
+
+
+# Section 5: handball Scatterplots with fitted lines----
+ggplot(data = handball_wide)+
+  geom_point(aes(x = bet.probs.diff, y = scorediff), color = "blue")+
+  geom_vline(xintercept =.0095)+
+  geom_vline(xintercept = -.46)+
+  geom_vline(xintercept =.55 )+
+  geom_vline(xintercept = .78)+
+  geom_segment(y = -4.6, x = -1, xend = -.46)+
+  geom_segment(y = -.94, x = -.46, xend = .0095)+
+  geom_segment(y = 1.5, x = .0095, xend = .55)+
+  geom_segment(y = 4.7, x = .55, xend = .78)+
+  geom_segment(y = 7.4, x = .78, xend = 1)+
+  labs(title = "Handball Mod1 Regression Tree")+
+  theme_bw()
+
+# Section 6: football scatter plots----
+# I'm too lazy to do the final 3 plots for football: 
+#        (GDP < 1.1 ) & (FifaRank >= -12) and (MarketValue >=1.1) 
+
+ggplot(data = football_train)+
+  geom_point(aes(x = MarketValue, y = Goals, color = residual))+
+  scale_color_continuous(palette = c("red", "white", "blue"))+
+  geom_vline(xintercept =-.26, color = "green")+
+  geom_vline(xintercept =1.6)+
+  geom_segment(y = 1.1, x = -3, xend = 1.6)+
+  geom_segment(y = 2.3, x = 1.6, xend = 3)+
+  geom_segment(y = .8, x = -3, xend = -.26, color = "green")+
+  geom_segment(y = 1.3, x = -.26, xend = 1.6, color = "green")+
+  labs(title = "Football Mod1 Regression Tree: Market Value")+
+  theme_bw()
+
+ggplot(data = football_train)+
+  geom_point(aes(x = MarketValue, y = Goals, color = residual))+
+  scale_color_continuous(palette = c("red", "white", "blue"))+
+  geom_vline(xintercept =1.6)+
+  geom_segment(y = 1.1, x = -3, xend = 1.6)+
+  geom_segment(y = 2.3, x = 1.6, xend = 3)+
+  labs(title = "Football Mod1 Regression Tree: Market Value")+
+  theme_bw()
+
+football_train %>%
+  filter(MarketValue >= 1.6) %>%
+ggplot()+
+  geom_point(aes(x = .data[["FifaRank"]], y = Goals, color = residual))+
+  scale_color_continuous(palette = c("red", "white", "blue"))+
+  geom_vline(xintercept =-20)+
+  geom_segment(y = 1.9, x = -100, xend = -20)+
+  geom_segment(y = 3.3, x = -20, xend = 100)+
+  labs(title = "Football Mod1 Regression Tree: FifaRank", 
+       caption = "Data only from parent node MarketValue >=1.6")+
+  theme_bw()
+
+
+# Section 7: tennis boxplots (chose histograms instead) ----
+tennis %>%
+  ggplot()+ 
+  geom_histogram(aes(x = tennis_mod1_pred_win))+
+  labs(title = "Not Much of a Distribution of Win Probabilites for Tennis Mod1", 
+       subtitle = "cp was set too high so tree growth prevented")
+
+tennis %>%
+  ggplot()+ 
+  geom_histogram(aes(x = tennis_mod1_pred_loss))+
+  labs(title = "Not Much of a Distribution of Losing Probabilites for Tennis Mod1", 
+       subtitle = "cp was set too high so tree growth prevented")
+
+# Section 8: Reexamine the controls for Tennis regression----
+#         - My fit only ever had 2 predicted probabilities (1 split based on elo) 
+#         - Think about what error measure is used for classification (if anova -> R^2)
+#         - (Need help!) Understanding what CP actually represents in classification...
+#                    - In dcoumentation found R_cp(T) = R(T) + cp*|T|*R(T_1) where T is tree T_1 is tree
+#                       without splits, R is [empirical] risk  and R_cp is what the splitting criteria is based off of
+#                    - Somehow brier/gini probably has something to do with explanation (and R^2)
+tennis_mod1$control$cp # the setting was .01
+tennis_mod1$cptable # the first split had a CP of .01 so no more were permitted
+
+# Fitting a model with lower cp for tennis
+#        Wow thats a lot of splits!
+tennis_mod2 = rpart(data = tennis, 
+                    method = "class",
+                    win ~ rank + points + elo + age.30, 
+                    control = list(cp = .001))
+rpart.plot(tennis_mod2)
+summary(tennis_mod2)
+
+# way more complex, but Veeeeeery little gain (Mod2: 76.5% vs Mod1: 75%)
+tennis_mod2_pred = predict(tennis_mod2)
+tennis_mod2_pred_ratio = sum(((tennis_mod2_pred[,"win"] >= .5) & (tennis$win == "win")) | 
+                               ((tennis_mod2_pred[,"win"] < .5)  & (tennis$win == "loss")) )/nrow(tennis_mod2_pred)
+
+
+# Section 9: Importance of Predictors----
+#     https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html
+#           "Impurity-based feature importances can be misleading for high cardinality features (many unique values)."
+#     https://en.wikipedia.org/wiki/Feature_Importance
+# Impurity based feature importances: how much feature improves tree splits (reduction in variance of nodes)
+# Permutation based feature importance: something about disrupting information & seeing loss in prediction
+#      Lets hope impurity based feature importance makes sense (maybe not for handball but at least for football & tennis)
+
+tennis_mod1$variable.importance
+football_mod1$variable.importance
+handball_mod1$variable.importance # misleadingly large (so skip for now!)
+
+
+# Section 10: football mod1 train vs test errors----
+#     Conclusion: training mae - .778 test mae - .7836
+#                 training rmse - .97 test rmse - 1.048
+#     All we can really say is that we're not crazily overfitting... otherwise test error would be way higher than training error
+#     Don't think we can distinguish between underfit & reasonable (though gut says reasonable considering lower bound of .5)
+football_test$GroupStage <-  as.numeric(football_test$GroupStage)
+football_mod1_test_pred <- predict(football_mod1, newdata = football_test)
+football_mod1_test_mae = mean(abs(football_test$Goals - football_mod1_test_pred))
+football_mod1_test_rmse = sqrt(mean((football_test$Goals - football_mod1_test_pred)^2))
+
+# Section 10: Building a pipeline for Hyper Parameter grid search, test & train----
+#    Possibly using  map_dfr, map, pmap
+#    Plan: 1) to fit a model given the specific parameters
+ctrl_params <- expand.grid(cp = c(0, .001, .005, .01, .02, .05), 
+            minsplit = c(2, 5, 10, 20, 40), 
+            maxdepth = c(1,2, 3, 5, 6, 10, 15))
+
+calculate_mae <- function(rpart_model){
+  
+}
+fit_given_params <- function(params, train, formula) {
+  rpart(data = train, 
+        formula = formula, 
+        method = method, 
+        control = list(params))
+  
+}
+build_rpart_comparisons <- function(train, test, formula, method, eval_func, ctrl_param_df) {
+  map()
+}
+
+# Section 11: Handball Grid Search Over Hyper Parameters-----
+# Section 12: Football Grid Search Over Hyper Parameters-----
+# Section 13: Tennis Grid Search Over Hyper Parameters----
