@@ -21,7 +21,16 @@ handball_wide = read_csv("raw-data/handball_wide.csv")
 tennis = read_csv("raw-data/SlamsData.csv")
 
 # quickly cleaning data if necessary
-tennis$win <- factor(x = tennis$win, levels = c("0", "1"), labels = c("loss", "win"))
+tennis$win <- factor(x = tennis$win, levels = c(0,1), labels = c("loss", "win"), ordered = T)
+str(tennis)
+clean_football_types <- function(df) {
+  df  %>%
+    mutate(across(c(Team, Opponent, GroupStage), as.factor)) %>%
+    mutate(across(c(Goals, FifaRank, UefaPoints), as.integer))
+}
+
+football_test <- clean_football_types(football_test)
+football_train <- clean_football_types(football_train)
 
 # Some online resources for getting started with `rpart`
 # (didn't use) https://bookdown.org/tpinto_home/Beyond-Additivity/regression-and-classification-trees.html
@@ -50,11 +59,23 @@ tennis$win <- factor(x = tennis$win, levels = c("0", "1"), labels = c("loss", "w
 handball_mod1 = rpart(data = handball_wide, scorediff ~ bet.probs.diff + season)
 rpart.plot(handball_mod1)
 
+# handball evaluating predictions
+handball_mod1_pred = predict(handball_mod1)
+handball_mod1_mae = mean(abs(handball_mod1_pred - handball_wide$scorediff))
+football_mod1_rmse = sqrt(mean((handball_mod1_pred - handball_wide$scorediff)^2))
+
+
 # Section 3: Fit Regresion tree to football_train----
 # Use Formula Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers
 football_mod1 = rpart(data = football_train, 
                       Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers)
 rpart.plot(football_mod1)
+
+# football evaluating predictions
+football_mod1_pred = predict(football_mod1)
+football_mod1_mae = mean(abs(football_mod1_pred - football_train$Goals))
+football_mod1_rmse = sqrt(mean((football_mod1_pred - football_train$Goals)^2))
+
 
 # Section 4: Fit Classification Tree to tennis data----
 # Use formula win ~ rank + points + elo + age.30
@@ -63,3 +84,9 @@ tennis_mod1 = rpart(data = tennis,
                     method = "class",
                     win ~ rank + points + elo + age.30)
 rpart.plot(tennis_mod1)
+
+# tennis evaluating predictions
+tennis_mod1_pred = predict(tennis_mod1)
+tennis_mod1_pred_ratio = sum(((tennis_mod1_pred[,"win"] >= .5) & (tennis$win == "win")) | 
+                             ((tennis_mod1_pred[,"win"] < .5)  & (tennis$win == "loss")) )/nrow(tennis_mod1_pred)
+
