@@ -12,6 +12,7 @@ library(dplyr)
 library(rpart)
 library(rpart.plot)
 library(ggplot2)
+library(purrr)
 
 # Section 1: Read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -213,7 +214,6 @@ handball_mod1$variable.importance # misleadingly large (so skip for now!)
 #                 training rmse - .97 test rmse - 1.048
 #     All we can really say is that we're not crazily overfitting... otherwise test error would be way higher than training error
 #     Don't think we can distinguish between underfit & reasonable (though gut says reasonable considering lower bound of .5)
-football_test$GroupStage <-  as.numeric(football_test$GroupStage)
 football_mod1_test_pred <- predict(football_mod1, newdata = football_test)
 football_mod1_test_mae = mean(abs(football_test$Goals - football_mod1_test_pred))
 football_mod1_test_rmse = sqrt(mean((football_test$Goals - football_mod1_test_pred)^2))
@@ -221,24 +221,243 @@ football_mod1_test_rmse = sqrt(mean((football_test$Goals - football_mod1_test_pr
 # Section 10: Building a pipeline for Hyper Parameter grid search, test & train----
 #    Possibly using  map_dfr, map, pmap
 #    Plan: 1) to fit a model given the specific parameters
+#    https://www.r-bloggers.com/2024/10/how-to-iterate-over-rows-of-data-frame-in-r-a-complete-guide-for-beginners/
+#    Note about pmap:  Arguments will be supply by position if unnamed, and by name if named.
+
+# Create Test and Train datasets
+tennis_train = tennis %>%
+  filter(year <= 2017)
+tennis_test = tennis %>%
+  filter(year > 2017)
+handball_train = handball_wide %>%
+  filter(season != max(season))
+handball_test = handball_wide %>%
+  filter(season == max(season))
+
+
 ctrl_params <- expand.grid(cp = c(0, .001, .005, .01, .02, .05), 
             minsplit = c(2, 5, 10, 20, 40), 
             maxdepth = c(1,2, 3, 5, 6, 10, 15))
 
-calculate_mae <- function(rpart_model){
-  
+# FOR TESTING ON SMALLER # OF MODELS
+# ctrl_params_small <- expand.grid(cp = c(0, .001), 
+#                             minsplit = c(2, 5), 
+#                             maxdepth = c(1,2))
+
+# Getting pmap to run multiple rpart models (working!)
+# pmap(ctrl_params_small, function(...) {rpart(data = tennis_train, 
+#                                             formula = win ~ rank + points + elo + age.30,
+#                                             method = "class", 
+#                                             ...)})-> check
+
+
+# Helper Functions to Evaluate Error
+calculate_mae <- function(actual, prediction){
+  return (mean(abs(actual - prediction)))
 }
-fit_given_params <- function(params, train, formula) {
-  rpart(data = train, 
-        formula = formula, 
-        method = method, 
-        control = list(params))
-  
-}
-build_rpart_comparisons <- function(train, test, formula, method, eval_func, ctrl_param_df) {
-  map()
+calculate_rmse <- function(actual, prediction){
+  return (sqrt(mean((actual - prediction)^2)))
 }
 
-# Section 11: Handball Grid Search Over Hyper Parameters-----
-# Section 12: Football Grid Search Over Hyper Parameters-----
-# Section 13: Tennis Grid Search Over Hyper Parameters----
+tennis_ratio_wrongly_pred <- function(actual, pred_win, pred_loss) {
+  # Example: 
+  #       tennis_ratio_wrongly_pred(actual = tennis$win, pred_win = tennis_mod2_pred[,"win"],
+  #                                 pred_loss = tennis_mod2_pred[,"loss"])
+  # Note: assumes that pred_win & pred_loss are consistent with each other....!!!
+  #     E.g. pred_win = .6 -> pred_loss = .7 not allowed
+  actual_win <- actual == "win"
+  actual_loss <- actual == "loss"
+  pred_win_gt_half = pred_win >= .5
+  pred_loss_gt_half = pred_loss >= .5
+  
+  incorrect_pred = (actual_win & pred_loss_gt_half) | (actual_loss & pred_win_gt_half)
+  
+  return(sum(incorrect_pred)/length(actual_win))
+}
+
+
+# Section 11: Tennis Grid Search Over Hyper Parameters----
+
+tennis_call_pmap_on_me <- function(...) {
+  
+  # make the tree
+  tree = rpart(data = tennis_train, 
+               formula = win ~ rank + points + elo + age.30,
+               method = "class", 
+               maxsurrogate = 0, # wondering if this is consequential...(tried with 2--no diff)
+               maxcompete = 0,
+                     ...)
+  
+  #get training error
+  train_pred = predict(tree, newdata = tennis_train)
+  train_error = tennis_ratio_wrongly_pred(actual = tennis_train$win, 
+                                          pred_win = train_pred[,"win"], 
+                                          pred_loss = train_pred[,"loss"])
+  # get test error
+  test_pred = predict(tree, newdata = tennis_test)
+  test_error = tennis_ratio_wrongly_pred(actual = tennis_test$win, 
+                                         pred_win = test_pred[,"win"], 
+                                         pred_loss = test_pred[,"loss"])
+  
+  # Include splits in the output df
+  splits_df = data_frame(var = rownames(tree$splits),
+                         count = tree$splits[,"count"],
+                         ncat = tree$splits[,"ncat"],
+                         index = tree$splits[,"index"])
+  splits_df %>%
+    mutate(summary_string = paste("var:", var,
+                                  "count:", count,
+                                  "ncat:", ncat,
+                                  "index:", round(index,3))) -> splits_df
+  splits_str = paste(splits_df$summary_string, collapse = "\n")
+  
+  # Create output df 
+  df = data_frame(..., 
+                  train_error=train_error, 
+                  test_error=test_error,
+                  nsplits=nrow(splits_df),
+                  splits_str=splits_str)
+  return(df)
+}
+
+# Actually running the grid search
+pmap_dfr(ctrl_params,tennis_call_pmap_on_me)-> tennis_grid_search
+
+
+tennis_mod_winner = rpart(data = tennis_train, 
+             formula = win ~ rank + points + elo + age.30,
+             method = "class", 
+             maxsurrogate = 0, 
+             maxcompete = 0,
+             cp = 0, 
+             minsplit = 2,
+             maxdepth = 1)
+rpart.plot(tennis_mod_winner)
+
+
+# Section 12: Handball Grid Search Over Hyper Parameters-----
+handball_call_pmap_on_me <- function(...) {
+  
+  # make the tree
+  tree = rpart(data = handball_train, 
+               formula = scorediff ~ bet.probs.diff + season,
+               method = "anova", 
+               maxsurrogate = 0, # wondering if this is consequential...(tried with 2--no diff)
+               maxcompete = 0,
+               ...)
+  
+  #get training error
+  train_pred = predict(tree, newdata = handball_train)
+  train_mae = calculate_mae(actual = handball_train$scorediff, 
+                            prediction = train_pred)
+  train_rmse = calculate_rmse(actual = handball_train$scorediff,
+                              prediction = train_pred)
+  
+  # get test error
+  test_pred = predict(tree, newdata = handball_test)
+  test_mae = calculate_mae(actual = handball_test$scorediff, 
+                            prediction = test_pred)
+  test_rmse = calculate_rmse(actual = handball_test$scorediff,
+                              prediction = test_pred)
+  
+  # Include splits in the output df
+  splits_df = data_frame(var = rownames(tree$splits),
+                         count = tree$splits[,"count"],
+                         ncat = tree$splits[,"ncat"],
+             index = tree$splits[,"index"])
+  splits_df %>%
+    mutate(summary_string = paste("var:", var,
+                                  "count:", count,
+                                  "ncat:", ncat,
+                                  "index:", round(index,3))) -> splits_df
+  splits_str = paste(splits_df$summary_string, collapse = "\n")
+  
+  # Create output df 
+  df = data_frame(..., 
+                  train_mae=train_mae, 
+                  train_rmse=train_rmse,
+                  test_mae=test_mae,
+                  test_rmse=test_rmse,
+                  nsplits=nrow(splits_df),
+                  splits_str=splits_str)
+  return(df)
+}
+
+# Actually running the grid search
+pmap_dfr(ctrl_params,handball_call_pmap_on_me)-> handball_grid_search
+
+# winning handball model (min test error)
+handball_mod_win = rpart(data = handball_train, 
+             formula = scorediff ~ bet.probs.diff + season,
+             method = "anova", 
+             maxsurrogate = 0, # wondering if this is consequential...(tried with 2--no diff)
+             maxcompete = 0,
+             cp = 0,
+             minsplit = 40,
+             maxdepth = 5)
+rpart.plot(handball_mod_win)
+
+
+# Section 13: Football Grid Search Over Hyper Parameters-----
+football_call_pmap_on_me <- function(...) {
+  
+  # make the tree
+  tree = rpart(data = football_train, 
+               formula = Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers,
+               method = "anova", 
+               maxsurrogate = 0, # doesn't appear to make a difference.
+               maxcompete = 0,
+               ...)
+  
+  #get training error
+  train_pred = predict(tree, newdata = football_train)
+  train_mae = calculate_mae(actual = football_train$Goals, 
+                            prediction = train_pred)
+  train_rmse = calculate_rmse(actual = football_train$Goals,
+                              prediction = train_pred)
+  
+  # get test error
+  test_pred = predict(tree, newdata = football_test)
+  test_mae = calculate_mae(actual = football_test$Goals, 
+                           prediction = test_pred)
+  test_rmse = calculate_rmse(actual = football_test$Goals,
+                             prediction = test_pred)
+  
+  # Include splits in the output df
+  splits_df = data_frame(var = rownames(tree$splits),
+                         count = tree$splits[,"count"],
+                         ncat = tree$splits[,"ncat"],
+                         index = tree$splits[,"index"])
+  splits_df %>%
+    filter(count != 0)%>% # removes surrogates from nsplits and splits_str!
+    mutate(summary_string = paste("var:", var,
+                                  "count:", count,
+                                  "ncat:", ncat,
+                                  "index:", round(index,3))) -> splits_df
+  splits_str = paste(splits_df$summary_string, collapse = "\n")
+  
+  # Create output df 
+  df = data_frame(..., 
+                  train_mae=train_mae, 
+                  train_rmse=train_rmse,
+                  test_mae=test_mae,
+                  test_rmse=test_rmse,
+                  nsplits=nrow(splits_df),
+                  splits_str=splits_str)
+  return(df)
+}
+
+# football actually running the grid search
+pmap_dfr(ctrl_params,football_call_pmap_on_me)-> football_grid_search
+
+# football model winner
+football_mod_winner = rpart(data = football_train, 
+                            formula = Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers,
+                            method = "anova",
+                            maxsurrogate = 0, # doesn't appear to make a difference.
+                            maxcompete = 0,
+                            cp = 0, 
+                            minsplit = 5,
+                            maxdepth = 3)
+rpart.plot(football_mod_winner)
+
