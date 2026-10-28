@@ -14,6 +14,7 @@ library(rpart)
 library(rpart.plot)
 library(ggplot2)
 library(purrr)
+library(knitr)
 
 # Section 1: Read in the csv----
 football_test = read_csv("raw-data/EuroTest.csv")
@@ -325,6 +326,7 @@ tennis_call_pmap_on_me <- function(...) {
 pmap_dfr(ctrl_params,tennis_call_pmap_on_me)-> tennis_grid_search
 
 
+# Tennis winner
 tennis_mod_winner = rpart(data = tennis_train, 
              formula = win ~ rank + points + elo + age.30,
              method = "class", 
@@ -333,8 +335,39 @@ tennis_mod_winner = rpart(data = tennis_train,
              cp = 0, 
              minsplit = 2,
              maxdepth = 1)
-rpart.plot(tennis_mod_winner)
 
+# rpart plot tennis winner
+png(file="presentations/sports-week-2/plots/tennis_mod_winner_rpart_plot.png",
+    width=300, height=350)
+rpart.plot(tennis_mod_winner)
+dev.off()
+
+# scatterplot splits diagram tennis winner
+tennis_modW_pred_test = predict(tennis_mod_winner, newdata=tennis_test)
+tennis_test$winner_pred_win = tennis_modW_pred_test[,"win"]
+tennis_test$winner_pred_loss = tennis_modW_pred_test[,"loss"]
+tennis_test$correct_pred = (tennis_test$winner_pred_win >= .5  & tennis_test$win == "win") | 
+                           (tennis_test$winner_pred_loss >= .5 & tennis_test$win == "loss")
+
+ggplot(data = tennis_test)+
+  geom_jitter(aes(x = elo, y = win,alpha = .5, color = correct_pred), height = .15, )+
+  geom_vline(xintercept =22.41)+
+  scale_color_discrete(palette = c("red", "darkgreen"))+
+  labs(title = "Best Performing Tennis Tree Regression", 
+       x = "Player Elo Difference",
+       y = "Actual Match Outcome",
+       color = "Correct Prediction",
+       caption = "Using cp = 0, minsplit = 2, maxdepth = 1\nTest Ratio of False Predictions: 27.7%")+
+  guides(alpha = "none")+
+  theme_bw()+
+  theme(legend.position = "inside",
+        legend.position.inside = c(.9,.125),
+        legend.background = element_rect(color = "grey9",
+                                         linewidth = .5))-> tennis_winner_viz
+
+tennis_winner_viz
+ggsave(filename = "presentations/sports-week-2/plots/tennis_best_tree_scatter.png",
+       plot = tennis_winner_viz)
 
 # Section 13: Handball Grid Search Over Hyper Parameters-----
 handball_call_pmap_on_me <- function(...) {
@@ -388,16 +421,21 @@ handball_call_pmap_on_me <- function(...) {
 pmap_dfr(ctrl_params,handball_call_pmap_on_me)-> handball_grid_search
 
 # winning handball model (min test error)
-handball_mod_win = rpart(data = handball_train, 
+#      cp = 0, minsplit = 40, maxdepth = 5 outperformed but used 25 splits for marginal gain
+handball_mod_compromise = rpart(data = handball_train, 
              formula = scorediff ~ bet.probs.diff + season,
              method = "anova", 
              maxsurrogate = 0, # wondering if this is consequential...(tried with 2--no diff)
              maxcompete = 0,
              cp = 0,
-             minsplit = 40,
-             maxdepth = 5)
-rpart.plot(handball_mod_win)
+             minsplit = 2,
+             maxdepth = 3)
 
+# print handball compromise rpart for presentation
+png(file="presentations/sports-week-2/plots/handball-compromise-rpart-plot.png",
+    width=350, height=350)
+rpart.plot(handball_mod_compromise)
+dev.off()
 
 # Section 14: Football Grid Search Over Hyper Parameters-----
 football_call_pmap_on_me <- function(...) {
@@ -460,7 +498,24 @@ football_mod_winner = rpart(data = football_train,
                             cp = 0, 
                             minsplit = 5,
                             maxdepth = 3)
+football_mod_best_single = rpart(data = football_train, 
+                            formula = Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers,
+                            method = "anova",
+                            maxsurrogate = 0, 
+                            maxcompete = 0,
+                            cp = 0, 
+                            minsplit = 2,
+                            maxdepth = 1)
+
+png(file="presentations/sports-week-2/plots/football-best-rpart-plot.png",
+    width=350, height=200)
 rpart.plot(football_mod_winner)
+dev.off()
+
+png(file="presentations/sports-week-2/plots/football-one-split-rpart-plot.png",
+    width=350, height=150)
+rpart.plot(football_mod_best_single)
+dev.off()
 
 
 # Section 15: Visualizing Overfitting Tennis----
@@ -493,7 +548,13 @@ ggplot()+
        y = "% of matches falsely predicted",
        color = "Train vs Test",
        caption = "Taking control parameters cp ==0 & minsplit ==2 to be fixed")+
-  theme_bw()
+  theme_bw()+
+  theme(legend.position = "inside", 
+        legend.position.inside = c(.1,.2),
+        legend.background = element_rect(color = "grey9", linewidth = .5)) -> tennis_overfit_complexity
+tennis_overfit_complexity
+ggsave(plot = tennis_overfit_complexity, 
+       filename = "presentations/sports-week-2/plots/tennis_overfit_complexity.png")
 
 # FACET WRAP VERSION!
 tennis_grid_search %>%
@@ -525,11 +586,12 @@ tennis_mod_compare %>%
 
 # Section 16: Visualizing Overfitting Handball----
 
-# worst overfit
+# handball worst overfit
 handball_grid_search %>%
   mutate(diff_test_train_mae = abs(test_mae - train_mae), 
          diff_test_train_rmse = abs(test_rmse - train_rmse)) -> handball_grid_search
 
+# handball facet wrap overfit with complexity
 handball_grid_search %>%
   pivot_longer(
     cols = starts_with(c("train_", "test_")),
@@ -539,15 +601,22 @@ handball_grid_search %>%
   separate_wider_delim(test_vs_train, 
                        delim = "_",
                        names = c("test_or_train", "error_measure_type")) %>%
-  filter(error_measure_type == "mae") %>%
+  filter(error_measure_type == "mae",
+         cp < .01) %>%
   ggplot()+
   geom_line(aes(y = error_measure, x = maxdepth, color = test_or_train))+
-  facet_grid(rows = vars(cp), cols = vars(minsplit))+
+  facet_grid(rows = vars(cp), cols = vars(minsplit), labeller = label_both)+
   labs(title = "Handball: Training vs Test Errors with Increasing Complexity", 
        y = "Mean Absolute Error",
-       color = "Train vs Test",
-       caption = "Facet columns: minsplit \nFacet rows: cp")+
-  theme_bw()
+       color = "Train vs Test")+
+  theme_bw()+
+  theme(legend.position = "inside",
+        legend.position.inside = c(.1,.1),
+        legend.background = element_rect(color = "grey9",linewidth = .2))-> handball_overfit_complexity_facet
+
+handball_overfit_complexity_facet
+ggsave(plot = handball_overfit_complexity_facet, 
+       filename = "presentations/sports-week-2/plots/handball-overfit-complexity-facet.png")
 
 # handball selected model comparison
 handball_grid_search %>%
@@ -569,7 +638,6 @@ football_grid_search %>%
   mutate(diff_test_train_mae = abs(test_mae - train_mae), 
          diff_test_train_rmse = abs(test_rmse - train_rmse)) -> football_grid_search
 
-
 football_grid_search %>%
   pivot_longer(
     cols = starts_with(c("train_", "test_")),
@@ -579,15 +647,23 @@ football_grid_search %>%
   separate_wider_delim(test_vs_train, 
                        delim = "_",
                        names = c("test_or_train", "error_measure_type")) %>%
-  filter(error_measure_type == "mae") %>%
+  filter(error_measure_type == "mae",
+         minsplit %in% c(2,10,40),
+         cp %in% c(0,.005,.02,.05)) %>%
   ggplot()+
   geom_line(aes(y = error_measure, x = maxdepth, color = test_or_train))+
-  facet_grid(rows = vars(cp), cols = vars(minsplit))+
+  facet_grid(rows = vars(cp), cols = vars(minsplit), labeller = label_both)+
   labs(title = "Football: Training vs Test Errors with Increasing Complexity", 
        y = "Mean Absolute Error",
-       color = "Train vs Test",
-       caption = "Facet columns: minsplit \nFacet rows: cp")+
-  theme_bw()
+       color = "Train vs Test")+
+  theme_bw()+
+  theme(legend.position = "inside",
+        legend.position.inside = c(.9,.1),
+        legend.background = element_rect(color = "grey9",linewidth = .2)) -> football_complexity_overfit_facet
+football_complexity_overfit_facet
+ggsave(plot = football_complexity_overfit_facet, 
+       filename = "presentations/sports-week-2/plots/football-overfit-complexity-facet.png")
+
 
 # handpicked model comparison
 football_grid_search %>%
@@ -601,3 +677,26 @@ football_mod_comparison$comment = c("best test mae",
                                     "a single split model does well",
                                     "worst overfit in mae & rmse")
 football_mod_comparison %>% relocate(comment) -> football_mod_comparison
+
+# Section 18: Output for presenations----
+
+# tennis comparison table
+tennis_mod_compare %>%
+  select(-starts_with("diff_test"),
+         -splits_str) %>%
+kable(format = "latex", 
+      digits = 3,)
+
+# handball comparison table
+handball_mod_comparison %>%
+  select(-starts_with("diff_test"),
+         -splits_str) %>%
+  kable(format = "latex", 
+        digits = 3,)
+
+# football comparison table
+football_mod_comparison %>%
+  select(-starts_with("diff_test"),
+         -splits_str) %>%
+  kable(format = "latex", 
+        digits = 3,)
