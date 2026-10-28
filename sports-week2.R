@@ -6,8 +6,9 @@
 # And learning about overfitting, Regression Trees, and Tuning
 
 
-# Load Libraries-----
+# Section 0: Load Libraries-----
 library(readr)
+library(tidyr)
 library(dplyr)
 library(rpart)
 library(rpart.plot)
@@ -218,7 +219,7 @@ football_mod1_test_pred <- predict(football_mod1, newdata = football_test)
 football_mod1_test_mae = mean(abs(football_test$Goals - football_mod1_test_pred))
 football_mod1_test_rmse = sqrt(mean((football_test$Goals - football_mod1_test_pred)^2))
 
-# Section 10: Building a pipeline for Hyper Parameter grid search, test & train----
+# Section 11: Building a pipeline for Hyper Parameter grid search, test & train----
 #    Possibly using  map_dfr, map, pmap
 #    Plan: 1) to fit a model given the specific parameters
 #    https://www.r-bloggers.com/2024/10/how-to-iterate-over-rows-of-data-frame-in-r-a-complete-guide-for-beginners/
@@ -276,7 +277,7 @@ tennis_ratio_wrongly_pred <- function(actual, pred_win, pred_loss) {
 }
 
 
-# Section 11: Tennis Grid Search Over Hyper Parameters----
+# Section 12: Tennis Grid Search Over Hyper Parameters----
 
 tennis_call_pmap_on_me <- function(...) {
   
@@ -335,7 +336,7 @@ tennis_mod_winner = rpart(data = tennis_train,
 rpart.plot(tennis_mod_winner)
 
 
-# Section 12: Handball Grid Search Over Hyper Parameters-----
+# Section 13: Handball Grid Search Over Hyper Parameters-----
 handball_call_pmap_on_me <- function(...) {
   
   # make the tree
@@ -398,7 +399,7 @@ handball_mod_win = rpart(data = handball_train,
 rpart.plot(handball_mod_win)
 
 
-# Section 13: Football Grid Search Over Hyper Parameters-----
+# Section 14: Football Grid Search Over Hyper Parameters-----
 football_call_pmap_on_me <- function(...) {
   
   # make the tree
@@ -461,3 +462,142 @@ football_mod_winner = rpart(data = football_train,
                             maxdepth = 3)
 rpart.plot(football_mod_winner)
 
+
+# Section 15: Visualizing Overfitting Tennis----
+
+#       Worst Overfit (biggest diff between test & train error):
+#              cp = 0, minsplit = 2, maxdepth = 15 resulted in 434 splits!!!
+tennis_grid_search %>%
+  mutate(diff_test_train = abs(train_error-test_error)) -> tennis_grid_search
+tennis_mod_worst_overfit = rpart(data = tennis_train, 
+                                        formula = win ~ rank + points + elo + age.30,
+                                        method = "class", 
+                                        maxsurrogate = 0,
+                                        maxcompete = 0,
+                                 cp = 0, 
+                                 minsplit=2, 
+                                 maxdepth=15)
+# rpart.plot(tennis_mod_worst_overfit) # barely even runs...
+
+# Plotting tennis overfitting as a function of increasing complexity
+tennis_grid_search %>%
+  filter(cp ==0 & minsplit ==2) %>%
+  pivot_longer(
+    c(train_error, test_error),
+    names_to = "test_or_train",
+    values_to = "percent_false_preds"
+  ) %>%
+ggplot()+
+  geom_line(aes(y = percent_false_preds, x = maxdepth, color = test_or_train))+
+  labs(title = "Tennis: Training vs Test Errors with Increasing Complexity", 
+       y = "% of matches falsely predicted",
+       color = "Train vs Test",
+       caption = "Taking control parameters cp ==0 & minsplit ==2 to be fixed")+
+  theme_bw()
+
+# FACET WRAP VERSION!
+tennis_grid_search %>%
+  pivot_longer(
+    c(train_error, test_error),
+    names_to = "test_or_train",
+    values_to = "percent_false_preds"
+  ) %>%
+  ggplot()+
+  geom_line(aes(y = percent_false_preds, x = maxdepth, color = test_or_train))+
+  facet_grid(rows = vars(cp), cols = vars(minsplit))+
+  labs(title = "Tennis: Training vs Test Errors with Increasing Complexity", 
+       y = "% of matches falsely predicted",
+       color = "Train vs Test",
+       caption = "Facet columns: minsplit \nFacet rows: cp")+
+theme_bw()
+
+
+# tennis selected model comparison
+tennis_grid_search %>%
+  slice(c(1, # best error
+          181, #overfit
+          116 # when we first start getting past a one split model
+          ))  -> tennis_mod_compare
+tennis_mod_compare$comment = c("least test error", "worst overfit", "reasonable performer using more than one split")
+tennis_mod_compare %>% 
+  arrange(test_error) %>%
+  relocate(comment)-> tennis_mod_compare
+
+# Section 16: Visualizing Overfitting Handball----
+
+# worst overfit
+handball_grid_search %>%
+  mutate(diff_test_train_mae = abs(test_mae - train_mae), 
+         diff_test_train_rmse = abs(test_rmse - train_rmse)) -> handball_grid_search
+
+handball_grid_search %>%
+  pivot_longer(
+    cols = starts_with(c("train_", "test_")),
+    names_to = "test_vs_train",
+    values_to = "error_measure"
+  ) %>%
+  separate_wider_delim(test_vs_train, 
+                       delim = "_",
+                       names = c("test_or_train", "error_measure_type")) %>%
+  filter(error_measure_type == "mae") %>%
+  ggplot()+
+  geom_line(aes(y = error_measure, x = maxdepth, color = test_or_train))+
+  facet_grid(rows = vars(cp), cols = vars(minsplit))+
+  labs(title = "Handball: Training vs Test Errors with Increasing Complexity", 
+       y = "Mean Absolute Error",
+       color = "Train vs Test",
+       caption = "Facet columns: minsplit \nFacet rows: cp")+
+  theme_bw()
+
+# handball selected model comparison
+handball_grid_search %>%
+  slice(c(
+          61,  # compromise
+          115, #best test mae
+          181 #overfit
+          )) %>%
+  arrange(test_mae)-> handball_mod_comparison
+handball_mod_comparison$comment = c("best test mae", 
+                                    "compromise btw number of splits & test mae",
+                                    "worst overfit in mae & rmse")
+handball_mod_comparison %>% relocate(comment) -> handball_mod_comparison
+
+# Section 17: Visualizing Overfitting Football----
+
+#finding worst
+football_grid_search %>%
+  mutate(diff_test_train_mae = abs(test_mae - train_mae), 
+         diff_test_train_rmse = abs(test_rmse - train_rmse)) -> football_grid_search
+
+
+football_grid_search %>%
+  pivot_longer(
+    cols = starts_with(c("train_", "test_")),
+    names_to = "test_vs_train",
+    values_to = "error_measure"
+  ) %>%
+  separate_wider_delim(test_vs_train, 
+                       delim = "_",
+                       names = c("test_or_train", "error_measure_type")) %>%
+  filter(error_measure_type == "mae") %>%
+  ggplot()+
+  geom_line(aes(y = error_measure, x = maxdepth, color = test_or_train))+
+  facet_grid(rows = vars(cp), cols = vars(minsplit))+
+  labs(title = "Football: Training vs Test Errors with Increasing Complexity", 
+       y = "Mean Absolute Error",
+       color = "Train vs Test",
+       caption = "Facet columns: minsplit \nFacet rows: cp")+
+  theme_bw()
+
+# handpicked model comparison
+football_grid_search %>%
+  slice(c(
+    67, # lowest train mae
+    1, # a single split model does quite well!!
+    181 # worst overfit
+  )) %>%
+  arrange(test_mae)-> football_mod_comparison
+football_mod_comparison$comment = c("best test mae", 
+                                    "a single split model does well",
+                                    "worst overfit in mae & rmse")
+football_mod_comparison %>% relocate(comment) -> football_mod_comparison
