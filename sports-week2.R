@@ -129,18 +129,6 @@ ggplot(data = handball_wide)+
 ggplot(data = football_train)+
   geom_point(aes(x = MarketValue, y = Goals, color = residual))+
   scale_color_continuous(palette = c("red", "white", "blue"))+
-  geom_vline(xintercept =-.26, color = "green")+
-  geom_vline(xintercept =1.6)+
-  geom_segment(y = 1.1, x = -3, xend = 1.6)+
-  geom_segment(y = 2.3, x = 1.6, xend = 3)+
-  geom_segment(y = .8, x = -3, xend = -.26, color = "green")+
-  geom_segment(y = 1.3, x = -.26, xend = 1.6, color = "green")+
-  labs(title = "Football Mod1 Regression Tree: Market Value")+
-  theme_bw()
-
-ggplot(data = football_train)+
-  geom_point(aes(x = MarketValue, y = Goals, color = residual))+
-  scale_color_continuous(palette = c("red", "white", "blue"))+
   geom_vline(xintercept =1.6)+
   geom_segment(y = 1.1, x = -3, xend = 1.6)+
   geom_segment(y = 2.3, x = 1.6, xend = 3)+
@@ -517,6 +505,32 @@ png(file="presentations/sports-week-2/plots/football-one-split-rpart-plot.png",
 rpart.plot(football_mod_best_single)
 dev.off()
 
+# for best football model link to test data
+football_test$mod_single_pred = predict(football_mod_best_single, newdata = football_test)
+football_test$residuals = football_test$mod_single_pred - football_test$Goals
+ggplot(data = football_test)+
+  geom_jitter(aes(x = MarketValue, y = Goals, color = residuals),height = .05, width = 0, size = 3)+
+  scale_color_continuous(palette = c("red", "grey85", "blue"))+
+  geom_vline(xintercept =-.26, color = "darkgreen", linetype = "dashed", linewidth = 1)+
+  geom_vline(xintercept =1.6, linewidth = 1)+
+  geom_segment(y = 1.1, x = -3.2, xend = 1.6, linewidth = 1)+
+  geom_segment(y = 2.3, x = 1.6, xend = 3.2, linewidth = 1)+
+  geom_segment(y = .8, x = -3.2, xend = -.26, color = "darkgreen", linewidth = 1, linetype = "dashed")+
+  geom_segment(y = 1.3, x = -.26, xend = 1.6, color = "darkgreen", linewidth = 1, linetype = "dashed")+
+  labs(title = "Football Regression Tree: Team Market Value Splits",
+       color = "Goal Prediction Residual",
+       y = "Actual Goals",
+       caption= "Green lines indicate a secondary split of left child node.
+       Horizontal lines represent predicted values.
+       Residuals: using one-split-model on test set cp = 0,minsplit = 2,maxdepth = 1.")+
+  theme_bw()+
+  guides(alpha = "none", size = "none")+
+  theme(legend.position = "inside",
+        legend.position.inside = c(.15,.8),
+        legend.background = element_rect(color = "black")) -> football_splits_illustration
+football_splits_illustration
+ggsave(filename = "presentations/sports-week-2/plots/football-splits-marketvalue.png",
+       plot =football_splits_illustration)
 
 # Section 15: Visualizing Overfitting Tennis----
 
