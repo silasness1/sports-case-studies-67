@@ -10,3 +10,4 @@ presentations/**
 !presentations/**/*.pdf
 !presentations/**/*.tex
 !presentations/**/*.txt
+!presentations/**/*.png
