@@ -1,0 +1,231 @@
+
+SOME ADDITIONAL READING (Skip for now and keep reading): 
+
+
+    Great read distinuishing the difference between the inner and outer K-folds! 
+        https://users.cs.duke.edu/~cynthia/CourseNotes/CrossValidationNotes.pdf
+            The gist: The outer loop rotates over the test set. 
+                             The outer loop evaluates algorithms defined as including the CV for tuning parameters.
+                       The inner loop rotates over the validation set.
+
+
+    My understanding is that we're doing the following: 
+        https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k*l-fold_cross-validation
+
+
+RSAMPLE CODE TO PRODUCE K*I FOLDS
+The "rsample" package lets us create this structure using the following code: 
+
+        nested_cv(data = euro,                          # euro is just all the data together
+                  outside = group_vfold_cv(v = 6, 
+                                           group = Year,
+                                           repeats = 1,
+                                           strata = NULL),
+                  inside = group_vfold_cv(v = 5, 
+                                          group = Year,
+                                          repeats = 1,
+                                          strata = NULL)) -> nest_folds
+
+
+To be explicit, when following this procedure I've printed out the combinations of years that show up in the training data. 
+
+#THIS IS THE OUTER LAYER 1 WHERE 2016 IS ALWAYS MISSING
+[1] "layer_1: 1 layer_2: 1"
+[1] 2008 2012 2020 2024
+[1] "layer_1: 1 layer_2: 2"
+[1] 2004 2008 2020 2024
+[1] "layer_1: 1 layer_2: 3"
+[1] 2004 2008 2012 2024
+[1] "layer_1: 1 layer_2: 4"
+[1] 2004 2008 2012 2020
+[1] "layer_1: 1 layer_2: 5"
+[1] 2004 2012 2020 2024
+
+#THIS IS THE OUTER LAYER 2 WHERE 2008 IS ALWAYS MISSING
+[1] "layer_1: 2 layer_2: 1"
+[1] 2004 2012 2016 2020
+[1] "layer_1: 2 layer_2: 2"
+[1] 2012 2016 2020 2024
+[1] "layer_1: 2 layer_2: 3"
+[1] 2004 2016 2020 2024
+[1] "layer_1: 2 layer_2: 4"
+[1] 2004 2012 2016 2024
+[1] "layer_1: 2 layer_2: 5"
+[1] 2004 2012 2020 2024
+
+#THIS IS THE OUTER LAYER 3 WHERE 2024 IS ALWAYS MISSING
+[1] "layer_1: 3 layer_2: 1"    # in this first split, 2020 is being used for tuning eval
+[1] 2004 2008 2012 2016
+[1] "layer_1: 3 layer_2: 2"    # in this second split, 2008 is being used for tuning eval
+[1] 2004 2012 2016 2020
+[1] "layer_1: 3 layer_2: 3"  
+[1] 2004 2008 2012 2020
+[1] "layer_1: 3 layer_2: 4"
+[1] 2008 2012 2016 2020
+[1] "layer_1: 3 layer_2: 5"
+[1] 2004 2008 2016 2020
+
+#THIS IS THE OUTER LAYER 4 WHERE 2004 IS ALWAYS MISSING
+[1] "layer_1: 4 layer_2: 1"  # in this first split, 2016 is being used for tuning eval
+[1] 2008 2012 2020 2024
+[1] "layer_1: 4 layer_2: 2"  #....
+[1] 2008 2012 2016 2024
+[1] "layer_1: 4 layer_2: 3"
+[1] 2008 2012 2016 2020
+[1] "layer_1: 4 layer_2: 4"
+[1] 2012 2016 2020 2024
+[1] "layer_1: 4 layer_2: 5"
+[1] 2008 2016 2020 2024
+
+#THIS IS THE OUTER LAYER 5 WHERE 2012 IS ALWAYS MISSING
+[1] "layer_1: 5 layer_2: 1"
+[1] 2004 2008 2016 2024
+[1] "layer_1: 5 layer_2: 2"
+[1] 2004 2008 2016 2020
+[1] "layer_1: 5 layer_2: 3"
+[1] 2008 2016 2020 2024
+[1] "layer_1: 5 layer_2: 4"
+[1] 2004 2016 2020 2024
+[1] "layer_1: 5 layer_2: 5"
+[1] 2004 2008 2020 2024
+
+#THIS IS THE OUTER LAYER 6 WHERE 2020 IS ALWAYS MISSING
+[1] "layer_1: 6 layer_2: 1"
+[1] 2004 2012 2016 2024
+[1] "layer_1: 6 layer_2: 2"
+[1] 2008 2012 2016 2024
+[1] "layer_1: 6 layer_2: 3"
+[1] 2004 2008 2012 2024
+[1] "layer_1: 6 layer_2: 4"
+[1] 2004 2008 2012 2016
+[1] "layer_1: 6 layer_2: 5"
+[1] 2004 2008 2016 2024
+
+
+
+PROPOSED PLAN:
+
+1) Pretend we have a hyperparameter, k_i, in {.01,.1,.5}. Model_class, i, in {poisson, nn, xgboost, rf}:
+
+    - We fit each hyperparameter & model_class (3*4 = 12) to all of the training sets (6 outer * 5 inner = 30) 
+        12 algorithms*30 resampled sets = 360 different models in this example
+
+2) Average the RMSE performance across the inner folds for the different hyperparameters: 
+    - Example (within Outer Layer 5 where 2012 is always missing)
+
+                [1] "layer_1: 5 layer_2: 1"
+                [1] 2004 2008 2016 2024            
+                [1] "layer_1: 5 layer_2: 2"
+                [1] 2004 2008 2016 2020            
+                [1] "layer_1: 5 layer_2: 3"
+                [1] 2008 2016 2020 2024
+                [1] "layer_1: 5 layer_2: 4"
+                [1] 2004 2016 2020 2024
+                [1] "layer_1: 5 layer_2: 5"
+                [1] 2004 2008 2020 2024
+
+    - We have 12 different models fit to each of these guys... 
+            - if you're working on random forest (rf) model_class
+                    - find the average RMSE over these 5 folds *for each* k_rf in {.01, .1, .5}
+        
+            You end up with something like this (still specific to Outer Fold 5) 
+                
+                Random Forest Tuning Results for Outer Fold 5
+                k_rf = .01 -> rmse_avg = 2.74
+                k_rf = .1  -> rmse_avg = 3.43
+                k_rf = .5  -> rmse_avg = 5.12
+                       For Outer Fold 5, k_rf = .01 Won!!
+
+                Random Forest Tuning Results for Outer Fold 4
+                k_rf = .01 -> rmse_avg = 6.43
+                k_rf = .1  -> rmse_avg = 2.63
+                k_rf = .5  -> rmse_avg = 4.12
+                        For Outer Fold 4, k_rf = .1 won!!
+
+
+    - So at the end of this step, we'll end up with 6 outer folds * 4 algorithms = 24 to compare!
+
+            Outer fold 1:
+                rf
+                poisson
+                nn
+                xgboost
+            Outer fold 2:
+                rf
+                poisson
+                nn
+                xgboost
+            Outer fold 3:
+                rf
+                poisson
+                nn
+                xgboost
+            Outer fold 4:
+                rf(using k_rf = .1)                 *point here is that the local winners still get used
+                poisson (using k_poisson = ...)
+                nn (using k_nn =...)
+                xgboost (using k_nn =...)
+            Outer fold 5:
+                rf(using k_rf = .01)
+                poisson
+                nn
+                xgboost
+            Outer fold 6:
+                rf
+                poisson
+                nn
+                xgboost
+
+3) Now we measure the out-of-sample-RMSE for each model_class across the outer folds: 
+
+        - rf:      rmse_avg_across_outer = 6.52
+        - nn:      rmse_avg_across_outer = 7.21
+        - poisson: rmse_avg_across_outer = 3.12
+        - xgboost: rmse_avg_across_outer = 2.12
+
+            Conclusion: xgboost was the best algorithm (including letting tuning be part of the algorithm)
+
+4) Use the best algorithm-inclusive-of-tuning to fit on the entire training data (2004-2024) BUT We still need 
+the best hyperparameter now that we're using more data: 
+
+       In the example, xgboost won. 
+
+                So now we use the outer folds to choose the best k_xgboost hyperparameter for final model:
+
+                
+                - Simplify the nested structure to just the outer folds:
+
+                        - Outer fold 1: 2016 IS ALWAYS MISSING
+                                2004, 2008, 2012, 2020, 2024        -> fit with  k_xgboost = {.01, .1, .5} 
+
+                        - Outer fold 2: 2008 IS ALWAYS MISSING
+                                2004, 2012, 2016, 2020, 2024
+
+                        - Outer fold 3: 2024 IS ALWAYS MISSING
+                                2004, 2008, 2012, 2016, 2020
+
+                        - Outer fold 4: 2004 IS ALWAYS MISSING
+                                2008, 2012, 2016, 2020, 2024
+
+                        - Outer fold 5: 2012 IS ALWAYS MISSING
+                                2004, 2008, 2016, 2020, 2024
+
+                        - Outer fold 6: 2020 IS ALWAYS MISSING
+                                2004, 2008, 2012, 2016, 2024
+                                
+                 - Average the RMSE's across the outer fold runs: 
+                            
+                        Result: 
+                                k_xgboost = .01 -> outer_avg_rmse = 9.12
+                                k_xgboost = .1 ->  outer_avg_rmse = 8.41
+                                k_xgboost = .5 ->  outer_avg_rmse = 7.51
+                                                        k_xgboost = .5 WON!!!!!!!!
+
+5) Finally, fit xgboost(k_xgboost = .5, ...) on the FULL training data (using 2004 to 2024)
+
+            This is our resulting model we'd want to predict 2028 euro.
+
+
+
+
+
