@@ -56,6 +56,9 @@ library(purrr)
 library(dials)
 library(recipes)
 library(workflows)
+# install.packages("pak")
+pak::pak("tidymodels/nestedtune")
+library(nestedtune)
 # library(furrr)
 
 
@@ -76,6 +79,33 @@ euro = rbind(euro_2004,
 
 
 # Section 3: Form splits----
+
+# 
+valid_years = seq(2004,2024, 4)
+
+make_splits_leave_year_out <- function(leave_out_year) {
+  euro %>%
+    filter(Year == leave_out_year) -> assessment_df 
+  
+  euro %>%
+    filter(Year != leave_out_year) -> analysis_df 
+  
+  split_w_o_year = make_splits(
+    x = analysis_df, 
+    assessment = assessment_df
+  )
+}
+
+map(valid_years, make_splits_leave_year_out) -> outer_ordered_split_list
+
+outer_split_ids = map2_chr("outer_split_", valid_years, paste0)
+
+# make outer rset using 
+manual_rset(outer_ordered_split_list, 
+            ids = outer_split_ids) -> outer_folds
+
+
+
 # TODO find a way to programatically label the folds or custom build the nest
 set.seed(67676769)
 
@@ -91,7 +121,7 @@ for (layer_1 in 1:6) {   # for seed 67676769: order = 2020, 2004, 2016, 2012, 20
   print(unique(analysis(thesplit)$Year))
 }
 
-nested_cv(data = euro,
+?nested_cv(data = euro,
           outside = outer_folds,
           inside = group_vfold_cv(v = NULL, 
                                   group = Year,
