@@ -1,0 +1,442 @@
+```{r}
+# ============================================================
+# 1. PACKAGES AND SETTINGS
+# ============================================================
+
+# Install if necessary
+# install.packages("ranger")
+# install.packages("dplyr")
+# install.packages("ggplot2")
+
+library(ranger)
+library(dplyr)
+library(ggplot2)
+
+# Reproducibility
+set.seed(6769)
+
+# Keep identical to the previous LOOCV experiment
+N_TREES <- 1000
+```
+```{r}
+# ============================================================
+# 2. TOURNAMENT DATASETS
+# ============================================================
+
+euro_data <- list(
+  "2004" = euro_2004,
+  "2008" = euro_2008,
+  "2012" = euro_2012,
+  "2016" = euro_2016,
+  "2020" = euro_2020,
+  "2024" = euro_2024
+)
+
+# Combine all tournaments
+EuroAll <- bind_rows(euro_data, .id = "Tournament")
+
+# Ensure chronological ordering
+EuroAll$Tournament <- factor(
+  EuroAll$Tournament,
+  levels = names(euro_data),
+  ordered = TRUE
+)
+
+# Inspect dataset
+dim(EuroAll)
+table(EuroAll$Tournament)
+
+# Check observations per tournament
+data.frame(
+  Tournament = names(euro_data),
+  Observations = sapply(euro_data, nrow)
+)
+```
+```{r}
+# ============================================================
+# 3. RESPONSE AND PREDICTORS
+# ============================================================
+
+target <- "Goals"
+
+predictors <- c(
+  "GroupStage",
+  "GDP",
+  "MarketValue",
+  "FifaRank",
+  "UefaPoints",
+  "CLPlayers"
+)
+
+required_columns <- c(target, predictors)
+
+# Define model formula
+rf_formula <- as.formula(
+  paste(
+    target,
+    "~",
+    paste(predictors, collapse = " + ")
+  )
+)
+
+# Check required columns
+stopifnot(
+  all(required_columns %in% names(EuroAll))
+)
+
+# Check missing values
+colSums(is.na(EuroAll[, required_columns]))
+
+# Check variable types
+str(EuroAll[, required_columns])
+```
+```{r}
+# ============================================================
+# 4. EVALUATION METRICS
+# ============================================================
+
+calculate_metrics <- function(actual, predicted) {
+
+  mae <- mean(abs(actual - predicted))
+
+  rmse <- sqrt(mean((actual - predicted)^2))
+
+  return(
+    data.frame(
+      MAE = mae,
+      RMSE = rmse
+    )
+  )
+}
+```
+```{r}
+# ============================================================
+# 5. CHRONOLOGICAL CROSS-VALIDATION FOLDS
+# ============================================================
+
+fold_years <- names(euro_data)[-1]
+
+cv_folds <- lapply(seq_along(fold_years), function(i) {
+
+  test_year <- fold_years[i]
+
+  # All tournaments before the validation tournament
+  train_years <- names(euro_data)[1:i]
+
+  train_data <- EuroAll %>%
+    filter(as.character(Tournament) %in% train_years)
+
+  validation_data <- EuroAll %>%
+    filter(as.character(Tournament) == test_year)
+
+  list(
+    train = train_data,
+    validation = validation_data,
+    train_years = train_years,
+    year = test_year
+  )
+})
+
+names(cv_folds) <- fold_years
+
+# Inspect the folds
+fold_sizes <- data.frame(
+  Validation_Tournament = fold_years,
+
+  Training_Tournaments = sapply(
+    cv_folds,
+    function(x) paste(x$train_years, collapse = ", ")
+  ),
+
+  Training_Observations = sapply(
+    cv_folds,
+    function(x) nrow(x$train)
+  ),
+
+  Validation_Observations = sapply(
+    cv_folds,
+    function(x) nrow(x$validation)
+  )
+)
+
+print(fold_sizes, row.names = FALSE)
+```
+```{r}
+# ============================================================
+# 6. HYPERPARAMETER GRID
+# ============================================================
+
+rf_grid <- expand.grid(
+
+  mtry = 1:length(predictors),
+
+  min.node.size = c(3, 5, 10, 15),
+
+  sample.fraction = c(0.7, 0.85, 1.0)
+
+)
+
+# Number of combinations
+nrow(rf_grid)
+
+# Inspect grid
+head(rf_grid)
+
+# Confirm settings
+summary(rf_grid)
+```
+```{r}
+# ============================================================
+# 7. CHRONOLOGICAL RANDOM FOREST CROSS-VALIDATION
+# ============================================================
+
+# Store results for every hyperparameter combination
+cv_results <- vector("list", nrow(rf_grid))
+
+# Also retain individual fold results
+all_fold_results <- vector("list", nrow(rf_grid))
+
+for (i in seq_len(nrow(rf_grid))) {
+
+  # Current hyperparameter combination
+  params <- rf_grid[i, ]
+
+  # Store metrics for each chronological fold
+  fold_results <- vector("list", length(cv_folds))
+
+  for (j in seq_along(cv_folds)) {
+
+    # Training and validation data
+    train_data <- cv_folds[[j]]$train
+    validation_data <- cv_folds[[j]]$validation
+
+    # Fit Random Forest
+    rf_model <- ranger(
+      formula = rf_formula,
+      data = train_data[, required_columns],
+      num.trees = N_TREES,
+      mtry = params$mtry,
+      min.node.size = params$min.node.size,
+      sample.fraction = params$sample.fraction,
+      importance = "none",
+      seed = 6769 + i * 10 + j
+    )
+
+    # Predict on the next tournament
+    predictions <- predict(
+      rf_model,
+      data = validation_data[, predictors]
+    )$predictions
+
+    # Calculate metrics
+    metrics <- calculate_metrics(
+      validation_data$Goals,
+      predictions
+    )
+
+    fold_results[[j]] <- data.frame(
+      Tournament = cv_folds[[j]]$year,
+      MAE = metrics$MAE,
+      RMSE = metrics$RMSE
+    )
+  }
+
+  # Combine fold results for this parameter combination
+  fold_results_df <- bind_rows(fold_results)
+
+  # Save individual fold results
+  all_fold_results[[i]] <- cbind(
+    rf_grid[i, ],
+    fold_results_df
+  )
+
+  # Calculate average performance across tournaments
+  cv_results[[i]] <- data.frame(
+    mtry = params$mtry,
+    min.node.size = params$min.node.size,
+    sample.fraction = params$sample.fraction,
+    Mean_MAE = mean(fold_results_df$MAE),
+    Mean_RMSE = mean(fold_results_df$RMSE),
+    SD_MAE = sd(fold_results_df$MAE)
+  )
+
+  # Progress indicator
+  if (i %% 10 == 0 || i == nrow(rf_grid)) {
+    cat(
+      "Completed",
+      i,
+      "of",
+      nrow(rf_grid),
+      "combinations\n"
+    )
+  }
+}
+
+# Combine all results
+cv_results <- bind_rows(cv_results)
+
+# Sort by mean cross-validation MAE
+cv_results <- cv_results %>%
+  arrange(Mean_MAE)
+
+# Combine individual fold results
+fold_results_all <- bind_rows(all_fold_results)
+
+# Display best 10 combinations
+head(cv_results, 10)
+```
+```{r}
+# ============================================================
+# 8. INSPECT CROSS-VALIDATION RESULTS
+# ============================================================
+
+# Best 10 combinations
+cv_results %>%
+  select(
+    mtry,
+    min.node.size,
+    sample.fraction,
+    Mean_MAE,
+    Mean_RMSE,
+    SD_MAE
+  ) %>%
+  head(10)
+
+# Best combination based on mean MAE
+best_params <- cv_results[1, ]
+
+cat("\nBest hyperparameters:\n")
+print(best_params)
+
+# Individual fold performance for the best combination
+best_fold_results <- fold_results_all %>%
+  filter(
+    mtry == best_params$mtry,
+    min.node.size == best_params$min.node.size,
+    sample.fraction == best_params$sample.fraction
+  )
+
+cat("\nPerformance by validation tournament:\n")
+print(best_fold_results)
+```
+```{r}
+# ============================================================
+# 9. HYPERPARAMETER TUNING PLOT
+# ============================================================
+
+ggplot(
+  cv_results,
+  aes(
+    x = factor(mtry),
+    y = Mean_MAE,
+    color = factor(min.node.size),
+    shape = factor(sample.fraction)
+  )
+) +
+  geom_point(size = 3) +
+  labs(
+    title = "Random Forest Hyperparameter Tuning",
+    subtitle = "Chronological expanding-window cross-validation",
+    x = "Number of predictors considered at each split (mtry)",
+    y = "Mean cross-validation MAE",
+    color = "Minimum node size",
+    shape = "Sample fraction"
+  ) +
+  theme_minimal()
+```
+```{r}
+# ============================================================
+# 9B. BEST MODEL: PERFORMANCE BY TOURNAMENT
+# ============================================================
+
+ggplot(
+  best_fold_results,
+  aes(x = Tournament, y = MAE, group = 1)
+) +
+  geom_line() +
+  geom_point(size = 3) +
+  labs(
+    title = "Best Random Forest: Chronological Validation",
+    subtitle = "MAE for each held-out tournament",
+    x = "Validation tournament",
+    y = "MAE"
+  ) +
+  theme_minimal()
+```
+```{r}
+# ============================================================
+# 10. FINAL RANDOM FOREST MODEL
+# ============================================================
+
+# Extract best hyperparameters
+best_mtry <- best_params$mtry
+
+best_min_node_size <- best_params$min.node.size
+
+best_sample_fraction <- best_params$sample.fraction
+
+# Fit final model using all tournaments
+set.seed(6769)
+
+rf_final <- ranger(
+  formula = rf_formula,
+  data = EuroAll[, required_columns],
+  num.trees = N_TREES,
+  mtry = best_mtry,
+  min.node.size = best_min_node_size,
+  sample.fraction = best_sample_fraction,
+  importance = "permutation",
+  seed = 6769
+)
+
+# Display final model
+print(rf_final)
+```
+```{r}
+# ============================================================
+# 11. OUT-OF-BAG PERFORMANCE
+# ============================================================
+
+# OOB mean squared error
+oob_mse <- rf_final$prediction.error
+
+# OOB RMSE
+oob_rmse <- sqrt(oob_mse)
+
+# OOB R-squared
+oob_r_squared <- rf_final$r.squared
+
+oob_results <- data.frame(
+  OOB_MSE = oob_mse,
+  OOB_RMSE = oob_rmse,
+  OOB_R_squared = oob_r_squared
+)
+
+print(oob_results)
+```
+```{r}
+# ============================================================
+# 12. VARIABLE IMPORTANCE
+# ============================================================
+
+importance <- sort(
+  rf_final$variable.importance,
+  decreasing = TRUE
+)
+
+# Display importance scores
+print(importance)
+
+# Plot variable importance
+par(mar = c(8, 4, 4, 2) + 0.1)
+
+barplot(
+  importance,
+  las = 2,
+  col = "steelblue",
+  main = "Random Forest: Variable Importance",
+  ylab = "Permutation importance",
+  cex.names = 0.85
+)
+```
+
