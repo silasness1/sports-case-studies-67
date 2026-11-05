@@ -1,0 +1,975 @@
+library(nnet)
+library(readr)
+library(dplyr)
+library(purrr)
+library(mgcv)
+library(ggplot2)
+library(tidyr)
+
+
+football_test = read_csv("C:/Users/962ni/Downloads/EuroTest.csv")
+football_train = read_csv("C:/Users/962ni/Downloads/EuroTraining.csv")
+eurodata=rbind(football_test,football_train)
+View(football_test )
+euro.matches <- eurodata %>%
+  
+  select(
+    Year, Team, Opponent, Goals,
+    GroupStage, GDP, MarketValue,
+    FifaRank, UefaPoints, CLPlayers
+  ) %>%
+  
+  rename(
+    Team_A = Team,
+    Goals_A = Goals
+  ) %>%
+  
+  inner_join(
+    eurodata %>%
+      select(Year, Team, Opponent, Goals) %>%
+      rename(
+        Team_B = Team,
+        Goals_B = Goals
+      ),
+    by = c("Year", "Opponent" = "Team_B",
+           "Team_A" = "Opponent")
+  )
+euro.matches <- euro.matches %>%
+  filter(Team_A < Opponent) %>%
+  distinct(Year, Team_A, Opponent, .keep_all = TRUE)
+
+
+euro <- euro.matches %>%
+  mutate(
+    Result = case_when(
+      Goals_A > Goals_B ~ "Win",
+      Goals_A == Goals_B ~ "Draw",
+      Goals_A < Goals_B ~ "Loss"
+    ),
+    Result = factor(
+      Result,
+      levels = c("Loss", "Draw", "Win")
+    ),
+    GroupStage = factor(GroupStage)
+  )
+
+# Inspect outcome distribution
+table(euro$Result)
+
+# Number of matches per tournament
+table(euro$Year)
+predictor_formula <- ~ GroupStage +
+  GDP +
+  MarketValue +
+  FifaRank +
+  UefaPoints +
+  CLPlayers
+
+evaluate_model <- function(probabilities, actual) {
+  
+  classes <- levels(actual)
+  probabilities <- probabilities[, classes, drop = FALSE]
+  
+  predicted <- classes[max.col(probabilities)]
+  
+  accuracy <- mean(predicted == as.character(actual))
+  
+  actual_index <- match(actual, classes)
+  
+  log_loss <- -mean(
+    log(pmax(
+      probabilities[cbind(seq_along(actual), actual_index)],
+      1e-15
+    ))
+  )
+  
+  actual_matrix <- sapply(
+    classes,
+    function(cl) as.numeric(actual == cl)
+  )
+  
+  brier <- mean(
+    rowSums((probabilities - actual_matrix)^2)
+  )
+  
+  c(
+    Accuracy = accuracy,
+    LogLoss = log_loss,
+    BrierScore = brier
+  )
+}
+
+prepare_data <- function(train, test) {
+  
+  X_train <- model.matrix(
+    predictor_formula,
+    data = train
+  )[, -1, drop = FALSE]
+  
+  X_test <- model.matrix(
+    predictor_formula,
+    data = test
+  )[, -1, drop = FALSE]
+  
+  # Align test columns with training columns
+  missing_cols <- setdiff(
+    colnames(X_train),
+    colnames(X_test)
+  )
+  
+  for (col in missing_cols) {
+    X_test <- cbind(
+      X_test,
+      setNames(data.frame(rep(0, nrow(X_test))), col)
+    )
+  }
+  
+  extra_cols <- setdiff(
+    colnames(X_test),
+    colnames(X_train)
+  )
+  
+  X_test <- X_test[
+    , setdiff(colnames(X_test), extra_cols),
+    drop = FALSE
+  ]
+  
+  X_test <- X_test[, colnames(X_train), drop = FALSE]
+  
+  # Standardise using training data
+  means <- colMeans(X_train)
+  sds <- apply(X_train, 2, sd)
+  
+  sds[!is.finite(sds) | sds == 0] <- 1
+  
+  X_train <- scale(X_train, center = means, scale = sds)
+  X_test <- scale(X_test, center = means, scale = sds)
+  
+  list(
+    X_train = X_train,
+    X_test = X_test
+  )
+}
+
+set.seed(123)
+
+years <- sort(unique(euro$Year))
+
+results <- data.frame()
+euro <- euro.matches %>%
+  mutate(
+    Result = case_when(
+      Goals_A > Goals_B ~ "Win",
+      Goals_A == Goals_B ~ "Draw",
+      Goals_A < Goals_B ~ "Loss"
+    ),
+    Result = factor(Result, levels = c("Loss", "Draw", "Win")),
+    GroupStage = factor(GroupStage)
+  )
+
+
+predictors <- c(
+  "GroupStage",
+  "GDP",
+  "MarketValue",
+  "FifaRank",
+  "UefaPoints",
+  "CLPlayers"
+)
+
+classes <- levels(euro$Result)
+
+
+
+#
+#
+#
+#
+#
+#
+
+
+
+
+
+# Create one-hot encoded outcome matrix
+make_y <- function(y, classes) {
+  
+  y_matrix <- matrix(
+    0,
+    nrow = length(y),
+    ncol = length(classes),
+    dimnames = list(NULL, classes)
+  )
+  
+  y_matrix[cbind(
+    seq_along(y),
+    match(as.character(y), classes)
+  )] <- 1
+  
+  y_matrix
+}
+
+
+# Prepare predictors using training data only
+prepare_x <- function(train, test) {
+  
+  formula_x <- as.formula(
+    paste("~", paste(predictors, collapse = " + "))
+  )
+  
+  X_train <- model.matrix(formula_x, data = train)
+  X_test  <- model.matrix(formula_x, data = test)
+  
+  # Make sure both matrices have the same columns
+  missing_cols <- setdiff(colnames(X_train), colnames(X_test))
+  
+  if (length(missing_cols) > 0) {
+    for (col in missing_cols) {
+      X_test <- cbind(X_test, 0)
+      colnames(X_test)[ncol(X_test)] <- col
+    }
+  }
+  
+  X_test <- X_test[, colnames(X_train), drop = FALSE]
+  
+  # Calculate scaling parameters using training data only
+  x_mean <- colMeans(X_train)
+  x_sd <- apply(X_train, 2, sd)
+  
+  x_sd[is.na(x_sd) | x_sd == 0] <- 1
+  
+  X_train <- scale(
+    X_train,
+    center = x_mean,
+    scale = x_sd
+  )
+  
+  X_test <- scale(
+    X_test,
+    center = x_mean,
+    scale = x_sd
+  )
+  
+  list(
+    train = as.matrix(X_train),
+    test = as.matrix(X_test)
+  )
+}
+
+fit_nn <- function(train, test,
+                   size,
+                   decay,
+                   skip,
+                   draw_weight = 1,
+                   seed = 123) {
+  
+  set.seed(seed)
+  
+  x <- prepare_x(train, test)
+  
+  y_train <- make_y(train$Result, classes)
+  
+  # Give draw observations additional weight during training
+  case_weights <- ifelse(
+    train$Result == "Draw",
+    draw_weight,
+    1
+  )
+  
+  model <- nnet(
+    x = x$train,
+    y = y_train,
+    size = size,
+    softmax = TRUE,
+    decay = decay,
+    skip = skip,
+    weights = case_weights,
+    rang = 0.1,
+    maxit = 1000,
+    MaxNWts = 10000,
+    trace = FALSE
+  )
+  
+  probabilities <- predict(
+    model,
+    newdata = x$test,
+    type = "raw"
+  )
+  
+  probabilities <- as.matrix(probabilities)
+  colnames(probabilities) <- classes
+  
+  # Avoid numerical problems in log loss
+  probabilities <- pmax(probabilities, 1e-15)
+  probabilities <- probabilities / rowSums(probabilities)
+  
+  probabilities
+}
+
+# Multiclass log loss
+calculate_logloss <- function(actual, probabilities) {
+  
+  actual_index <- match(as.character(actual), classes)
+  
+  -mean(log(
+    probabilities[cbind(seq_along(actual_index), actual_index)]
+  ))
+}
+
+predict_with_draw_threshold <- function(probabilities, draw_threshold) {
+  
+  # First choose between Loss and Win
+  non_draw_probabilities <- probabilities[, c("Loss", "Win"), drop = FALSE]
+  
+  predicted <- colnames(non_draw_probabilities)[
+    max.col(non_draw_probabilities)
+  ]
+  
+  # Override the prediction when Draw probability exceeds the threshold
+  predicted[probabilities[, "Draw"] >= draw_threshold] <- "Draw"
+  
+  factor(predicted, levels = classes)
+}
+
+# Classification metrics
+calculate_metrics <- function(actual, probabilities,
+                              draw_threshold = 1/3) {
+  
+  predicted <- predict_with_draw_threshold(
+    probabilities,
+    draw_threshold
+  )
+  
+  confusion <- table(
+    factor(actual, levels = classes),
+    factor(predicted, levels = classes)
+  )
+  
+  accuracy <- mean(predicted == actual)
+  
+  recall <- diag(confusion) / rowSums(confusion)
+  precision <- diag(confusion) / colSums(confusion)
+  
+  names(recall) <- classes
+  names(precision) <- classes
+  
+  # F1 is zero when a class has no predicted observations
+  f1 <- 2 * precision * recall / (precision + recall)
+  f1[!is.finite(f1)] <- 0
+  
+  c(
+    Accuracy = accuracy,
+    Balanced_Accuracy = mean(recall, na.rm = TRUE),
+    Macro_F1 = mean(f1),
+    Draw_Recall = unname(recall["Draw"]),
+    Draw_Precision = unname(precision["Draw"]),
+    Log_Loss = calculate_logloss(actual, probabilities)
+  )
+}#
+
+calculate_metrics_from_predictions <- function(actual, predicted,
+                                               probabilities = NULL) {
+  
+  confusion <- table(
+    Actual = factor(actual, levels = classes),
+    Predicted = factor(predicted, levels = classes)
+  )
+  
+  recall <- diag(confusion) / rowSums(confusion)
+  precision <- diag(confusion) / colSums(confusion)
+  
+  f1 <- 2 * precision * recall / (precision + recall)
+  f1[!is.finite(f1)] <- 0
+  
+  result <- c(
+    Accuracy = sum(diag(confusion)) / sum(confusion),
+    Balanced_Accuracy = mean(recall),
+    Macro_F1 = mean(f1),
+    Draw_Recall = recall["Draw"],
+    Draw_Precision = precision["Draw"]
+  )
+  
+  if (!is.null(probabilities)) {
+    result <- c(
+      result,
+      Log_Loss = calculate_logloss(actual, probabilities)
+    )
+  }
+  
+  result
+}
+#
+#
+#
+#
+#
+#
+
+tune_nn <- function(outer_train) {
+  
+  inner_years <- sort(unique(outer_train$Year))
+  
+  if (length(inner_years) < 2) {
+    stop("Not enough tournament years for inner cross-validation.")
+  }
+  
+  grid <- expand.grid(
+    size = c(1, 2,3,4),
+    decay = c(0.5, 0.8 , 0.3),
+    skip = c(FALSE),
+    draw_weight = c(0.5,1, 1.5)
+  )
+  
+  thresholds <- c(0.5, 0.40, 0.45)
+  
+  tuning_results <- data.frame()
+  
+  for (g in seq_len(nrow(grid))) {
+    
+    size_value <- grid$size[g]
+    decay_value <- grid$decay[g]
+    skip_value <- grid$skip[g]
+    draw_weight_value <- grid$draw_weight[g]
+    
+    # Store metrics separately for each threshold
+    threshold_metrics <- vector("list", length(thresholds))
+    
+    names(threshold_metrics) <- as.character(thresholds)
+    
+    for (validation_year in inner_years) {
+      
+      inner_train <- outer_train %>%
+        filter(Year != validation_year)
+      
+      inner_valid <- outer_train %>%
+        filter(Year == validation_year)
+      
+      for (seed in 1:3) {
+        
+        probabilities <- fit_nn(
+          train = inner_train,
+          test = inner_valid,
+          size = size_value,
+          decay = decay_value,
+          skip = skip_value,
+          draw_weight = draw_weight_value,
+          seed = seed
+        )
+        
+        for (threshold in thresholds) {
+          
+          metrics <- calculate_metrics(
+            actual = inner_valid$Result,
+            probabilities = probabilities,
+            draw_threshold = threshold
+          )
+          
+          threshold_metrics[[as.character(threshold)]] <-
+            append(
+              threshold_metrics[[as.character(threshold)]],
+              list(metrics)
+            )
+        }
+      }
+    }
+    
+    # Summarise performance for each threshold
+    for (threshold in thresholds) {
+      
+      metric_list <- threshold_metrics[[as.character(threshold)]]
+      
+      metric_matrix <- do.call(rbind, metric_list)
+      
+      tuning_results <- rbind(
+        tuning_results,
+        data.frame(
+          size = size_value,
+          decay = decay_value,
+          skip = skip_value,
+          draw_weight = draw_weight_value,
+          draw_threshold = threshold,
+          
+          mean_accuracy = mean(metric_matrix[, "Accuracy"]),
+          mean_macro_f1 = mean(metric_matrix[, "Macro_F1"]),
+          mean_draw_recall = mean(metric_matrix[, "Draw_Recall"], na.rm = TRUE),
+          mean_draw_precision = mean(metric_matrix[, "Draw_Precision"], na.rm = TRUE),
+          mean_logloss = mean(metric_matrix[, "Log_Loss"])
+        )
+      )
+    }
+  }
+  
+  # Select best configuration
+  best <- tuning_results %>%
+    arrange(
+      desc(mean_macro_f1),
+      desc(mean_draw_recall),
+      mean_logloss
+    ) %>%
+    slice(1)
+  
+  list(
+    best = best,
+    results = tuning_results
+  )
+}#
+#
+#
+#Outer CV
+#
+#
+#
+
+outer_years <- sort(unique(euro$Year))
+
+outer_predictions <- list()
+outer_tuning <- list()
+
+for (yr in outer_years) {
+  
+  cat("\nOuter test tournament:", yr, "\n")
+  
+  # Split outer training and test data
+  outer_train <- euro %>%
+    filter(Year != yr)
+  
+  outer_test <- euro %>%
+    filter(Year == yr)
+  
+  # 1. Tune using inner CV
+  tuning <- tune_nn(outer_train)
+  
+  best_size <- tuning$best$size
+  best_decay <- tuning$best$decay
+  best_skip <- tuning$best$skip
+  best_draw_weight <- tuning$best$draw_weight
+  best_threshold <- tuning$best$draw_threshold
+  
+  cat("Best size:", best_size, "\n")
+  cat("Best decay:", best_decay, "\n")
+  cat("Best skip:", best_skip, "\n")
+  cat("Best draw weight:", best_draw_weight, "\n")
+  cat("Best draw threshold:", best_threshold, "\n")
+  
+  cat("Inner macro F1:", tuning$best$mean_macro_f1, "\n")
+  cat("Inner draw recall:", tuning$best$mean_draw_recall, "\n")
+  cat("Inner log loss:", tuning$best$mean_logloss, "\n")
+  
+  # Store tuning results
+  outer_tuning[[as.character(yr)]] <- tuning$results %>%
+    mutate(Outer_Test_Year = yr)
+  
+  # 2. Refit selected configuration on all outer training data
+  probability_list <- lapply(101:105, function(seed) {
+    
+    fit_nn(
+      train = outer_train,
+      test = outer_test,
+      size = best_size,
+      decay = best_decay,
+      skip = best_skip,
+      draw_weight = best_draw_weight,
+      seed = seed
+    )
+  })
+  
+  # 3. Average probabilities across initialisations
+  average_probabilities <- Reduce(
+    "+",
+    probability_list
+  ) / length(probability_list)
+  
+  # 4. Save predictions for the held-out tournament
+  predicted_classes <- predict_with_draw_threshold(
+    average_probabilities,
+    draw_threshold = best_threshold
+  )
+  
+  outer_predictions[[as.character(yr)]] <- data.frame(
+    Year = yr,
+    Actual = outer_test$Result,
+    Predicted = factor(
+      predicted_classes,
+      levels = classes
+    ),
+    Prob_Loss = average_probabilities[, "Loss"],
+    Prob_Draw = average_probabilities[, "Draw"],
+    Prob_Win = average_probabilities[, "Win"]
+  )
+}
+
+# Combine all outer test predictions
+predictions_nested <- bind_rows(outer_predictions)
+
+# Combine tuning results
+tuning_summary <- bind_rows(outer_tuning)
+
+# Calculate final metrics
+prob_matrix <- as.matrix(
+  predictions_nested[, c(
+    "Prob_Loss",
+    "Prob_Draw",
+    "Prob_Win"
+  )]
+)
+
+colnames(prob_matrix) <- classes
+
+# final_metrics <- calculate_metrics(
+#   predictions_nested$Actual,
+#   prob_matrix
+# )
+final_metrics <- calculate_metrics_from_predictions(
+  predictions_nested$Actual,
+  predictions_nested$Predicted,
+  prob_matrix
+)
+
+print(final_metrics)
+
+print(final_metrics)
+
+# Confusion matrix
+table(
+  Actual = predictions_nested$Actual,
+  Predicted = predictions_nested$Predicted
+)
+predictions_nested %>%
+  count(Predicted) %>%
+  mutate(Proportion = n / sum(n))
+
+year_metrics <- predictions_nested %>%
+  group_by(Year) %>%
+  group_modify(~ {
+    
+    p <- as.matrix(
+      .x[, c("Prob_Loss", "Prob_Draw", "Prob_Win")]
+    )
+    
+    colnames(p) <- classes
+    
+    as.data.frame(
+      as.list(
+        calculate_metrics_from_predictions(
+          .x$Actual,
+          .x$Predicted,
+          p
+        )
+      )
+    )
+  })
+
+print(year_metrics)
+cm_direct <- table(
+  Actual = factor(predictions_nested$Actual, levels = classes),
+  Predicted = factor(predictions_nested$Predicted, levels = classes)
+)
+
+# Convert to percentages
+cm_direct_df <- as.data.frame(cm_direct) %>%
+  group_by(Actual) %>%
+  mutate(
+    Percentage = Freq / sum(Freq) * 100
+  ) %>%
+  ungroup()
+
+# Plot
+ggplot(cm_direct_df,
+       aes(x = Predicted, y = Actual, fill = Percentage)) +
+  geom_tile(colour = "white", linewidth = 1.5) +
+  geom_text(
+    aes(label = sprintf("%.1f%%\n(%d)", Percentage, Freq)),
+    size = 5
+  ) +
+  scale_fill_gradient(
+    low = "white",
+    high = "steelblue",
+    limits = c(0, 100)
+  ) +
+  labs(
+    title = "Direct Classification NN",
+    subtitle = "Nested CV outer test predictions",
+    x = "Predicted outcome",
+    y = "Actual outcome",
+    fill = "Recall (%)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    panel.grid = element_blank()
+  )
+
+# 
+# year_metrics <- predictions_nested %>%
+#   group_by(Year) %>%
+#   group_modify(~ {
+#     
+#     p <- as.matrix(
+#       .x[, c("Prob_Loss", "Prob_Draw", "Prob_Win")]
+#     )
+#     
+#     colnames(p) <- classes
+#     
+#     as.data.frame(
+#       as.list(calculate_metrics(.x$Actual, p))
+#     )
+#   })
+
+print(year_metrics)
+
+inner_results <- data.frame(
+  Year = c(2004, 2008, 2012, 2016, 2020, 2024),
+  Macro_F1 = c(
+    0.4711768, 0.4917262, 0.4718047,
+    0.4540297, 0.4684875, 0.4774762
+  ),
+  Draw_Recall = c(
+    0.2048459, 0.4439808, 0.3388636,
+    0.3010581, 0.2972320, 0.2553247
+  ),
+  Log_Loss = c(
+    1.042173, 1.023969, 1.046710,
+    1.031957, 1.046531, 1.015239
+  )
+)
+
+inner_long <- inner_results %>%
+  pivot_longer(
+    cols = -Year,
+    names_to = "Metric",
+    values_to = "Value"
+  )
+
+ggplot(
+  inner_long,
+  aes(x = Year, y = Value)
+) +
+  geom_line() +
+  geom_point(size = 3) +
+  facet_wrap(~Metric, scales = "free_y", ncol = 1) +
+  scale_x_continuous(breaks = inner_results$Year) +
+  labs(
+    title = "Inner CV Results Across Outer Folds",
+    subtitle = "Validation metrics used during model selection",
+    x = "Outer test tournament",
+    y = "Metric value"
+  ) +
+  theme_minimal(base_size = 12)
+baseline_predictions <- bind_rows(
+  lapply(outer_years, function(yr) {
+    
+    train <- euro %>% filter(Year != yr)
+    test  <- euro %>% filter(Year == yr)
+    
+    majority_class <- names(
+      which.max(table(factor(train$Result, levels = classes)))
+    )
+    
+    data.frame(
+      Year = yr,
+      Actual = test$Result,
+      Predicted = majority_class
+    )
+  })
+)
+
+baseline_accuracy <- mean(
+  baseline_predictions$Actual ==
+    baseline_predictions$Predicted
+)
+
+baseline_accuracy
+
+
+
+threshold_plot_data <- tuning_summary %>%
+  group_by(draw_threshold) %>%
+  summarise(
+    Macro_F1 = mean(mean_macro_f1),
+    Draw_Recall = mean(mean_draw_recall, na.rm = TRUE),
+    Draw_Precision = mean(mean_draw_precision, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(threshold_plot_data, aes(x = draw_threshold)) +
+  geom_line(aes(y = Macro_F1, colour = "Macro F1"), linewidth = 1) +
+  geom_point(aes(y = Macro_F1, colour = "Macro F1"), size = 2) +
+  geom_line(aes(y = Draw_Recall, colour = "Draw Recall"), linewidth = 1) +
+  geom_point(aes(y = Draw_Recall, colour = "Draw Recall"), size = 2) +
+  geom_line(aes(y = Draw_Precision, colour = "Draw Precision"),
+            linewidth = 1) +
+  geom_point(aes(y = Draw_Precision, colour = "Draw Precision"),
+             size = 2) +
+  labs(
+    title = "Effect of Draw Threshold on Model Performance",
+    x = "Draw Probability Threshold",
+    y = "Performance",
+    colour = "Metric"
+  ) +
+  theme_minimal()
+
+parameter_plot_data <- tuning_summary %>%
+  group_by(size, decay, skip) %>%
+  summarise(
+    Macro_F1 = mean(mean_macro_f1),
+    Draw_Recall = mean(mean_draw_recall, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(
+  parameter_plot_data,
+  aes(
+    x = factor(decay),
+    y = factor(size),
+    fill = Macro_F1
+  )
+) +
+  geom_tile(colour = "white") +
+  geom_text(aes(label = round(Macro_F1, 3))) +
+  facet_wrap(~skip, labeller = labeller(
+    skip = c(`FALSE` = "Without skip connections",
+             `TRUE` = "With skip connections")
+  )) +
+  labs(
+    title = "Neural Network Hyperparameter Performance",
+    subtitle = "Mean inner-CV macro F1 across outer folds",
+    x = "Weight Decay",
+    y = "Hidden Neurons",
+    fill = "Macro F1"
+  ) +
+  theme_minimal()
+ggplot(
+  tuning_summary %>%
+    group_by(draw_weight) %>%
+    summarise(
+      Macro_F1 = mean(mean_macro_f1),
+      Draw_Recall = mean(mean_draw_recall, na.rm = TRUE),
+      Draw_Precision = mean(mean_draw_precision, na.rm = TRUE),
+      .groups = "drop"
+    ),
+  aes(x = factor(draw_weight), y = Draw_Recall)
+) +
+  geom_col() +
+  labs(
+    title = "Effect of Draw Weight on Draw Recall",
+    x = "Draw Weight",
+    y = "Mean Draw Recall"
+  ) +
+  theme_minimal()
+library(NeuralNetTools)
+
+# Prepare all predictors
+x_all <- prepare_x(euro, euro)
+
+# Prepare outcomes
+y_all <- make_y(euro$Result, classes)
+
+# Fit an exploratory network
+set.seed(123)
+
+final_nn <- nnet(
+  x = x_all$train,
+  y = y_all,
+  size = 2,
+  softmax = TRUE,
+  decay = 0.5,
+  maxit = 1000,
+  MaxNWts = 10000,
+  trace = FALSE
+)
+
+plotnet(final_nn)
+
+library(dplyr)
+library(ggplot2)
+
+set.seed(123)
+
+importance_results <- list()
+
+outer_years <- sort(unique(euro$Year))
+
+for (yr in outer_years) {
+  
+  train <- euro %>% filter(Year != yr)
+  test  <- euro %>% filter(Year == yr)
+  
+  # Retrieve the best hyperparameters selected in inner CV
+  best <- tuning_summary %>%
+    filter(Outer_Test_Year == yr) %>%
+    arrange(mean_logloss) %>%
+    slice(1)
+  
+  best_size <- best$size
+  best_decay <- best$decay
+  best_skip <- best$skip
+  best_draw_weight <- best$draw_weight
+  
+  seeds <- 101:103
+  
+  # Baseline predictions
+  baseline_list <- lapply(seeds, function(s) {
+    fit_nn(
+      train, test,
+      best_size,
+      best_decay,
+      skip = best_skip,
+      draw_weight = best_draw_weight,
+      seed = s
+    )
+  
+  })
+  
+  baseline_prob <- Reduce("+", baseline_list) / length(seeds)
+  
+  baseline_loss <- calculate_logloss(
+    test$Result,
+    baseline_prob
+  )
+}  
+
+tuning_summary %>%
+  group_by(Outer_Test_Year) %>%
+  arrange(desc(mean_macro_f1)) %>%
+  slice(1) %>%
+  select(
+    Outer_Test_Year,
+    size,
+    decay,
+    skip,
+    draw_weight,
+    draw_threshold,
+    mean_macro_f1,
+    mean_draw_recall,
+    mean_draw_precision
+  )
+
+
+best_configurations <- tuning_summary %>%
+  group_by(Outer_Test_Year) %>%
+  arrange(
+    desc(mean_macro_f1),
+    .by_group = TRUE
+  ) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(
+    Outer_Test_Year,
+    size,
+    decay,
+    skip,
+    draw_weight,
+    draw_threshold,
+    mean_macro_f1,
+    mean_draw_recall
+  )
+
+print(best_configurations)
+top_configs <- tuning_summary %>%
+  group_by(Outer_Test_Year) %>%
+  arrange(desc(mean_macro_f1), .by_group = TRUE) %>%
+  slice_head(n = 5) %>%
+  ungroup()
+
+print(top_configs)
