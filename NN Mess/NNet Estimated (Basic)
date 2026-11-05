@@ -1,0 +1,905 @@
+library(dplyr)
+library(nnet)
+
+football_test = read_csv("C:/Users/962ni/Downloads/EuroTest.csv")
+football_train = read_csv("C:/Users/962ni/Downloads/EuroTraining.csv")
+eurodata=rbind(football_test,football_train)
+
+# Original one-team-per-row data
+team_data <- eurodata
+View(eurodata)
+
+
+# Extract opponent characteristics
+opponent_data <- team_data %>%
+  select(
+    Year, Team, Opponent,
+    GDP, MarketValue, FifaRank,
+    UefaPoints, CLPlayers
+  ) %>%
+  rename(
+    Team_opp = Team,
+    Opponent_opp = Opponent,
+    GDP_opp = GDP,
+    MarketValue_opp = MarketValue,
+    FifaRank_opp = FifaRank,
+    UefaPoints_opp = UefaPoints,
+    CLPlayers_opp = CLPlayers
+  )
+
+# Join each team's row to its opponent's row
+team_data <- team_data %>%
+  left_join(
+    opponent_data,
+    by = c(
+      "Year",
+      "Team" = "Opponent_opp",
+      "Opponent" = "Team_opp"
+    )
+  )
+
+# Check that opponent information was successfully matched
+if (anyNA(team_data$GDP_opp)) {
+  stop("Some opponent characteristics could not be matched.")
+}
+
+# Prepare variables
+team_data <- team_data %>%
+  mutate(
+    GroupStage = factor(GroupStage),
+    Goals = as.numeric(Goals)
+  )
+
+# Inspect
+glimpse(team_data)
+
+# 
+# fit_goal_nn <- function(train, test,
+#                         size = 3,
+#                         decay = 0.1,
+#                         maxit = 1000,
+#                         seed = 123) {
+#   
+#   # Predictors: own and opponent characteristics
+#   formula_x <- ~
+#     GroupStage +
+#     GDP + MarketValue + FifaRank +
+#     UefaPoints + CLPlayers +
+#     GDP_opp + MarketValue_opp + FifaRank_opp +
+#     UefaPoints_opp + CLPlayers_opp - 1
+#   
+#   # Create model matrices
+#   x_train <- model.matrix(formula_x, data = train)
+#   x_test <- model.matrix(formula_x, data = test)
+#   
+#   # Align test columns with training columns
+#   missing_cols <- setdiff(colnames(x_train), colnames(x_test))
+#   
+#   for (col in missing_cols) {
+#     x_test <- cbind(x_test, setNames(
+#       data.frame(rep(0, nrow(x_test))), col
+#     ))
+#   }
+#   
+#   x_test <- x_test[, colnames(x_train), drop = FALSE]
+#   
+#   # Standardise using training data only
+#   x_center <- colMeans(x_train)
+#   x_scale <- apply(x_train, 2, sd)
+#   
+#   x_scale[!is.finite(x_scale) | x_scale == 0] <- 1
+#   
+#   x_train <- scale(
+#     x_train,
+#     center = x_center,
+#     scale = x_scale
+#   )
+#   
+#   x_test <- scale(
+#     x_test,
+#     center = x_center,
+#     scale = x_scale
+#   )
+#   
+#   # Transform target
+#   y_train <- log1p(train$Goals)
+#   
+#   # Train neural network
+#   set.seed(seed)
+#   
+#   model <- nnet(
+#     x = x_train,
+#     y = y_train,
+#     size = size,
+#     linout = TRUE,
+#     decay = decay,
+#     maxit = maxit,
+#     rang = 0.1,
+#     MaxNWts = 10000,
+#     trace = FALSE
+#   )
+#   
+#   # Predict on log scale
+#   predicted_log <- as.numeric(
+#     predict(model, x_test)
+#   )
+#   
+#   # Retransform to goals, with a smearing correction
+#   residuals <- y_train - as.numeric(
+#     predict(model, x_train)
+#   )
+#   
+#   smearing <- mean(exp(residuals))
+#   
+#   predicted_goals <- pmax(
+#     0,
+#     exp(predicted_log) * smearing - 1
+#   )
+#   
+#   return(list(
+#     model = model,
+#     predicted_goals = predicted_goals,
+#     actual_goals = test$Goals
+#   ))
+# }
+
+goal_grid <- expand.grid(
+  size = c(1, 2, 3, 4, 5),
+  decay = c(0.7, 0.5, 1,0.9,1.1,2),
+  skip = c(FALSE, TRUE)
+)
+
+head(goal_grid)
+nrow(goal_grid)
+
+
+fit_goal_nn <- function(train, test,
+                        size = 3,
+                        decay = 0.1,
+                        skip = FALSE,
+                        maxit = 1000,
+                        seed = 123) {
+  
+  formula_x <- ~
+    GroupStage +
+    GDP + MarketValue + FifaRank +
+    UefaPoints + CLPlayers +
+    GDP_opp + MarketValue_opp + FifaRank_opp +
+    UefaPoints_opp + CLPlayers_opp - 1
+  
+  x_train <- model.matrix(formula_x, data = train)
+  x_test  <- model.matrix(formula_x, data = test)
+  
+  # Make sure test has exactly the training columns
+  missing_cols <- setdiff(colnames(x_train), colnames(x_test))
+  
+  if (length(missing_cols) > 0) {
+    extra <- matrix(
+      0,
+      nrow = nrow(x_test),
+      ncol = length(missing_cols),
+      dimnames = list(NULL, missing_cols)
+    )
+    x_test <- cbind(x_test, extra)
+  }
+  
+  x_test <- x_test[, colnames(x_train), drop = FALSE]
+  
+  # Scale using training data only
+  x_center <- colMeans(x_train)
+  x_scale <- apply(x_train, 2, sd)
+  x_scale[!is.finite(x_scale) | x_scale == 0] <- 1
+  
+  x_train <- scale(x_train, center = x_center, scale = x_scale)
+  x_test  <- scale(x_test, center = x_center, scale = x_scale)
+  
+  # Transform the response
+  y_train <- log1p(train$Goals)
+  
+  set.seed(seed)
+  
+  model <- nnet(
+    x = x_train,
+    y = y_train,
+    size = size,
+    linout = TRUE,
+    skip = skip,
+    decay = decay,
+    maxit = maxit,
+    rang = 0.1,
+    MaxNWts = 10000,
+    trace = FALSE
+  )
+  
+  # Predictions on transformed scale
+  predicted_log <- as.numeric(predict(model, x_test))
+  
+  # Approximate retransformation correction
+  train_fitted <- as.numeric(predict(model, x_train))
+  residuals <- y_train - train_fitted
+  smearing <- mean(exp(residuals))
+  
+  # Convert predictions back to goals
+  predicted_goals <- pmax(
+    0,
+    exp(predicted_log) * smearing - 1
+  )
+  
+  list(
+    model = model,
+    predicted_goals = predicted_goals
+  )
+}
+
+predict_match_outcome <- function(lambda_A, lambda_B,
+                                  draw_threshold = 1/3,
+                                  max_goals = 10) {
+  
+  goals <- 0:max_goals
+  
+  prob_A <- dpois(goals, lambda_A)
+  prob_B <- dpois(goals, lambda_B)
+  
+  score_matrix <- outer(prob_A, prob_B)
+  
+  # Normalise probabilities after truncation
+  score_matrix <- score_matrix / sum(score_matrix)
+  
+  p_win <- sum(score_matrix[row(score_matrix) > col(score_matrix)])
+  p_draw <- sum(score_matrix[row(score_matrix) == col(score_matrix)])
+  p_loss <- sum(score_matrix[row(score_matrix) < col(score_matrix)])
+  
+  probabilities <- c(
+    Loss = p_loss,
+    Draw = p_draw,
+    Win = p_win
+  )
+  
+  predicted <- if (p_loss > p_win) "Loss" else "Win"
+  
+  if (p_draw >= draw_threshold) {
+    predicted <- "Draw"
+  }
+  
+  list(
+    probabilities = probabilities,
+    predicted = predicted
+  )
+}
+draw_thresholds <- seq(0.20, 0.45, by = 0.025)
+library(dplyr)
+
+library(dplyr)
+library(ggplot2)
+library(caret)
+
+# Pair the two team-level predictions into one match
+match_predictions <- predictions_nested_goals %>%
+  mutate(
+    Team = as.character(Team),
+    Opponent = as.character(Opponent),
+    Team_A = pmin(Team, Opponent),
+    Team_B = pmax(Team, Opponent)
+  ) %>%
+  group_by(Year, Team_A, Team_B) %>%
+  summarise(
+    lambda_A = Predicted_Goals[match(Team_A, Team)],
+    lambda_B = Predicted_Goals[match(Team_B, Team)],
+    Goals_A = Actual_Goals[match(Team_A, Team)],
+    Goals_B = Actual_Goals[match(Team_B, Team)],
+    n_rows = n(),
+    .groups = "drop"
+  )
+
+# Check that every match has two reciprocal team rows
+table(match_predictions$n_rows)
+
+if (any(match_predictions$n_rows != 2) ||
+    anyNA(match_predictions)) {
+  stop("Some matches have missing or duplicated team predictions.")
+}
+outcomes <- lapply(seq_len(nrow(match_predictions)), function(i) {
+  
+  result <- predict_match_outcome(
+    match_predictions$lambda_A[i],
+    match_predictions$lambda_B[i]
+  )
+  
+  data.frame(
+    Prob_Loss = result$probabilities["Loss"],
+    Prob_Draw = result$probabilities["Draw"],
+    Prob_Win = result$probabilities["Win"],
+    Predicted = result$predicted
+  )
+})
+
+match_predictions <- bind_cols(
+  match_predictions,
+  bind_rows(outcomes)
+)
+
+match_predictions <- match_predictions %>%
+  mutate(
+    Actual = case_when(
+      Goals_A > Goals_B ~ "Win",
+      Goals_A == Goals_B ~ "Draw",
+      TRUE ~ "Loss"
+    ),
+    Actual = factor(Actual, levels = c("Loss", "Draw", "Win")),
+    Predicted = factor(Predicted, levels = c("Loss", "Draw", "Win"))
+  )
+
+library(caret)
+
+confusionMatrix(
+  match_predictions$Predicted,
+  match_predictions$Actual
+)
+prob_matrix <- as.matrix(
+  match_predictions[, c(
+    "Prob_Loss",
+    "Prob_Draw",
+    "Prob_Win"
+  )]
+)
+
+calculate_logloss(
+  match_predictions$Actual,
+  prob_matrix
+)
+tune_goal_nn <- function(train_data, grid) {
+  
+  inner_years <- sort(unique(train_data$Year))
+  
+  tuning_results <- vector("list", nrow(grid))
+  
+  for (g in seq_len(nrow(grid))) {
+    
+    size_value <- grid$size[g]
+    decay_value <- grid$decay[g]
+    skip_value <- grid$skip[g]
+    
+    fold_rmse <- numeric(length(inner_years))
+    fold_mae <- numeric(length(inner_years))
+    
+    for (j in seq_along(inner_years)) {
+      
+      validation_year <- inner_years[j]
+      
+      inner_train <- train_data %>%
+        filter(Year != validation_year)
+      
+      inner_valid <- train_data %>%
+        filter(Year == validation_year)
+      
+      fitted <- fit_goal_nn(
+        train = inner_train,
+        test = inner_valid,
+        size = size_value,
+        decay = decay_value,
+        skip = skip_value,
+        seed = 1000 + j
+      )
+      
+      errors <- inner_valid$Goals - fitted$predicted_goals
+      
+      fold_rmse[j] <- sqrt(mean(errors^2))
+      fold_mae[j] <- mean(abs(errors))
+    }
+    
+    tuning_results[[g]] <- data.frame(
+      size = size_value,
+      decay = decay_value,
+      skip = skip_value,
+      mean_RMSE = mean(fold_rmse),
+      mean_MAE = mean(fold_mae)
+    )
+  }
+  
+  tuning_results <- bind_rows(tuning_results) %>%
+    arrange(mean_RMSE)
+  
+  list(
+    best = tuning_results %>% slice(1),
+    results = tuning_results
+  )
+}
+years <- sort(unique(team_data$Year))
+
+outer_predictions <- list()
+outer_tuning_results <- list()
+outer_best_parameters <- list()
+
+for (i in seq_along(years)) {
+  
+  test_year <- years[i]
+  
+  cat("\n============================\n")
+  cat("Outer test year:", test_year, "\n")
+  cat("============================\n")
+  
+  # Outer split
+  outer_train <- team_data %>%
+    filter(Year != test_year)
+  
+  outer_test <- team_data %>%
+    filter(Year == test_year)
+  
+  # Inner CV: select hyperparameters
+  tuning <- tune_goal_nn(
+    train_data = outer_train,
+    grid = goal_grid
+  )
+  
+  best <- tuning$best
+  
+  cat("Best parameters:\n")
+  print(best)
+  
+  # Refit on all outer training years
+  final_fit <- fit_goal_nn(
+    train = outer_train,
+    test = outer_test,
+    size = best$size,
+    decay = best$decay,
+    skip = best$skip,
+    seed = 2000 + i
+  )
+  
+  # Save outer test predictions
+  outer_predictions[[i]] <- data.frame(
+    Year = outer_test$Year,
+    Team = outer_test$Team,
+    Opponent = outer_test$Opponent,
+    Actual_Goals = outer_test$Goals,
+    Predicted_Goals = final_fit$predicted_goals
+  )
+  
+  outer_tuning_results[[i]] <- tuning$results %>%
+    mutate(Outer_Test_Year = test_year)
+  
+  outer_best_parameters[[i]] <- best %>%
+    mutate(Outer_Test_Year = test_year)
+}
+
+# Combine results
+predictions_nested_goals <- bind_rows(outer_predictions)
+
+tuning_summary_goals <- bind_rows(outer_tuning_results)
+
+best_parameters_goals <- bind_rows(outer_best_parameters)
+
+goal_metrics <- predictions_nested_goals %>%
+  summarise(
+    MAE = mean(abs(Actual_Goals - Predicted_Goals)),
+    RMSE = sqrt(mean(
+      (Actual_Goals - Predicted_Goals)^2
+    )),
+    Mean_Error = mean(
+      Predicted_Goals - Actual_Goals
+    )
+  )
+
+goal_metrics
+year_metrics_goals <- predictions_nested_goals %>%
+  group_by(Year) %>%
+  summarise(
+    MAE = mean(abs(Actual_Goals - Predicted_Goals)),
+    RMSE = sqrt(mean(
+      (Actual_Goals - Predicted_Goals)^2
+    )),
+    Mean_Error = mean(
+      Predicted_Goals - Actual_Goals
+    ),
+    .groups = "drop"
+  )
+
+year_metrics_goals
+
+
+ggplot(
+  predictions_nested_goals,
+  aes(x = Actual_Goals, y = Predicted_Goals)
+) +
+  geom_point(alpha = 0.6) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Nested CV: Actual vs Predicted Goals",
+    x = "Actual goals",
+    y = "Predicted goals"
+  ) +
+  theme_minimal()
+
+best_parameters_goals
+
+# BASELINE
+#
+#
+baseline_predictions <- list()
+
+for (i in seq_along(years)) {
+  
+  test_year <- years[i]
+  
+  train <- team_data %>%
+    filter(Year != test_year)
+  
+  test <- team_data %>%
+    filter(Year == test_year)
+  
+  baseline_predictions[[i]] <- data.frame(
+    Year = test$Year,
+    Actual_Goals = test$Goals,
+    Predicted_Goals = mean(train$Goals)
+  )
+}
+
+baseline_predictions <- bind_rows(baseline_predictions)
+
+baseline_metrics <- baseline_predictions %>%
+  summarise(
+    MAE = mean(abs(Actual_Goals - Predicted_Goals)),
+    RMSE = sqrt(mean(
+      (Actual_Goals - Predicted_Goals)^2
+    ))
+  )
+
+baseline_metrics
+
+
+years <- sort(unique(team_data$Year))
+
+cv_predictions <- list()
+
+for (i in seq_along(years)) {
+  
+  test_year <- years[i]
+  
+  cat("Testing tournament:", test_year, "\n")
+  
+  # Split by tournament year
+  train <- team_data %>%
+    filter(Year != test_year)
+  
+  test <- team_data %>%
+    filter(Year == test_year)
+  
+  # Fit neural network
+  result <- fit_goal_nn(
+    train = train,
+    test = test,
+    size = 3,
+    decay = 0.1,
+    seed = 100 + i
+  )
+  
+  # Store predictions
+  cv_predictions[[i]] <- data.frame(
+    Year = test$Year,
+    Team = test$Team,
+    Opponent = test$Opponent,
+    Actual_Goals = test$Goals,
+    Predicted_Goals = result$predicted_goals
+  )
+}
+
+# Combine all outer-fold predictions
+predictions_goals <- bind_rows(cv_predictions)
+# Overall performance
+mae <- mean(abs(
+  predictions_goals$Actual_Goals -
+    predictions_goals$Predicted_Goals
+))
+
+rmse <- sqrt(mean(
+  (predictions_goals$Actual_Goals -
+     predictions_goals$Predicted_Goals)^2
+))
+
+mean_error <- mean(
+  predictions_goals$Predicted_Goals -
+    predictions_goals$Actual_Goals
+)
+
+data.frame(
+  MAE = mae,
+  RMSE = rmse,
+  Mean_Error = mean_error
+)
+
+year_metrics_goals <- predictions_goals %>%
+  group_by(Year) %>%
+  summarise(
+    MAE = mean(abs(Actual_Goals - Predicted_Goals)),
+    RMSE = sqrt(mean(
+      (Actual_Goals - Predicted_Goals)^2
+    )),
+    Mean_Error = mean(Predicted_Goals - Actual_Goals),
+    .groups = "drop"
+  )
+
+print(year_metrics_goals)
+
+library(ggplot2)
+
+ggplot(
+  predictions_goals,
+  aes(x = Actual_Goals, y = Predicted_Goals)
+) +
+  geom_point(alpha = 0.6) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Actual vs Predicted Goals",
+    x = "Actual goals",
+    y = "Predicted expected goals"
+  ) +
+  theme_minimal()
+
+
+
+
+ggplot(predictions_nested_goals,
+       aes(x = Actual_Goals, y = Predicted_Goals)) +
+  geom_point(alpha = 0.6, size = 2) +
+  geom_abline(
+    intercept = 0, slope = 1,
+    linetype = "dashed"
+  ) +
+  coord_equal() +
+  scale_x_continuous(breaks = 0:6) +
+  scale_y_continuous(breaks = 0:6) +
+  labs(
+    title = "Actual vs Predicted Goals",
+    subtitle = "Out-of-sample predictions from nested CV",
+    x = "Actual goals",
+    y = "Predicted goals"
+  ) +
+  theme_minimal()
+
+ggplot(year_metrics_goals,
+       aes(x = factor(Year), y = RMSE)) +
+  geom_col(fill = "steelblue", width = 0.7) +
+  geom_hline(
+    yintercept = mean(year_metrics_goals$RMSE),
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "RMSE Across Tournament Years",
+    subtitle = "Each bar represents one outer CV fold",
+    x = "Held-out tournament",
+    y = "RMSE"
+  ) +
+  theme_minimal()
+
+predictions_nested_goals <- predictions_nested_goals %>%
+  mutate(
+    Residual = Actual_Goals - Predicted_Goals
+  )
+
+ggplot(predictions_nested_goals,
+       aes(x = Predicted_Goals, y = Residual)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
+  geom_smooth(
+    method = "loess",
+    se = FALSE
+  ) +
+  labs(
+    title = "Residuals vs Predicted Goals",
+    x = "Predicted goals",
+    y = "Residual (actual - predicted)"
+  ) +
+  theme_minimal()
+ggplot(predictions_nested_goals,
+       aes(x = factor(Year), y = Residual)) +
+  geom_boxplot(outlier.alpha = 0.5) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Distribution of Prediction Errors by Year",
+    x = "Held-out tournament",
+    y = "Residual (actual - predicted)"
+  ) +
+  theme_minimal()
+year_metrics_long <- year_metrics_goals %>%
+  tidyr::pivot_longer(
+    cols = c(MAE, RMSE),
+    names_to = "Metric",
+    values_to = "Value"
+  )
+
+ggplot(year_metrics_long,
+       aes(x = factor(Year),
+           y = Value,
+           group = Metric,
+           color = Metric)) +
+  geom_point(size = 3) +
+  geom_line() +
+  labs(
+    title = "Model Performance Across Outer CV Folds",
+    x = "Held-out tournament",
+    y = "Prediction error",
+    color = "Metric"
+  ) +
+  theme_minimal()
+
+ggplot(best_parameters_goals,
+       aes(x = factor(Outer_Test_Year),
+           y = decay)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = 1)) +
+  labs(
+    title = "Selected Weight Decay Across Outer Folds",
+    x = "Outer test year",
+    y = "Selected decay"
+  ) +
+  theme_minimal()
+
+predict_match_outcome <- function(lambda_A, lambda_B,
+                                  draw_threshold = 1/3,
+                                  max_goals = 10) {
+  
+  goals <- 0:max_goals
+  
+  prob_A <- dpois(goals, lambda_A)
+  prob_B <- dpois(goals, lambda_B)
+  
+  score_matrix <- outer(prob_A, prob_B)
+  
+  p_win <- sum(score_matrix[row(score_matrix) > col(score_matrix)])
+  p_draw <- sum(score_matrix[row(score_matrix) == col(score_matrix)])
+  p_loss <- sum(score_matrix[row(score_matrix) < col(score_matrix)])
+  
+  probabilities <- c(
+    Loss = p_loss,
+    Draw = p_draw,
+    Win = p_win
+  )
+  
+  # First choose between Loss and Win
+  predicted <- ifelse(p_loss > p_win, "Loss", "Win")
+  
+  # Override if draw probability exceeds threshold
+  if (p_draw >= draw_threshold) {
+    predicted <- "Draw"
+  }
+  
+  list(
+    probabilities = probabilities,
+    predicted = predicted
+  )
+}
+draw_thresholds <- seq(0.20, 0.45, by = 0.025)
+library(dplyr)
+
+match_predictions <- predictions_nested_goals %>%
+  left_join(
+    predictions_nested_goals %>%
+      select(
+        Year,
+        Team,
+        Opponent,
+        Predicted_Goals
+      ) %>%
+      rename(
+        Opponent = Team,
+        Team = Opponent,
+        Predicted_Goals_Opp = Predicted_Goals
+      ),
+    by = c(
+      "Year",
+      "Team",
+      "Opponent"
+    )
+  )
+match_predictions <- predictions_nested_goals %>%
+  mutate(
+    Team_A = pmin(Team, Opponent),
+    Team_B = pmax(Team, Opponent)
+  ) %>%
+  group_by(Year, Team_A, Team_B) %>%
+  summarise(
+    lambda_A = Predicted_Goals[Team == Team_A][1],
+    lambda_B = Predicted_Goals[Team == Team_B][1],
+    Goals_A = Actual_Goals[Team == Team_A][1],
+    Goals_B = Actual_Goals[Team == Team_B][1],
+    .groups = "drop"
+  )
+
+outcomes <- lapply(seq_len(nrow(match_predictions)), function(i) {
+  
+  result <- predict_match_outcome(
+    match_predictions$lambda_A[i],
+    match_predictions$lambda_B[i]
+  )
+  
+  data.frame(
+    Prob_Loss = result$probabilities["Loss"],
+    Prob_Draw = result$probabilities["Draw"],
+    Prob_Win = result$probabilities["Win"],
+    Predicted = result$predicted
+  )
+})
+
+match_predictions <- bind_cols(
+  match_predictions,
+  bind_rows(outcomes)
+)
+
+match_predictions <- match_predictions %>%
+  mutate(
+    Actual = case_when(
+      Goals_A > Goals_B ~ "Win",
+      Goals_A == Goals_B ~ "Draw",
+      TRUE ~ "Loss"
+    ),
+    Actual = factor(Actual, levels = c("Loss", "Draw", "Win")),
+    Predicted = factor(Predicted, levels = c("Loss", "Draw", "Win"))
+  )
+
+library(caret)
+
+confusionMatrix(
+  match_predictions$Predicted,
+  match_predictions$Actual
+)
+prob_matrix <- as.matrix(
+  match_predictions[, c(
+    "Prob_Loss",
+    "Prob_Draw",
+    "Prob_Win"
+  )]
+)
+
+calculate_logloss(
+  match_predictions$Actual,
+  prob_matrix
+)
+
+# Define helper functions first
+
+
+# Outer CV
+for (test_year in years) {
+  
+  outer_train <- data %>% filter(Year != test_year)
+  outer_test  <- data %>% filter(Year == test_year)
+  
+  # 1. Tune the goal prediction model
+  best_params <- tune_goal_nn(outer_train)
+  
+  # 2. Tune the draw threshold using inner CV
+  best_threshold <- tune_draw_threshold(
+    outer_train,
+    best_params
+  )
+  
+  # 3. Fit final NN on all outer training data
+  final_model <- fit_goal_nn(
+    train = outer_train,
+    test = outer_test,
+    size = best_params$size,
+    decay = best_params$decay,
+    skip = best_params$skip
+  )
+  
+  # 4. Pair team predictions into matches
+  match_predictions <- pair_team_predictions(final_model)
+  
+  # 5. Convert xG predictions into outcomes
+  # 6. Apply best_threshold
+  # 7. Store outer-fold predictions
+}
