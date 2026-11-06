@@ -11,8 +11,11 @@
 #   - model_class_wfs
 #   - model_class_grids
 #   - model_class_metrics
-#   - model_class_fits
+#   - model_class_tuned
 
+# Section 0: Global settings-----
+
+SIMPLE = F
 
 # Section 1: load libraries---------
 library(tune)
@@ -78,20 +81,33 @@ rename_rset_ids <- function(x, new_ids) {
   x
 }
 
-# Rename outer resamples
-get_outer_names <- function(resamples, all_years) {
+get_resample_ids <- function(resamples, all_years, outer_test_year = NULL) {
+  
   purrr::map_chr(resamples$splits, function(split) {
-    test_year <- setdiff(all_years, unique(analysis(split)$Year))
     
-    stopifnot(length(test_year) == 1)
+    missing_years <- setdiff(
+      all_years,
+      unique(analysis(split)$Year)
+    )
     
-    paste("test", test_year)
+    if (is.null(outer_test_year)) {
+      stopifnot(length(missing_years) == 1)
+      paste("test", missing_years)
+      
+    } else {
+      eval_year <- setdiff(missing_years, outer_test_year)
+      
+      stopifnot(length(eval_year) == 1)
+      
+      paste0("test ", outer_test_year, " / eval ", eval_year)
+    }
   })
 }
 
+# Rename outer resamples
 nested_leave_one_year <- rename_rset_ids(
   nested_leave_one_year,
-  get_outer_names(nested_leave_one_year, all_years)
+  get_resample_ids(nested_leave_one_year, all_years)
 )
 
 # Rename inner resamples
@@ -104,7 +120,7 @@ for (i in seq_along(nested_leave_one_year$inner_resamples)) {
   
   inner <- nested_leave_one_year$inner_resamples[[i]]
   
-  inner_names <- get_split_names(
+  inner_names <- get_resample_ids(
     inner,
     all_years,
     outer_test_year
@@ -114,6 +130,19 @@ for (i in seq_along(nested_leave_one_year$inner_resamples)) {
     inner,
     inner_names
   )
+}
+
+# adding weights to (at least) outer layer (in approximation of pooled estimates)
+nested_leave_one_year = add_resample_weights(
+  rset = nested_leave_one_year, 
+  weights = calculate_resample_weights(nested_leave_one_year)
+) 
+
+for (i in 1:6) { # I don't know whether the inner weights are actually supported
+  nested_leave_one_year$inner_resamples[[i]] = add_resample_weights(
+    rset = nested_leave_one_year$inner_resamples[[i]], 
+    weights = calculate_resample_weights(nested_leave_one_year$inner_resamples[[i]])
+  ) 
 }
 
 # Section 3.2 nested expanding window (sliding period)----
@@ -155,7 +184,6 @@ pois_wf = workflow() |>
 
 # Section 5: Defining Neural Net Workflow & Grid -----
 
-
 nnet_tune = mlp(engine = "nnet", 
                 mode = "regression",
                 penalty = tune(), 
@@ -163,14 +191,14 @@ nnet_tune = mlp(engine = "nnet",
 )
 
 nnet_grid = expand.grid(
-  penalty = c(0.7, 0.5, 1,0.9,1.1,2), # TODO think about whether to include much smaller values!
+  penalty = c(0.5, 
+              0.7,
+              0.9,
+              1.0,
+              1.1,
+              2.0), # TODO think about whether to include much smaller values
   hidden_units = 1:5
 )
-
-# nnet_tailor =                 #TODO we can use tailors to get to the WDL conversion
-#   tailor() |>
-#   adjust_predictions_custom(
-# )
   
 nnet_wf = workflow() |>
   add_model(nnet_tune) |> 
@@ -178,6 +206,7 @@ nnet_wf = workflow() |>
 
 # Section 6: Defining Random Forest Workflow & Grid -----
 
+# Settings
 target <- "Goals"
 predictors <- c(
   "GroupStage",
@@ -187,7 +216,8 @@ predictors <- c(
   "UefaPoints",
   "CLPlayers"
 )
-N_TREES = 100
+N_TREES = 1000
+
 
 rf_formula <- as.formula(
   paste(target, "~", paste(predictors, collapse = " + "))
@@ -196,7 +226,6 @@ rf_formula <- as.formula(
 rf_tune = rand_forest(
   min_n = tune(), 
   mtry = tune(), 
-  # trees = 1000
   trees= !!N_TREES
 ) %>%
   set_engine(
@@ -205,13 +234,23 @@ rf_tune = rand_forest(
     num.threads = 1) %>%
   set_mode("regression")
 
+
+# option to reduce runtime when debugging
+if (SIMPLE == T) {
+  N_TREES = 100
+  
+  rf_grid <- expand.grid(,
+    mtry            = 3:length(predictors),
+    min_n           = c(3, 5), 
+    sample.fraction = c(0.7, 0.85)
+  )
+}
+
+# FULL
 rf_grid <- expand.grid(
-  # mtry = 1:length(predictors),
-  mtry = 3:length(predictors),
-  # min_n = c(3, 5, 10, 15), #simplifying
-  min_n = c(3, 5), 
-  sample.fraction = c(0.7, 0.85)
-  # sample.fraction = c(0.7, 0.85, 1.0)
+  mtry            = 1:length(predictors),
+  min_n           = c(3, 5, 10, 15),
+  sample.fraction = c(0.7, 0.85, 1.0)
 )
 
 rf_wf = workflow() |>
@@ -220,46 +259,35 @@ rf_wf = workflow() |>
 
 # Section 7: Defining XGBoost Workflow & Grid-----
 
-# min_child_weight <- function(range = c(1, 10)) {
-#   dials::new_quant_param(
-#     type = "double",
-#     range = range,
-#     inclusive = c(TRUE, TRUE),
-#     label = c(min_child_weight = "Minimum Child Weight")
-#   )
-# }
-# xg_params <- dials::parameters(
-#   dials::tree_depth(),
-#   dials::learn_rate(),
-#   dials::sample_size(),
-#   min_child_weight()
-# )
-
 xg_tune <- boost_tree(
   tree_depth = tune(), 
   learn_rate = tune(), 
   sample_size = tune(), 
-  min_n = tune() # not really the same as min_child_weight but... close enough for now
-  ) |> 
+  min_n = tune()) |>                           # similar-ish to min_child_weight
   set_engine("xgboost",
-             counts = FALSE, # changes interpretation of colsample_bytree
-             # min_child_weight = tune(), # not possible..
+             counts = FALSE,                   # changes colsample_bytree
+             # min_child_weight = tune(),      # not possible
              eval_metric = "poisson-nloglik", 
              objective =  "count:poisson",
              colsample_bytree = 0.8) |> 
   set_mode("regression")
 
 xg_grid <- expand.grid(
-  # tree_depth       = c(1, 2, 3),
-  # learn_rate       = c(0.01, 0.05, 0.1), # assuming equivalent to eta
-  # sample_size      = c(0.5, 0.8), #assuming this was subsample
-  # min_child_weight = c(1, 5, 10)
-  #SIMPLE
-  tree_depth       = c(1, 2),
-  learn_rate       = c(0.01, 0.05), # assuming equivalent to eta
-  sample_size      = c(0.5, 0.8), #assuming this was subsample
-  min_n            = c(1,5,10)
+  # FULL
+  tree_depth    = c(1, 2, 3),
+  learn_rate    = c(0.01, 0.05, 0.1), # assuming equivalent to eta
+  sample_size   = c(0.5, 0.8),        # assuming equivalent to subsample
+  min_n         = c(1, 5, 10)
 )
+
+if (SIMPLE){
+  xg_grid <- expand.grid(
+    tree_depth       = c(1, 2),
+    learn_rate       = c(0.01, 0.05), # assuming equivalent to eta
+    sample_size      = c(0.5, 0.8),   # assuming equivalent to subsample
+    min_n            = c(1, 5, 10)
+  )
+}
 
 xg_wf = workflow() |>
   add_model(xg_tune) |> 
@@ -294,11 +322,6 @@ model_class_metrics = list(nnet = metrics_goals,
                            rf   = metrics_goals,
                            xg   = metrics_goals)
 
-# model_class_param_infos = list(nnet = NULL, 
-#                                pois = NULL,
-#                                rf   = NULL,
-#                                xg   = xg_params)
-
 # Section 9: Running nested_tune_grid for each model_class----
 
 model_class_vec = c(
@@ -309,15 +332,30 @@ model_class_vec = c(
 )
 
 run_nested_tune_for_model = function(model_class) {
+  
+  # Control parallelization
   mirai::daemons(2) # 0 vs 2 makes a difference 3,4, no real difference.
   
+  # Check time to run
   print(system.time({
+    
   tuned = nested_tune_grid(
     object     = model_class_wfs[[model_class]], 
     resamples  = model_class_resamples[[model_class]], 
     grid       = model_class_grids[[model_class]], 
-    metrics    = model_class_metrics[[model_class]],
-    # param_info = model_class_param_infos[[model_class]]
+    metrics    = model_class_metrics[[model_class]], 
+    select     = selection_rule(                      #TODO: reconsider
+      rule = "desirability", 
+      minimize(rmse),
+      minimize(poisson_log_loss)
+    ),
+    control = control_grid( # reaches inner tune grid in every fold
+      verbose = FALSE, 
+      extract = NULL,   # can save other intermediates from the nested cv & call collect_extracts() 
+      save_pred = TRUE, # The inner run's predictions and extracts are still discarded
+                        # Use extract = function(x) x to keep each fold's fitted workflow
+    )
+    
   )}))
   
   mirai::daemons(0)
@@ -328,18 +366,57 @@ run_nested_tune_for_model = function(model_class) {
 # Switch to vectorized after debugging a bit
 # model_class_fits = map(model_class_vec, run_nested_tune_for_model)
 
-pois_tuned = run_nested_tune_for_model("pois") #full run took 23 seconds
-rf_tuned = run_nested_tune_for_model("rf") #simplified run took 40 seconds
-xg_tuned = run_nested_tune_for_model("xg") #simplfied run took 63 seconds
-nnet_tuned = run_nested_tune_for_model("nnet") # full run took 46 seconds
+pois_tuned = run_nested_tune_for_model("pois") # simplified run:  NA, full run:  23s
+rf_tuned   = run_nested_tune_for_model("rf")   # simplified run: 40s, full run: 540s (9 min)
+xg_tuned   = run_nested_tune_for_model("xg")   # simplified run: 63s, full run: 125s (2 min)
+nnet_tuned = run_nested_tune_for_model("nnet") # simplified run:  NA, full run:  46s
+
+model_class_tuned = list(pois = pois_tuned, 
+                         rf   = rf_tuned, 
+                         xg   = xg_tuned, 
+                         nnet = nnet_tuned)
+
+# Section 10: Inspecting results----
+summary(pois_tuned)
+summary(rf_tuned)
+summary(xg_tuned)
+summary(nnet_tuned)
+
+model_class_comparison = Reduce(
+  rbind, 
+  map2(model_class_tuned, 
+       names(model_class_tuned), 
+       function(x,y){
+         model_compare_metrics = collect_metrics(x)
+         model_compare_metrics$model_class = y                      
+         return(model_compare_metrics)
+       }
+  )
+)
+
+model_class_selections = map(model_class_tuned, collect_selections)
 
 
+# Section 11: Rerunning but with tailor to convert to WDL----
+
+# nnet_tailor =                 #TODO we can use tailors to get to the WDL conversion
+#   tailor() |>
+#   adjust_predictions_custom(
+# )
 
 
-summary(poisson_competition)
+# https://yardstick.tidymodels.org/articles/grouping.html
+# accuracy_diff <-
+#   new_groupwise_metric(
+#     fn = accuracy,
+#     name = "accuracy_diff",
+#     aggregate = function(acc_by_group) {
+#       diff(c(acc_by_group$.estimate[2], acc_by_group$.estimate[1]))
+#     }
+#   )
 
-collect_metrics(poisson_competition)
-collect_selections(poisson_competition)
+
+# OR APPROACH VIA THE save_pred = TRUE OPTION
 
 # nested_fit_resamples
 
@@ -349,7 +426,6 @@ collect_selections(poisson_competition)
 # TODO: Visualize tuning performances (thinking means with error bars, faceted by metric & outer)
 # TODO have to find a resolution between rmse & mae for each fold (Currently only based on RMSE
 # TODO: reconsider alternative to just taking first best parameter using selection_rule()
-
 # TODO: e.g. but later call programmatically using lists for each model_class_wfs, model_class_grids, model_class_metrics
 # aka forced pois win
 # TODO: build winner workflow using winner_best_hyper_params & class_winner_wf but somehow 
