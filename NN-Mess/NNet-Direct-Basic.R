@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 library(nnet)
 library(dplyr)
 library(purrr)
