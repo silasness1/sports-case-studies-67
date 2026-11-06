@@ -29,6 +29,7 @@ library(knitr)
 # install.packages("pak")
 # pak::pak("tidymodels/nestedtune")
 library(nestedtune)
+library(lubridate)
 library(mirai)
 
 # Section 2: Read in data ----
@@ -46,46 +47,22 @@ euro = rbind(euro_2004,
              euro_2020,
              euro_2024) 
 
-# euro_matches <- euro %>% #abandoning this for now
-#   mutate(
-#     perspective = if_else(Team < Opponent, "team", "opp")
-#   ) %>%
-#   select(
-#     match_id, Goals, Team, Opponent, Year, perspective,
-#     GDP, MarketValue, FifaRank,
-#     UefaPoints, CLPlayers
-#   ) %>% 
-#   pivot_wider(
-#     id_cols = c(match_id),
-#     names_from = perspective,
-#     values_from = -c(match_id),
-#     names_glue = "{.value}_{perspective}"
-#   ) %>%
-#   mutate(Goals_diff = Goals_team - Goals_opp) %>%
-#   select(-ends_with("_opp"), 
-#          -perspective_team) %>%
-#   rename_with(function(x){sub("_team$", "", x)})
-
-
-
 # Section 3: Form splits----
+# NOTE: Look for where resample_struct is defined. That's the ultimate split that's used below
 set.seed(67676769)
 
-# Initially using nested Leave One Euro Out but can be easily swapped for comparison
-resample_struct_long = nested_resamples(data = euro,
-                       outside = group_vfold_cv(v = NULL, 
-                                                group = Year,
-                                                # group = match_id,
-                                                repeats = 1,
-                                                strata = NULL),
-                       inside = group_vfold_cv(v = NULL, 
-                                               group = Year,
-                                               # group = match_id,
-                                               repeats = 1,
-                                               strata = NULL))
 
+# Section 3.1 nested_leave_one_year object----
+nested_leave_one_year = nested_resamples(data = euro,
+                                         outside = group_vfold_cv(v = NULL, 
+                                                                  group = Year,
+                                                                  repeats = 1,
+                                                                  strata = NULL),
+                                         inside = group_vfold_cv(v = NULL, 
+                                                                 group = Year,
+                                                                 repeats = 1,
+                                                                 strata = NULL))
 
-# (CAN IGNORE REST OF SECTION 3): Creating proper IDs for the resample_struct object 
 all_years <- seq(2004, 2024, 4)
 
 # Rename an rset and its underlying split objects
@@ -112,20 +89,20 @@ get_outer_names <- function(resamples, all_years) {
   })
 }
 
-resample_struct <- rename_rset_ids(
-  resample_struct,
-  get_outer_names(resample_struct, all_years)
+nested_leave_one_year <- rename_rset_ids(
+  nested_leave_one_year,
+  get_outer_names(nested_leave_one_year, all_years)
 )
 
 # Rename inner resamples
-for (i in seq_along(resample_struct$inner_resamples)) {
+for (i in seq_along(nested_leave_one_year$inner_resamples)) {
   
   outer_test_year <- setdiff(
     all_years,
-    unique(analysis(resample_struct$splits[[i]])$Year)
+    unique(analysis(nested_leave_one_year$splits[[i]])$Year)
   )
   
-  inner <- resample_struct$inner_resamples[[i]]
+  inner <- nested_leave_one_year$inner_resamples[[i]]
   
   inner_names <- get_split_names(
     inner,
@@ -133,12 +110,35 @@ for (i in seq_along(resample_struct$inner_resamples)) {
     outer_test_year
   )
   
-  resample_struct$inner_resamples[[i]] <- rename_rset_ids(
+  nested_leave_one_year$inner_resamples[[i]] <- rename_rset_ids(
     inner,
     inner_names
   )
 }
 
+# Section 3.2 nested expanding window (sliding period)----
+euro %>% mutate(Year = lubridate::make_date(year = Year, 
+                                            month = 1, 
+                                            day = 1)) -> euro_date
+
+nested_expaning_window = nested_resamples(
+  data = euro_date,
+  outside = sliding_period(
+    lookback = Inf, # makes expanding window
+    period = "year", 
+    index = Year,
+    every = 4
+  ),
+  inside = sliding_period(
+    lookback = Inf, # makes expanding window
+    period = "year", 
+    index = Year,
+    every = 4
+  )
+) %>% filter(id != "Slice1") # takes out first instance where no validation available
+
+# Section 3.3 Choose the splitting method----
+resample_struct = nested_leave_one_year
 
 # Section 4: Poisson Workflow & Grid----
 pois_tune <- poisson_reg(engine = "glmnet", 
