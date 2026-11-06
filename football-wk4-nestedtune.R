@@ -24,6 +24,7 @@ library(purrr)
 library(dials)
 library(recipes)
 library(workflows)
+library(tidyr)
 library(knitr)
 # install.packages("pak")
 # pak::pak("tidymodels/nestedtune")
@@ -45,21 +46,43 @@ euro = rbind(euro_2004,
              euro_2020,
              euro_2024) 
 
+# euro_matches <- euro %>% #abandoning this for now
+#   mutate(
+#     perspective = if_else(Team < Opponent, "team", "opp")
+#   ) %>%
+#   select(
+#     match_id, Goals, Team, Opponent, Year, perspective,
+#     GDP, MarketValue, FifaRank,
+#     UefaPoints, CLPlayers
+#   ) %>% 
+#   pivot_wider(
+#     id_cols = c(match_id),
+#     names_from = perspective,
+#     values_from = -c(match_id),
+#     names_glue = "{.value}_{perspective}"
+#   ) %>%
+#   mutate(Goals_diff = Goals_team - Goals_opp) %>%
+#   select(-ends_with("_opp"), 
+#          -perspective_team) %>%
+#   rename_with(function(x){sub("_team$", "", x)})
+
+
+
 # Section 3: Form splits----
 set.seed(67676769)
 
 # Initially using nested Leave One Euro Out but can be easily swapped for comparison
-resample_struct = nested_resamples(data = euro,
-                 outside = group_vfold_cv(v = NULL, 
-                                          group = Year,
-                                          # group = match_id,
-                                          repeats = 1,
-                                          strata = NULL),
-                 inside = group_vfold_cv(v = NULL, 
-                                         group = Year,
-                                         # group = match_id,
-                                         repeats = 1,
-                                         strata = NULL))
+resample_struct_long = nested_resamples(data = euro,
+                       outside = group_vfold_cv(v = NULL, 
+                                                group = Year,
+                                                # group = match_id,
+                                                repeats = 1,
+                                                strata = NULL),
+                       inside = group_vfold_cv(v = NULL, 
+                                               group = Year,
+                                               # group = match_id,
+                                               repeats = 1,
+                                               strata = NULL))
 
 
 # (CAN IGNORE REST OF SECTION 3): Creating proper IDs for the resample_struct object 
@@ -131,8 +154,10 @@ pois_wf = workflow() |>
   add_formula(Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers)
 
 # Section 5: Defining Neural Net Workflow & Grid -----
+
+
 nnet_tune = mlp(engine = "nnet", 
-                mode = "classification",
+                mode = "regression",
                 penalty = tune(), 
                 hidden_units = tune()
 )
@@ -142,6 +167,11 @@ nnet_grid = expand.grid(
   hidden_units = 1:5
 )
 
+# nnet_tailor =                 #TODO we can use tailors to get to the WDL conversion
+#   tailor() |>
+#   adjust_predictions_custom(
+# )
+  
 nnet_wf = workflow() |>
   add_model(nnet_tune) |> 
   add_formula(Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers)
@@ -273,7 +303,7 @@ model_class_metrics = list(nnet = metrics_goals,
 
 model_class_vec = c(
   "rf", 
-  # "nnet",  #TODO turning off for now
+  "nnet",
   "xg", 
   "pois"
 )
@@ -301,7 +331,7 @@ run_nested_tune_for_model = function(model_class) {
 pois_tuned = run_nested_tune_for_model("pois") #full run took 23 seconds
 rf_tuned = run_nested_tune_for_model("rf") #simplified run took 40 seconds
 xg_tuned = run_nested_tune_for_model("xg") #simplfied run took 63 seconds
-# nnet_tuned = run_nested_tune_for_model("nnet")
+nnet_tuned = run_nested_tune_for_model("nnet") # full run took 46 seconds
 
 
 
