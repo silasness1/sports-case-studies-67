@@ -57,7 +57,7 @@ library(dials)
 library(recipes)
 library(workflows)
 # library(furrr)
-
+library(knitr)
 
 # Section 2: Read in data ----
 euro_2004 = read_csv("raw-data/euro_2004.csv")
@@ -283,3 +283,58 @@ find_best_hyperparam(winner_tuning_performances) -> winner_best_hyper_params
 
 # TODO: build winner workflow using winner_best_hyper_params & class_winner_wf but somehow 
 # updating the workflow to use specified params
+
+# Section 9: wk3 presentation prep ------
+
+all_splits_hyperparms_metrics
+
+store_outer = list()
+for ( i in 1:6){
+  per_outer = Reduce(rbind, all_splits_hyperparms_metrics[[i]]$.metrics)
+  per_outer$inner_fold = rep(1:5, each = 98)
+  store_outer[[i]]=per_outer
+}
+Reduce(rbind, store_outer) -> all
+all$outer_fold = rep(1:6, each = 490)
+
+all %>%
+  filter(.metric == "rmse") -> all_rmse
+
+all_rmse$penalty = as.factor(signif(all_rmse$penalty, digits = 3))
+all_rmse$mixture = as.factor(signif(all_rmse$mixture, digits = 3))
+
+library(ggplot2)
+ggplot(data = all_rmse)+
+  geom_tile(aes(x = penalty, y = mixture, fill = .estimate))+
+  facet_grid(rows = vars(inner_fold), cols = vars(outer_fold), labeller = label_both)+
+  theme(axis.text.x = element_text(angle = 90)) 
+  
+all_rmse %>%
+  group_by(penalty, mixture) %>%
+  summarize(class_avg_metric_est  = mean(.estimate)) ->idk2
+
+ggplot(data = idk2)+
+  geom_tile(aes(x = penalty, y = mixture, fill = class_avg_metric_est))+
+  geom_text(aes(x = penalty,
+                y = mixture,
+                label = round(class_avg_metric_est, 3)),
+                color = "white", size = 4)+
+  labs(title = "Poisson Elastic Net Hyperparameter Grid Search RMSE Averages",
+       y = "Mixture", 
+       x = "Penalty",
+       fill = "RMSE Avg\nOver Nested CV")
+
+
+combine_inner(all_splits_hyperparms_metrics[[1]])
+
+all_splits_hyperparms_metrics[[1]]$.metrics
+
+
+winner_tuning_performances %>% 
+  group_by(.metric, 
+           penalty, 
+           mixture) %>%
+  summarize(class_avg_metric_est  = mean(avg_metric_est)) %>%
+  ungroup() %>%
+  group_by(.metric)%>%
+  slice_min(class_avg_metric_est) -> fuckit

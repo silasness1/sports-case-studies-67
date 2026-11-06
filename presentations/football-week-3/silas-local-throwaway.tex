@@ -1,0 +1,99 @@
+
+\documentclass{beamer}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\title{Week 2 Presentation}
+\author{Nick, Sriram, Rohit, Silas}
+
+\begin{document}
+
+\begin{frame}
+    \frametitle{Poisson Elastic Net: Nested CV}
+
+    \small
+
+    \textbf{Hyperparameter Grid} $7 \times 7$ = 49 combinations
+
+    {\footnotesize
+    \begin{columns}[c]
+        \begin{column}{0.38\textwidth}
+            \begin{align*}
+                \text{penalty} \in \{&
+                1.00e\text{-}10,\;
+                4.64e\text{-}09,\;
+                2.15e\text{-}07,\\
+                &1.00e\text{-}05,\;
+                4.60e\text{-}04,\;
+                2.15e\text{-}02,\;
+                1.00
+                \}
+            \end{align*}
+        \end{column}
+
+        \begin{column}{0.06\textwidth}
+            \centering
+            $\times$
+        \end{column}
+
+        \begin{column}{0.32\textwidth}
+            \begin{align*}
+                \text{mixture} \in \{&
+                0.000,\;0.167,\;0.333,\;0.500,\\
+                &0.666,\;0.833,\;1.000
+                \}
+            \end{align*}
+        \end{column}
+    \end{columns}
+    }
+
+    \textbf{Poisson Regression}
+    \vspace{-.2cm}
+    \begin{align*}
+        \log(\mu(x)) &= \beta_0 + \beta^T x\\
+        \ell(\beta|X,Y) &= \sum_{i=1}^N
+        \left[
+        y_i(\beta_0+\beta^Tx_i)
+        - e^{\beta_0+\beta^Tx_i}
+        \right]
+    \end{align*}
+
+    \vspace{-0.2cm}
+
+    \textbf{Penalized Objective}
+
+    \vspace{-0.1cm}
+
+    \footnotesize
+    \[
+    \begin{aligned}
+    \hat{\beta} = \arg\min_{\beta_0,\beta}
+    \quad &-\frac{1}{N}\ell(\beta|X,Y) +\lambda\left[
+    \frac{1-\alpha}{2}\sum_{j=1}^p\beta_j^2
+    +\alpha\sum_{j=1}^p|\beta_j|
+    \right]
+    \end{aligned}
+    \]
+
+    \vspace{-0.3cm}
+
+    \begin{itemize}
+        \item \textbf{Penalty ($\lambda$):} Total amount of regularization.
+        \item \textbf{Mixture ($\alpha$):} Proportion of L1 regularization.
+        \begin{itemize}
+            \item $\alpha=1$: Pure lasso
+            \item $\alpha=0$: Ridge regression
+        \end{itemize}
+    \end{itemize}
+
+    \vfill
+
+    \tiny
+    \href{https://glmnet.stanford.edu/articles/glmnet.html\#poisson-regression-family-poisson}{glmnet Poisson regression documentation link}
+
+    \href{https://parsnip.tidymodels.org/reference/poisson_reg.html}{parsnip Poisson regression documentation link}
+
+\end{frame}
+
+\end{document}
