@@ -33,6 +33,7 @@ library(knitr)
 # pak::pak("tidymodels/nestedtune")
 library(nestedtune)
 library(lubridate)
+library(skellam)
 library(mirai)
 
 # Section 2: Read in data ----
@@ -417,6 +418,85 @@ model_class_selections = map(model_class_tuned, collect_selections)
 
 
 # OR APPROACH VIA THE save_pred = TRUE OPTION
+
+skellam_nll_vec <- function(truth, estimate, na_rm = TRUE, ...) {
+  
+  if (length(truth) != 2 || length(estimate) != 2) {
+    stop("Expected exactly two observations per match.")
+  }
+  
+  if (na_rm && anyNA(c(truth, estimate))) {
+    return(NA_real_)
+  }
+  
+  # negative log likelihood
+  -skellam::dskellam(
+    x = truth[1] - truth[2],  # actual skellam value
+    lambda1 = estimate[1],    # probability of the truth, given our estimate
+    lambda2 = estimate[2],
+    log = TRUE
+  )
+}
+
+# define an S3 generic (specify how a function acts for each class(data))
+skellam_nll <- function(data, ...) {
+  UseMethod("skellam_nll")
+}
+
+# have skellam_nll inherit properties of a yardstick metric
+skellam_nll <- yardstick::new_numeric_metric(
+  skellam_nll,
+  direction = "minimize"
+)
+
+# Next section built to anticipate yardstick calls like 
+# skellam_nll(
+#   data = predictions,
+#   truth = Goals,
+#   estimate = .pred
+# )
+skellam_nll.data.frame <- function(
+    data, truth, estimate, na_rm = TRUE, ...) {
+  
+  yardstick::numeric_metric_summarizer(
+    name = "skellam_nll",
+    fn = skellam_nll_vec,
+    data = data,
+    truth = !!rlang::enquo(truth),          #first time working with quosures:
+    estimate = !!rlang::enquo(estimate),        #they pass expressions in the context of environment it was created
+    na_rm = na_rm                               #"!!" inserts the expression that the quosure captured into numeric_metric_summarizer
+  )
+}
+
+# we tell yardstick how our custom skellam_nll works across groups
+skellam_by_match <- yardstick::new_groupwise_metric(
+  fn = skellam_nll,
+  name = "skellam_nll",
+  aggregate = function(x) mean(x$.estimate, na.rm = TRUE),
+  direction = "minimize"
+)
+
+# tells new_groupwise_metric which variable to group_by
+skellam_by_match <- skellam_by_match(match_id)
+
+metrics <- yardstick::metric_set(
+  yardstick::rmse,
+  skellam_by_match
+)
+
+ex_outer = group_vfold_cv(data = euro, 
+               v = NULL, 
+               group = Year,
+               repeats = 1,
+               strata = NULL)
+
+
+results <- tune::tune_grid(
+  pois_wf,
+  resamples = ex_outer,
+  grid = pois_grid,
+  metrics = metrics
+)
 
 # nested_fit_resamples
 
