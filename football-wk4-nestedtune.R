@@ -35,6 +35,7 @@ library(nestedtune)
 library(lubridate)
 library(skellam)
 library(mirai)
+library(tailor)
 
 # Section 2: Read in data ----
 euro_2004 = read_csv("raw-data/euro_2004.csv")
@@ -42,7 +43,7 @@ euro_2008 = read_csv("raw-data/euro_2008.csv")
 euro_2012 = read_csv("raw-data/euro_2012.csv")
 euro_2016 = read_csv("raw-data/euro_2016.csv")
 euro_2020 = read_csv("raw-data/euro_2020.csv")
-euro_2024 = read_csv("raw-data/euro_2024.csv")
+euro_2024 = read_csv("raw-data/euro_2024_fixed.csv")
 
 euro = rbind(euro_2004,
              euro_2008,
@@ -170,7 +171,175 @@ nested_expaning_window = nested_resamples(
 # Section 3.3 Choose the splitting method----
 resample_struct = nested_leave_one_year
 
-# Section 4: Poisson Workflow & Grid----
+# Section 4: Defining custom groupwise metrics ----
+
+# Section 4.1: skellam negative log likelihood metric-----
+skellam_nll <- function(data, truth, estimate, na_rm = TRUE, ...) {
+  
+  # defined inside so it travels to mirai daemons with the metric
+  skellam_nll_vec <- function(truth, estimate, na_rm = TRUE, ...) {
+    if (length(truth) != 2 || length(estimate) != 2) {
+      stop("Expected exactly two observations per match.")
+    }
+    if (na_rm && anyNA(c(truth, estimate))) {
+      return(NA_real_)
+    }
+    
+    # negative log likelihood
+    -skellam::dskellam(
+      x = truth[1] - truth[2],# actual skellam value
+      lambda1 = estimate[1], # probability of the truth, given our estimate
+      lambda2 = estimate[2],
+      log = TRUE
+    )
+  }
+  
+  yardstick::numeric_metric_summarizer(
+    name = "skellam_nll",
+    fn = skellam_nll_vec,
+    data = data,
+    truth = !!rlang::enquo(truth),
+    estimate = !!rlang::enquo(estimate),
+    na_rm = na_rm
+  )
+}
+
+# have skellam_nll inherit properties of a yardstick metric
+skellam_nll <- yardstick::new_numeric_metric(
+  skellam_nll,
+  direction = "minimize"
+)
+
+# we tell yardstick how our custom skellam_nll works across groups
+skellam_nll_by_match <- yardstick::new_groupwise_metric(
+  fn = skellam_nll,
+  name = "skellam_nll",
+  aggregate = function(x) mean(x$.estimate, na.rm = TRUE),
+  direction = "minimize"
+)
+
+# tells new_groupwise_metric which variable to group_by
+skellam_nll_by_match <- skellam_nll_by_match(match_id)
+
+# WDL metrics: each sees one match at a time (2 rows, grouped by match_id)
+#   truth    = c(goals team 1, goals team 2)
+#   estimate = c(lambda team 1, lambda team 2)
+# WDL is from the first row's perspective
+
+# Section 4.2: Implementing yardstick compatible classification metrics all at once----
+  # Basically, "tune" package didn't like I was using poisson "regression" based parsnip model 
+  # and mixing with classification based metrics (so here had to make my own)
+
+# helpers live in the make_wdl_vec def so they get shipped to mirai daemons
+# concept is that make_wdl_vec is a function factory to reduce repeated code among metric defs
+make_wdl_vec <- function(score = c("accuracy", "brier", "rps"), draw_range = 0) {
+  score <- match.arg(score) # makes sure score is one of provided arguments (defaults to accuracy)
+  force(draw_range) # storing draw_range at time of factory make_wdl_vec call rather than it getting manipulated
+
+  # P(win), P(draw), P(loss) for team 1 from a Skellam(lambda1, lambda2)
+  skellam_wdl_probs <- function(lambda1, lambda2) {
+    p <- c(
+      win  = skellam::pskellam(q = 0,  lambda1 = lambda1, lambda2 = lambda2, lower.tail = FALSE),
+      draw = skellam::dskellam(x = 0,  lambda1 = lambda1, lambda2 = lambda2),
+      loss = skellam::pskellam(q = -1, lambda1 = lambda1, lambda2 = lambda2, lower.tail = TRUE)
+    )
+    p / sum(p)
+  }
+
+  actual_wdl <- function(goals) {
+    if (goals[1] > goals[2]) "win" else if (goals[1] == goals[2]) "draw" else "loss"
+  }
+
+  function(truth, estimate, na_rm = TRUE, ...) {
+    
+    # catch bad inputs
+    if (length(truth) != 2 || length(estimate) != 2) {
+      stop("Expected exactly two observations per match.")
+    }
+    if (na_rm && anyNA(c(truth, estimate))) {
+      return(NA_real_)
+    }
+
+    p      <- skellam_wdl_probs(estimate[1], estimate[2])
+    actual <- actual_wdl(truth)
+    y      <- as.numeric(names(p) == actual)   #True/False (1/0) if correctly predicted or not
+
+    # based on what score argument calculate the desired metric
+    switch(
+      score,
+      
+      # argmax pick, or "draw" when the three probabilities are within draw_range
+      accuracy = {
+        pred_wdl <- names(p)[which.max(p)]
+        # TODO: range implemented accuracy (change if we want threshold or raw)
+        if (max(p) - min(p) < draw_range) pred_wdl <- "draw"
+        as.numeric(pred_wdl == actual)
+      },
+      
+      # multiclass brier: sum of squared errors over win/draw/loss
+      brier = sum((p - y)^2),
+      
+      # ranked probability score: respects win > draw > loss ordering
+      # RPS essentially avg square penalized errors in cumulative probabilities (final)
+      # imagine "p <- c(win = 0.6, draw = 0.3, loss = 0.1)"
+      # cum_win_v_draw_draw_v_loss = (cumsum(p) - cumsum(y))[1:2] 
+      rps = sum((cumsum(p) - cumsum(y))[1:2]^2) / 2
+    )
+  }
+}
+
+# builds the yardstick metric + groupwise-by-match version in one go
+make_wdl_metric <- function(name, score, direction, draw_range = 0) {
+
+  vec_fn <- make_wdl_vec(score, draw_range)
+
+  metric_fn <- function(data, truth, estimate, na_rm = TRUE, ...) {
+    # https://yardstick.tidymodels.org/reference/metric_summarizer.html
+    yardstick::numeric_metric_summarizer(
+      name = name,
+      fn = vec_fn,
+      data = data,
+      truth = !!rlang::enquo(truth),   #tidyverse way of accepting column names and !! evals Goals now
+      estimate = !!rlang::enquo(estimate),
+      na_rm = na_rm
+    )
+  }
+  metric_fn <- yardstick::new_numeric_metric(metric_fn, direction = direction)
+
+  by_match <- yardstick::new_groupwise_metric(
+    fn = metric_fn,
+    name = name,
+    aggregate = function(x) mean(x$.estimate, na.rm = TRUE),
+    direction = direction
+  )
+  by_match(match_id)
+}
+
+# object names must equal the metric name: nestedtune checks selection_rule()
+# against object names, tune matches on the .metric column
+wdl_accuracy       = make_wdl_metric("wdl_accuracy",       "accuracy", "maximize")
+wdl_accuracy_range = make_wdl_metric("wdl_accuracy_range", "accuracy", "maximize", draw_range = .15)
+wdl_brier          = make_wdl_metric("wdl_brier",          "brier",    "minimize")
+wdl_rps            = make_wdl_metric("wdl_rps",            "rps",      "minimize")
+
+# Section 4.3: Declare metrics for nested_grid_tune in  Win Draw Loss & Goals Prediction Cases----
+# Define evaluation metrics for WDL (first metric is what selection_rule("best") uses)
+metrics_wdl = yardstick::metric_set(
+  wdl_rps,
+  wdl_brier,
+  wdl_accuracy,
+  wdl_accuracy_range
+)
+
+# Define evaluation metrics to be used across all models for goals (later define for WDL)
+metrics_goals = yardstick::metric_set(
+  rmse,
+  mae,
+  poisson_log_loss,
+  skellam_nll_by_match
+)
+
+# Section 5: Poisson Workflow & Grid----
 pois_tune <- poisson_reg(engine = "glmnet", 
                              penalty = tune(), 
                              mixture = tune())
@@ -179,11 +348,16 @@ pois_grid = grid_regular(penalty(),
                          mixture(), 
                          levels = 7)
 
+pois_rec = recipe(
+  data = euro, 
+  Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers + match_id) |>
+  update_role(match_id, new_role = "id")
+
 pois_wf = workflow() |>
   add_model(pois_tune) |> 
-  add_formula(Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers)
+  add_recipe(pois_rec)
 
-# Section 5: Defining Neural Net Workflow & Grid -----
+# Section 6: Defining Neural Net Workflow & Grid -----
 
 nnet_tune = mlp(engine = "nnet", 
                 mode = "regression",
@@ -205,7 +379,7 @@ nnet_wf = workflow() |>
   add_model(nnet_tune) |> 
   add_formula(Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers)
 
-# Section 6: Defining Random Forest Workflow & Grid -----
+# Section 7: Defining Random Forest Workflow & Grid -----
 
 # Settings
 target <- "Goals"
@@ -258,7 +432,7 @@ rf_wf = workflow() |>
   add_model(rf_tune) |> 
   add_formula(rf_formula)
 
-# Section 7: Defining XGBoost Workflow & Grid-----
+# Section 8: Defining XGBoost Workflow & Grid-----
 
 xg_tune <- boost_tree(
   tree_depth = tune(), 
@@ -294,15 +468,7 @@ xg_wf = workflow() |>
   add_model(xg_tune) |> 
   add_formula(Goals ~ GroupStage + GDP + MarketValue + FifaRank + UefaPoints + CLPlayers)
 
-# Section 8: Setting up Model_class iterators----
-
-# Define evaluation metrics to be used across all models for goals (later define for WDL)
-metrics_goals = yardstick::metric_set(
-  rmse,
-  mae,
-  poisson_log_loss
-)
-
+# Section 9: Setting up Model_class iterators----
 model_class_wfs = list(nnet = nnet_wf, 
                        pois = pois_wf,
                        rf   = rf_wf, 
@@ -323,7 +489,7 @@ model_class_metrics = list(nnet = metrics_goals,
                            rf   = metrics_goals,
                            xg   = metrics_goals)
 
-# Section 9: Running nested_tune_grid for each model_class----
+# Section 10: Running nested_tune_grid for each model_class----
 
 model_class_vec = c(
   "rf", 
@@ -332,15 +498,23 @@ model_class_vec = c(
   "pois"
 )
 
-run_nested_tune_for_model = function(model_class) {
+nested_tune_grid_mirai = function(...) {
   
   # Control parallelization
   mirai::daemons(2) # 0 vs 2 makes a difference 3,4, no real difference.
   
   # Check time to run
-  print(system.time({
+  print(system.time({tuned = nested_tune_grid(...)}))
+  
+  mirai::daemons(0)
+  
+  return(tuned)
+}
+
+run_nested_tune_for_model = function(model_class) {
+  
     
-  tuned = nested_tune_grid(
+  tuned = nested_tune_grid_mirai(
     object     = model_class_wfs[[model_class]], 
     resamples  = model_class_resamples[[model_class]], 
     grid       = model_class_grids[[model_class]], 
@@ -356,11 +530,7 @@ run_nested_tune_for_model = function(model_class) {
       save_pred = TRUE, # The inner run's predictions and extracts are still discarded
                         # Use extract = function(x) x to keep each fold's fitted workflow
     )
-    
-  )}))
-  
-  mirai::daemons(0)
-  
+  )
   return(tuned)
 }
 
@@ -368,16 +538,16 @@ run_nested_tune_for_model = function(model_class) {
 # model_class_fits = map(model_class_vec, run_nested_tune_for_model)
 
 pois_tuned = run_nested_tune_for_model("pois") # simplified run:  NA, full run:  23s
-rf_tuned   = run_nested_tune_for_model("rf")   # simplified run: 40s, full run: 540s (9 min)
-xg_tuned   = run_nested_tune_for_model("xg")   # simplified run: 63s, full run: 125s (2 min)
-nnet_tuned = run_nested_tune_for_model("nnet") # simplified run:  NA, full run:  46s
+# rf_tuned   = run_nested_tune_for_model("rf")   # simplified run: 40s, full run: 540s (9 min)
+# xg_tuned   = run_nested_tune_for_model("xg")   # simplified run: 63s, full run: 125s (2 min)
+# nnet_tuned = run_nested_tune_for_model("nnet") # simplified run:  NA, full run:  46s
 
 model_class_tuned = list(pois = pois_tuned, 
                          rf   = rf_tuned, 
                          xg   = xg_tuned, 
                          nnet = nnet_tuned)
 
-# Section 10: Inspecting results----
+# Section 11: Inspecting results----
 summary(pois_tuned)
 summary(rf_tuned)
 summary(xg_tuned)
@@ -398,7 +568,138 @@ model_class_comparison = Reduce(
 model_class_selections = map(model_class_tuned, collect_selections)
 
 
-# Section 11: Rerunning but with tailor to convert to WDL----
+# Section 12: Rerunning but with tailor to convert to WDL----
+
+collect_metrics(pois_tuned)
+collect_predictions(pois_tuned)
+collect_selections(pois_tuned)
+
+
+
+# NOTE: the tailor approach below doesn't work in tailor 0.1.0: tailor::fit()
+# drops every column but Goals/.pred (so match_id is gone), and .by inside
+# adjust_predictions_custom() becomes a new column instead of grouping.
+# WDL tuning is done with metrics_wdl instead (see pois_wdl below).
+raw_skellam_wdl_tailor = tailor() |> adjust_predictions_custom(
+    raw_pwin = pskellam(
+      q = 0, 
+      lambda1 = first(.pred), 
+      lambda2 = last(.pred), 
+      lower.tail = F # strictly > 0 
+    ),
+    raw_ploss = pskellam(
+      q = -1, 
+      lambda1 = first(.pred), 
+      lambda2 = last(.pred), 
+      lower.tail = T # less than or eq -1
+    ),
+    raw_pdraw = dskellam(
+      x = 0,         # eq 0 case
+      lambda1 = first(.pred), 
+      lambda2 = last(.pred)
+    ),
+    raw_maxp = pmax(raw_pwin, raw_ploss, raw_pdraw), 
+    pred_wdl = case_when(
+      raw_maxp == raw_pwin ~ "win",
+      raw_maxp == raw_ploss ~ "loss",
+      raw_maxp == raw_pdraw ~ "draw"
+    ),
+    actual_wdl = case_when(
+      first(Goals) > last(Goals) ~ "win",
+      first(Goals) == last(Goals) ~ "draw",
+      first(Goals) < last(Goals) ~ "loss"
+    ),
+    .by = match_id,
+    .pkgs = c("skellam", "dplyr")
+)
+
+# TODO: Try to do the threshold approach
+# threshold_skellam_wdl_tailor = raw_skellam_wdl_tailor |> 
+#   adjust_probability_threshold()
+  
+range_skellam_wdl_tailor = raw_skellam_wdl_tailor |> 
+  adjust_predictions_custom(
+    raw_wdl = pred_wdl,
+    pred_wdl = replace_when(
+      pred_wdl,
+      pmax(raw_pwin, raw_ploss, raw_pdraw) - pmin(raw_pwin, raw_ploss, raw_pdraw) < .15 ~ "draw"
+    )
+  )
+
+# brier_wdl <- function(data, truth, estimate, ...) {
+#   
+#   truth <- rlang::enquo(truth)
+#   estimate <- rlang::enquos(estimate)
+#   
+#   truth_values <- dplyr::pull(data, !!truth)
+#   
+#   pred_values <- dplyr::select(data, !!!estimate) |>
+#     as.matrix()
+#   
+#   actual_values <- model.matrix(~ factor(truth_values) - 1)
+#   
+#   score <- rowSums((pred_values - actual_values)^2)
+#   
+#   tibble::tibble(.estimate = mean(score))
+# }
+# brier_wdl <- yardstick::new_numeric_metric(
+#   brier_wdl,
+#   direction = "minimize"
+# )
+# 
+# metrics_wdl = metric_set(
+#   rmse               #TODO patch for brier later
+# )
+
+
+pois_wf |>
+  add_tailor(range_skellam_wdl_tailor) -> pois_wf_wdl_range
+
+pois_wf |>
+  add_tailor(raw_skellam_wdl_tailor) -> pois_wf_wdl_raw
+
+tune_grid(object = pois_wf, 
+          resamples = nested_leave_one_year$inner_resamples[[1]], 
+          grid = pois_grid, 
+          metrics = metrics_goals, 
+          control = control_grid(
+            save_pred = T
+          )) -> check
+
+
+# WDL-based tuning: same workflow, no tailor, tuned on metrics_wdl
+pois_wdl = nested_tune_grid_mirai(            # full run: ~240s
+  object     = pois_wf,
+  resamples  = nested_leave_one_year,
+  grid       = pois_grid,
+  metrics    = metrics_wdl,
+  select     = selection_rule(rule = "best"), # picks on wdl_rps (first in metrics_wdl)
+  control = control_grid(
+    verbose = FALSE,
+    extract = NULL,
+    save_pred = TRUE
+  )
+)
+
+collect_metrics(pois_wdl)
+collect_selections(pois_wdl)
+
+# pois_wdl_range = nested_tune_grid_mirai(
+#   object     = pois_wf_wdl_range, 
+#   resamples  = nested_leave_one_year, 
+#   grid       = pois_grid, 
+#   metrics    = metrics_wdl, 
+#   select     = selection_rule(                      #TODO: reconsider
+#     rule = "desirability", 
+#     minimize(rmse)
+#   ),
+#   control = control_grid( # reaches inner tune grid in every fold
+#     verbose = FALSE, 
+#     extract = NULL,   # can save other intermediates from the nested cv & call collect_extracts() 
+#     save_pred = TRUE  # The inner run's predictions and extracts are still discarded
+#     # Use extract = function(x) x to keep each fold's fitted workflow
+#   )
+# )
 
 # nnet_tailor =                 #TODO we can use tailors to get to the WDL conversion
 #   tailor() |>
@@ -417,86 +718,20 @@ model_class_selections = map(model_class_tuned, collect_selections)
 #   )
 
 
-# OR APPROACH VIA THE save_pred = TRUE OPTION
 
-skellam_nll_vec <- function(truth, estimate, na_rm = TRUE, ...) {
-  
-  if (length(truth) != 2 || length(estimate) != 2) {
-    stop("Expected exactly two observations per match.")
-  }
-  
-  if (na_rm && anyNA(c(truth, estimate))) {
-    return(NA_real_)
-  }
-  
-  # negative log likelihood
-  -skellam::dskellam(
-    x = truth[1] - truth[2],  # actual skellam value
-    lambda1 = estimate[1],    # probability of the truth, given our estimate
-    lambda2 = estimate[2],
-    log = TRUE
-  )
-}
-
-# define an S3 generic (specify how a function acts for each class(data))
-skellam_nll <- function(data, ...) {
-  UseMethod("skellam_nll")
-}
-
-# have skellam_nll inherit properties of a yardstick metric
-skellam_nll <- yardstick::new_numeric_metric(
-  skellam_nll,
-  direction = "minimize"
-)
-
-# Next section built to anticipate yardstick calls like 
-# skellam_nll(
-#   data = predictions,
-#   truth = Goals,
-#   estimate = .pred
+# ex_outer = group_vfold_cv(data = euro, 
+#                v = NULL, 
+#                group = Year,
+#                repeats = 1,
+#                strata = NULL)
+# 
+# 
+# results <- tune::tune_grid(
+#   pois_wf,
+#   resamples = ex_outer,
+#   grid = pois_grid,
+#   metrics = metrics
 # )
-skellam_nll.data.frame <- function(
-    data, truth, estimate, na_rm = TRUE, ...) {
-  
-  yardstick::numeric_metric_summarizer(
-    name = "skellam_nll",
-    fn = skellam_nll_vec,
-    data = data,
-    truth = !!rlang::enquo(truth),          #first time working with quosures:
-    estimate = !!rlang::enquo(estimate),        #they pass expressions in the context of environment it was created
-    na_rm = na_rm                               #"!!" inserts the expression that the quosure captured into numeric_metric_summarizer
-  )
-}
-
-# we tell yardstick how our custom skellam_nll works across groups
-skellam_by_match <- yardstick::new_groupwise_metric(
-  fn = skellam_nll,
-  name = "skellam_nll",
-  aggregate = function(x) mean(x$.estimate, na.rm = TRUE),
-  direction = "minimize"
-)
-
-# tells new_groupwise_metric which variable to group_by
-skellam_by_match <- skellam_by_match(match_id)
-
-metrics <- yardstick::metric_set(
-  yardstick::rmse,
-  skellam_by_match
-)
-
-ex_outer = group_vfold_cv(data = euro, 
-               v = NULL, 
-               group = Year,
-               repeats = 1,
-               strata = NULL)
-
-
-results <- tune::tune_grid(
-  pois_wf,
-  resamples = ex_outer,
-  grid = pois_grid,
-  metrics = metrics
-)
 
 # nested_fit_resamples
 
