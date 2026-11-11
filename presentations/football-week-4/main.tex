@@ -1,12 +1,7 @@
-\documentclass{beamer}
+% TU Dortmund theme (github.com/maxnoe/TUDoBeamerTheme): beamerthemetudo.sty and logos/ live in
+% this folder, so it compiles here and on Overleaf. Needs the Fira fonts (texlive-fira) with pdflatex
+\documentclass[aspectratio=1610, 9pt]{beamer}
 
-\usetheme{metropolis}
-
-\metroset{
-  progressbar=frametitle,   % thin progress bar under each title
-  block=fill,
-  numbering=fraction        % "3/12" instead of just "3"
-}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
@@ -19,9 +14,13 @@
 \newcommand{\rtable}[1]{\adjustbox{max width=\linewidth}{\input{tables/#1.tex}}}
 \newcommand{\todo}[1]{\textcolor{gray}{[#1]}}
 
+% load the theme after all packages (as in the template)
+\usetheme[showtotalframes]{tudo}
+
 \title{Case Studies: Sports Analytics}
 \subtitle{UEFA Euro -- Poisson, Skellam W/D/L and the draw problem}
 \author{Nicholas, Sriram, Rohit, Silas}
+\institute{Case Studies WS 26/27}
 \date{}
 
 \begin{document}
@@ -128,7 +127,7 @@
     \draw[->, thick] (s) -- (w);
     \draw[->, thick] (w) -- (t);
 
-    \node[met, below=0.3cm of g] {MSE$^\ast$\\MAE\\Poisson NLL};
+    \node[met, below=0.3cm of g] {MAE$^\ast$\\MSE\\Poisson NLL};
     \node[met, below=0.3cm of s] {Skellam NLL$^\ast$};
     \node[met, below=0.3cm of w] {\textit{probability:}\\RPS$^\ast$, Brier, log loss\\[3pt]\textit{class:}\\accuracy, macro F1};
     \node[met, below=0.3cm of t] {\textit{class:}\\accuracy, macro F1,\\draw precision / recall};
@@ -402,7 +401,7 @@
 
       \vspace{0.3em}
       \scriptsize
-      Folds disagree, but mse and rps finals are identical;
+      Folds disagree, but mae and rps finals are identical;
       skellam differs only in mixture
     \end{column}
 
@@ -438,7 +437,7 @@
   \frametitle{Poisson Coefficient Interpretation (Final Model)}
 
   \footnotesize
-  Selected on mse and on rps (identical model): $\lambda = 0.0215$, $\alpha = 1$ (lasso)
+  Selected on mae and on rps (identical model): $\lambda = 0.0215$, $\alpha = 1$ (lasso)
 
   \vspace{0.2em}
   \centering
@@ -511,7 +510,7 @@
   \rtable{pois_skel_coefs}
 
   \vspace{0.4em}
-  Nearly identical to the mse / rps final model.
+  Nearly identical to the mae / rps final model.
 
 \end{frame}
 
