@@ -1,0 +1,305 @@
+% =============================================================
+% Fallstudien 2 - UEFA Euro - XGBoost results record
+% Compile with pdflatex
+% =============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\title{XGBoost on the UEFA Euro data\\[0.3em]
+       \large Results record -- Sheet 3, Section 1}
+\author{Rohit}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Setup}
+
+\textbf{Data.} Six tournaments (2004--2024), 492 rows, 246 matches.
+Each match appears twice, once from each team's perspective. The response
+\texttt{Goals} has mean $1.205$ and variance $1.253$, so the Poisson
+assumption holds well. All numeric predictors are differences
+(team $-$ opponent).
+
+\textbf{Objective.} \texttt{count:poisson}, tuned by Poisson negative
+log-likelihood.
+
+\textbf{Folds.} Leave-one-season-out (LOSO): one fold per tournament.
+A random split would separate the two rows of a match, and the predictors
+are built from pre-tournament information, so the tournament is the
+natural unit.
+
+\textbf{Match key.} \texttt{Year + sorted team pair + GroupStage}. The
+\texttt{GroupStage} component is required: three team pairs met twice in
+the same tournament (group stage and knockout round).
+
+\subsection*{Hyperparameter grid}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  parameter & values & source \\
+  \midrule
+  \texttt{max\_depth}        & 1, 2, 3          & ESL ch.\ 10: 4--8 terminal nodes \\
+  \texttt{eta}               & 0.01, 0.05, 0.1  & Friedman (2001): small shrinkage \\
+  \texttt{subsample}         & 0.5, 0.8         & Friedman (2002) \\
+  \texttt{min\_child\_weight} & 1, 5, 10         & xgboost docs \\
+  \midrule
+  \multicolumn{3}{l}{$3 \times 3 \times 2 \times 3 = 54$ combinations;
+    \texttt{colsample\_bytree} fixed at 0.8} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{nrounds} is not in the grid. It is coupled to \texttt{eta}
+(a small step size needs more rounds), so early stopping
+(\texttt{early\_stopping\_rounds} $= 50$, ceiling 2000) selects it per
+combination instead.
+
+\textbf{Fits.} Nested CV: $6 \times (54 \times 5 + 1) = 1\,626$.
+Final pass: $54 \times 6 + 1 = 325$.
+
+
+\section{Nested cross-validation}
+
+Outer loop over the 6 seasons (evaluation), inner LOSO over the
+remaining 5 (tuning). Each outer fold re-tunes from scratch, so the
+held-out season never influences the hyperparameters used to predict it.
+
+\begin{center}
+\begin{tabular}{lrrrrcccr}
+  \toprule
+  season & $n$ & MAE & RMSE & NLL & depth & $\eta$ & subsample & rounds \\
+  \midrule
+  2004 &  62 & 0.844 & 1.052 & 1.371 & 1 & 0.10 & 0.8 &  81 \\
+  2008 &  62 & 0.883 & 1.078 & 1.414 & 1 & 0.10 & 0.8 &  81 \\
+  2012 &  62 & 0.782 & 1.009 & 1.333 & 1 & 0.05 & 0.8 & 169 \\
+  2016 & 102 & 0.846 & 1.015 & 1.313 & 1 & 0.05 & 0.5 & 172 \\
+  2020 & 102 & 0.886 & 1.110 & 1.417 & 1 & 0.05 & 0.8 & 198 \\
+  2024 & 102 & 0.751 & 0.968 & 1.307 & 1 & 0.05 & 0.8 & 165 \\
+  \midrule
+  mean &     & 0.8318 & 1.0388 & 1.3593 & & & & \\
+  sd   &     & 0.0545 & 0.0515 & 0.0490 & & & & \\
+  pooled &   & 0.8308 & 1.0382 & 1.3560 & & & & \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+All six folds chose \texttt{max\_depth} $= 1$. The selected model is
+therefore purely additive: a sum of single-split stumps with no
+interactions. The variation between folds is mainly in
+$\eta$ and \texttt{nrounds}, which move together
+($\eta = 0.1 \Rightarrow 81$ rounds, $\eta = 0.05 \Rightarrow 165$--$198$):
+roughly the same total correction reached at different speeds.
+
+2024 is the easiest season (MAE $0.751$ against a mean of $0.832$).
+Training size is constant at 410 rows in every fold, so this is a
+property of the tournament, not of the training data available.
+
+
+\section{Selection bias}
+
+Both columns train on five seasons and predict the sixth, on the same
+folds. They differ only in whether the predicted season also helped
+choose the hyperparameters.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+  \toprule
+  metric & nested (pooled) & tuning pass (pooled) & gap & in sd \\
+  \midrule
+  MAE         & 0.8308 & 0.8283 & 0.0024 & 0.045 \\
+  RMSE        & 1.0382 & 1.0354 & 0.0028 & 0.054 \\
+  Poisson NLL & 1.3560 & 1.3533 & 0.0027 & 0.055 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+All three metrics agree on a bias of roughly $0.0025$, about 4--5\% of
+one standard deviation. It is small because the tuning is stable: with
+depth 1 chosen in every fold, the winner barely depends on which seasons
+were used to pick it. The nested figures are the ones comparable across
+methods, since the tuning score flatters whoever searches the larger grid.
+
+
+\section{Constant baselines}
+
+\begin{center}
+\begin{tabular}{lrr}
+  \toprule
+   & MAE & RMSE \\
+  \midrule
+  XGBoost              & 0.831 & 1.038 \\
+  constant median (1)  & 0.809 & 1.114 \\
+  constant mean (1.205)& 0.873 & 1.099 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+MAE is minimised by the median, RMSE by the mean. The goal distribution
+has median 1 and mean 1.205, so the two measures reward different
+predictions. The constant median wins on MAE and loses on RMSE; the
+constant mean does the reverse. A Poisson model estimates the mean, so
+MAE structurally handicaps it: this is loss-function geometry, not
+evidence about the predictors. Season by season, XGBoost beats the
+constant mean on RMSE in all six tournaments.
+
+
+\section{Final model}
+
+Tuned by LOSO over all six seasons ($54 \times 6 = 324$ fits), then
+fitted on all 492 rows.
+
+\begin{center}
+\begin{tabular}{lr}
+  \toprule
+  \texttt{max\_depth}         & 1 \\
+  \texttt{eta}                & 0.1 \\
+  \texttt{subsample}          & 0.8 \\
+  \texttt{min\_child\_weight} & 5 \\
+  \texttt{nrounds}            & 86 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+This model carries no error of its own: it has seen every season, so any
+score computed on those rows would be optimistic. The performance claim
+is the nested CV estimate in Section 2.
+
+\begin{center}
+\begin{tabular}{lrr}
+  \toprule
+  predictor & Gain & stumps \\
+  \midrule
+  MarketValue & 0.392 & 26 \\
+  CLPlayers   & 0.212 & 17 \\
+  GDP         & 0.192 & 23 \\
+  FifaRank    & 0.109 &  9 \\
+  UefaPoints  & 0.096 & 11 \\
+  GroupStage  & ---   &  0 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{GroupStage} is never split on, consistent with its correlation of
+$-0.016$ with \texttt{Goals}. \texttt{GDP} is split on often but
+contributes little per split, so frequency and importance diverge; Gain
+is the column to report. The $39\%$ Gain for \texttt{MarketValue} closely
+reproduces the Week 2 CART result ($\approx 40\%$).
+
+
+\section{Match outcomes via the Skellam distribution}
+
+The two predicted rates of a match are paired and converted to
+win/draw/loss probabilities. With
+$G_1 \sim \text{Pois}(\lambda_1)$, $G_2 \sim \text{Pois}(\lambda_2)$
+independent, the goal difference $D = G_1 - G_2$ follows a Skellam
+distribution:
+\[
+  P(\text{win}) = P(D \geq 1), \quad
+  P(\text{draw}) = P(D = 0), \quad
+  P(\text{loss}) = P(D \leq -1).
+\]
+Predictions come from the selected hyperparameters refitted per fold
+(goal-level MAE $0.8296$, RMSE $1.0380$), so every match is predicted by
+a model that did not see its tournament.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+  \toprule
+   & Log loss & Brier & RPS & Accuracy \\
+  \midrule
+  XGBoost $+$ Skellam  & 0.9973 & 0.5982 & 0.1951 & 0.5081 \\
+  Historical frequency & 1.1027 & 0.6695 & 0.2306 & 0.3008 \\
+  \midrule
+  improvement & 9.6\% & 10.6\% & 15.4\% & $+20.7$pp \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{lrrrr}
+  \toprule
+  tournament & Log loss & Brier & RPS & Accuracy \\
+  \midrule
+  2004 & 1.0116 & 0.6075 & 0.1870 & 0.4516 \\
+  2008 & 1.0141 & 0.6064 & 0.2298 & 0.4516 \\
+  2012 & 0.9394 & 0.5525 & 0.1905 & 0.6129 \\
+  2016 & 1.0449 & 0.6296 & 0.2059 & 0.4706 \\
+  2020 & 0.9661 & 0.5809 & 0.1792 & 0.5686 \\
+  2024 & 0.9971 & 0.6014 & 0.1870 & 0.4902 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Discussion}
+
+\textbf{Advantages.} The outcome response is what matters in football,
+and it uses the whole predicted distribution rather than a point estimate.
+The improvement over the baseline is far larger here (10--15\%) than at
+the goal level, where XGBoost beat the ``do nothing'' floor by only about
+5\% and lost to the constant median on MAE outright. The predictors carry
+real information about \emph{who wins} even though they cannot pin down
+\emph{how many goals}. Outcome probabilities are also directly comparable
+with bookmaker odds.
+
+\textbf{Disadvantages.} Skellam assumes the two teams' goals are
+independent, which they are not: a team leading changes how it plays. The
+known consequence is that draws are underestimated, and that appears here
+--- mean predicted $P(\text{draw}) = 0.258$ against an actual frequency of
+$0.293$, with wins correspondingly overestimated ($0.394$ vs $0.358$).
+Information is also discarded: a $1$--$0$ and a $5$--$0$ become the same
+``win''. The sample halves from 492 rows to 246 matches. Knockout draws
+are decided on penalties, which are close to coin flips.
+
+\textbf{Measures.} RPS is the most appropriate, because the outcomes are
+ordered: predicting a loss when the result was a draw should be penalised
+less than when the result was a win, and only RPS respects that. It is
+also where the largest improvement appears. Log loss and Brier are proper
+scoring rules and are reported alongside. Accuracy is the weakest measure
+here: under Skellam a draw is never the single most likely outcome, so the
+model never predicts one, and all 72 actual draws are counted wrong by
+construction:
+
+\begin{center}
+\begin{tabular}{lrrr}
+  \toprule
+  predicted $\backslash$ actual & Win & Draw & Loss \\
+  \midrule
+  Win  & 67 & 43 & 28 \\
+  Draw &  0 &  0 &  0 \\
+  Loss & 21 & 29 & 58 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+This is not the same as the model assigning draws low probability --- it
+gives them $0.258$ on average. A draw simply sits between the other two
+outcomes and is squeezed from both sides. The baseline's accuracy of
+$0.3008$ is likewise near-meaningless: it assigns identical probabilities
+to every match and so predicts a single class throughout.
+
+
+\section{Notes for the group}
+
+\begin{itemize}
+  \item Comparisons require identical folds, identical metric
+        definitions, and the same aggregation (pooled vs mean) across all
+        four methods.
+  \item The fold-to-fold standard deviation ($\approx 0.05$) exceeds the
+        likely gaps between methods, so differences of a few hundredths
+        should be checked with a paired test across the six folds rather
+        than by comparing averages.
+  \item Earlier single-split benchmarks (Lasso $0.735$, CART $0.741$ on
+        2024 only) are not comparable to six-fold figures. The XGBoost
+        2024 fold alone gives $0.751$ against a six-fold mean of $0.832$,
+        so a 2024-only estimate is optimistic by roughly $0.08$ --- an
+        order of magnitude larger than the selection bias in Section 3.
+\end{itemize}
+
+\end{document}

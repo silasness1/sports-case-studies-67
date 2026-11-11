@@ -371,21 +371,6 @@ metrics_sel_skel = yardstick::metric_set(
   poisson_log_loss
 )
 
-# Full sets, e.g. for compute_metrics() on a finished run
-metrics_wdl = yardstick::metric_set(
-  wdl_rps,
-  wdl_brier,
-  wdl_accuracy,
-  wdl_accuracy_range
-)
-
-metrics_goals = yardstick::metric_set(
-  mse,
-  mae,
-  poisson_log_loss,
-  skellam_nll_by_match
-)
-
 # Section 5: Poisson Workflow & Grid----
 pois_tune <- poisson_reg(engine = "glmnet", 
                              penalty = tune(), 
@@ -525,7 +510,8 @@ xg_wf = workflow() |>
 #   pois_mse_preds_outer   goal predictions from the nested outer folds (honest)
 #   pois_mse_preds_tuning  goal predictions from the tuning pass at the chosen config (optimistic,
 #                          comparable to Random_Forest_LOTOCV.Rmd and xgboost_with_skellam.R)
-#   pois_mse_wdl_outer     match-level win/draw/loss built from preds_outer, with tuned draw threshold
+#   pois_mse_wdl_outer_raw match-level win/draw/loss built from preds_outer: probabilities + argmax, no threshold
+#   pois_mse_wdl_outer     the same with the leave-one-tournament-out draw threshold added (draw_t, pred_wdl_t)
 # To add rf / xg / nnet: copy a Section 10 block and rename pois -> rf etc.
 
 # TRUE = refit and overwrite results/<name>.rds, FALSE = load the last saved fit (no refit)
@@ -603,6 +589,14 @@ nested_final_fit_mirai = function(...) {
   # (!!) Finally, the function uses those hyperparameters to fit on all the data available
   # Its tuning-pass metrics are optimistically biased: every year helped choose the winner
 
+# nested_final_fit names its tuning-pass resamples Resample1..6 in no particular year order
+# (Resample1 is 2012). Rename them "test YYYY" like the nested folds, reusing Section 3.1's helpers.
+# Applied after Section 10 so it covers both freshly fitted and readRDS-loaded fits
+name_final_ids = function(final) {
+  final$tuning = rename_rset_ids(final$tuning, get_resample_ids(final$tuning, all_years))
+  final
+}
+
 # Section 10: Running the experiments----
 
 # Section 10.1: pois, hyperparameters selected on mse----
@@ -665,7 +659,12 @@ if (RUN_POIS_SKEL) {
   pois_skel_final  = pois_skel_saved$final
 }
 
-# Section 10.4: Run times----
+# Section 10.4: Name the final fits' tuning-pass resamples "test YYYY"----
+pois_mse_final  = name_final_ids(pois_mse_final)
+pois_rps_final  = name_final_ids(pois_rps_final)
+pois_skel_final = name_final_ids(pois_skel_final)
+
+# Section 10.5: Run times----
 # (selections, final hyperparameters and nested metrics are reported in Sections 13-15)
 pois_timing = tibble(
   experiment  = c("pois_mse_nested", "pois_mse_final", "pois_rps_nested", "pois_rps_final",
@@ -756,13 +755,14 @@ best_draw_t = function(wdl, grid = DRAW_GRID) {
 # on the OTHER years, so the score at that t is honest (unlike the Rmd's section 14)
 tune_draw_range = function(wdl, grid = DRAW_GRID) {
   years = sort(unique(wdl$Year))
+  # get the best draw range hyperparam for all but the hold-out year
   t_by_year = sapply(years, function(y) best_draw_t(filter(wdl, Year != y), grid))
   names(t_by_year) = years
-
+  
   wdl |>
     mutate(
-      draw_t     = unname(t_by_year[as.character(Year)]),
-      pred_wdl_t = pred_at_threshold(wdl, draw_t)
+      draw_t     = unname(t_by_year[as.character(Year)]), # draw_t contains one per match
+      pred_wdl_t = pred_at_threshold(wdl, draw_t) # use the winner
     )
 }
 
@@ -862,11 +862,19 @@ pois_skel_preds_outer  = collect_predictions(pois_skel_nested)
 pois_skel_preds_tuning = get_tuning_preds(pois_skel_final)
 
 # Section 12.2: Win/draw/loss with leave-one-tournament-out draw threshold----
-pois_mse_wdl_outer  = pois_mse_preds_outer  |> convert_preds_to_wdl() |> tune_draw_range()
-pois_mse_wdl_tuning = pois_mse_preds_tuning |> convert_preds_to_wdl() |> tune_draw_range()
-pois_rps_wdl_outer  = pois_rps_preds_outer  |> convert_preds_to_wdl() |> tune_draw_range()
-pois_rps_wdl_tuning = pois_rps_preds_tuning |> convert_preds_to_wdl() |> tune_draw_range()
-pois_skel_wdl_outer  = pois_skel_preds_outer  |> convert_preds_to_wdl() |> tune_draw_range()
+# _raw: one row per match with Skellam probabilities, p_range and the argmax prediction (no threshold)
+pois_mse_wdl_outer_raw  = convert_preds_to_wdl(pois_mse_preds_outer)
+pois_rps_wdl_outer_raw  = convert_preds_to_wdl(pois_rps_preds_outer)
+pois_skel_wdl_outer_raw = convert_preds_to_wdl(pois_skel_preds_outer)
+
+# adds draw_t (each year's threshold, chosen on the other years) and pred_wdl_t
+pois_mse_wdl_outer  = tune_draw_range(pois_mse_wdl_outer_raw)
+pois_rps_wdl_outer  = tune_draw_range(pois_rps_wdl_outer_raw)
+pois_skel_wdl_outer = tune_draw_range(pois_skel_wdl_outer_raw)
+
+# tuning pass: no final threshold is taken from these, so convert and threshold in one go
+pois_mse_wdl_tuning  = pois_mse_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
+pois_rps_wdl_tuning  = pois_rps_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
 pois_skel_wdl_tuning = pois_skel_preds_tuning |> convert_preds_to_wdl() |> tune_draw_range()
 
 # thresholds chosen per held-out year
@@ -875,16 +883,18 @@ pois_rps_wdl_outer |> distinct(Year, draw_t)
 pois_skel_wdl_outer |> distinct(Year, draw_t)
 
 # Section 12.3: Final draw threshold for the 2028 rule----
-# best t on all pooled outer matches. This is a decision rule, not a performance estimate
-pois_mse_t_final = best_draw_t(pois_mse_wdl_outer)
-pois_rps_t_final = best_draw_t(pois_rps_wdl_outer)
-pois_skel_t_final = best_draw_t(pois_skel_wdl_outer)
+# best t on all pooled outer matches (the _raw tables: best_draw_t doesn't use the per-year
+# draw_t / pred_wdl_t columns). This is a decision rule, not a performance estimate
+pois_mse_t_final  = best_draw_t(pois_mse_wdl_outer_raw)
+pois_rps_t_final  = best_draw_t(pois_rps_wdl_outer_raw)
+pois_skel_t_final = best_draw_t(pois_skel_wdl_outer_raw)
 
 # Section 12.4: Baseline (no model)----
-baseline_preds_outer = baseline_preds()
-baseline_wdl_outer   = baseline_wdl() |> tune_draw_range()
-baseline_t_final     = best_draw_t(baseline_wdl_outer)
-baseline_wdl_insample = baseline_wdl(leave_out = FALSE) |> tune_draw_range()
+baseline_preds_outer   = baseline_preds()
+baseline_wdl_outer_raw = baseline_wdl()
+baseline_wdl_outer     = tune_draw_range(baseline_wdl_outer_raw)
+baseline_t_final       = best_draw_t(baseline_wdl_outer_raw)
+baseline_wdl_insample  = baseline_wdl(leave_out = FALSE) |> tune_draw_range()
 
 baseline_wdl_outer |> distinct(Year, p_win, p_draw, p_loss, draw_t)
 
@@ -906,7 +916,7 @@ pois_results = bind_rows(
 baseline_results = bind_rows(goal_scores(baseline_preds_outer), wdl_scores(baseline_wdl_outer)) |>
   mutate(select = "none", preds = "nested_outer", model_class = "baseline")
 
-bind_rows(baseline_results, pois_results) |>
+pois_results_baseline_wide = bind_rows(baseline_results, pois_results) |>
   pivot_wider(names_from = c(model_class, select, preds), values_from = value)
 
 # Section 13.2: Confusion matrices----
@@ -1008,7 +1018,9 @@ nested_eval
 nested_eval |>
   mutate(value = sprintf("%.3f (%.3f)", pooled, se)) |>
   select(metric, experiment, value) |>
-  pivot_wider(names_from = experiment, values_from = value)
+  pivot_wider(names_from = experiment, values_from = value) -> nested_eval_report
+
+nested_eval_report
 
 # Section 13.4: Baseline vs argmax Skellam vs range-adjusted Skellam----
 # Same layout as Random_Forest_LOTOCV.Rmd section 16: one row per model, metrics as columns
@@ -1088,11 +1100,13 @@ save_plot(plot_model_comparison(model_comparison_tuning, "Baseline vs Skellam (t
 # Section 14: Final model coefficients----
 # glmnet coefficients of the final (2028) model, on the original scale of each predictor
 # Predictors are team-minus-opponent differences (except GroupStage), so:
-#   estimate       = change in log expected goals per 1-unit difference
-#   rate_ratio     = exp(estimate): expected goals are multiplied by this per 1-unit difference
-#   std_estimate   = estimate * sd(x): effect of a 1-SD difference, comparable across predictors
-#                    (UefaPoints is in the 10,000s and GDP around 1, so raw estimates aren't comparable)
-#   std_rate_ratio = exp(std_estimate)
+#   beta_k        = change in log expected goals (log lambda) per 1-unit difference in x_k
+#   exp_beta_k    = exp(beta_k): expected goals are multiplied by this per 1-unit difference
+#   sd_x          = standard deviation of x_k in euro
+#   beta_k_sd     = beta_k * sd_x: effect of a 1-SD difference, comparable across predictors
+#                   (UefaPoints is in the 10,000s and GDP around 1, so raw beta_k aren't comparable)
+#   exp_beta_k_sd = exp(beta_k_sd): expected goals are multiplied by this per 1-SD difference
+# These are point estimates only (no standard errors: glmnet doesn't provide them)
 # glmnet shrinks coefficients toward 0 (attenuated), and an exact 0 means the lasso dropped the variable
 coef_table = function(final) {
   predictor_sd = euro |>
@@ -1100,11 +1114,11 @@ coef_table = function(final) {
     pivot_longer(everything(), names_to = "term", values_to = "sd_x")
 
   broom::tidy(extract_fit_parsnip(final)) |>
-    select(term, estimate) |>
+    select(term, beta_k = estimate) |>
+    mutate(exp_beta_k = exp(beta_k)) |>
     left_join(predictor_sd, by = "term") |>
-    mutate(rate_ratio     = exp(estimate),
-           std_estimate   = estimate * sd_x,
-           std_rate_ratio = exp(std_estimate))
+    mutate(beta_k_sd     = beta_k * sd_x,
+           exp_beta_k_sd = exp(beta_k_sd))
 }
 
 pois_mse_final$selected
@@ -1120,7 +1134,7 @@ pois_skel_coefs = coef_table(pois_skel_final)
 pois_skel_coefs
 
 # sanity check: the coefficients reproduce the final model's prediction for the first row
-exp(sum(pois_rps_coefs$estimate * c(1, unlist(euro[1, predictors]))))
+exp(sum(pois_rps_coefs$beta_k * c(1, unlist(euro[1, predictors]))))
 predict(extract_workflow(pois_rps_final), new_data = euro[1, ])
 
 # Section 15: Hyperparameter selection variability----
@@ -1202,7 +1216,9 @@ agreement(pois_skel_nested)
 # final (2028) models
 bind_rows(pois_mse_final$selected |> mutate(select = "mse"),
           pois_rps_final$selected |> mutate(select = "rps"),
-          pois_skel_final$selected |> mutate(select = "skel"))
+          pois_skel_final$selected |> mutate(select = "skel")) -> pois_select_rule_hyperparams_final
+
+pois_select_rule_hyperparams_final
 
 # Same check within ONE run: the rps run also computed mse on the inner folds, so we can read off
 # what mse would have picked from exactly the same fits (no run-to-run randomness)
@@ -1285,3 +1301,182 @@ pois_skel_wdl_plots = plot_wdl_probs(pois_skel_wdl_outer, "pois, selected on ske
 iwalk(pois_mse_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_mse_", name)))
 iwalk(pois_rps_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_rps_", name)))
 iwalk(pois_skel_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_skel_", name)))
+
+# Section 17: Poisson assumption diagnostics (final models)----
+# Checked on the final models (fit on all data): they're the models we interpret and use for 2028.
+# The hundreds of nested fits evaluate the tuning procedure; they share these assumptions
+# pois_mse_final and pois_rps_final picked the same hyperparameters, and pois_skel_final is
+# nearly the same model, so the summary table covers all three and the plots can use any one
+
+# Fitted expected goals (lambda) and Pearson residuals for every row of euro
+#   Pearson residual = (observed - expected) / sqrt(expected): for a Poisson, Var = mean = lambda,
+#   so these should have mean 0 and variance 1 if the model is right
+final_fitted = function(final) {
+  euro |>
+    mutate(.row = row_number(),
+           lambda = predict(extract_workflow(final), new_data = euro)$.pred,
+           resid_pearson = (Goals - lambda) / sqrt(lambda))
+}
+
+# Dispersion: sum of squared Pearson residuals / (n - p)
+#   ~1: variance matches the mean, as Poisson assumes
+#   >1: overdispersion, goals vary more than Poisson allows (probabilities too confident)
+#   <1: underdispersion
+# p = number of non-zero coefficients incl. the intercept (the usual degrees of freedom for a lasso)
+dispersion_stat = function(fitted, final) {
+  p = sum(broom::tidy(extract_fit_parsnip(final))$estimate != 0)
+  sum(fitted$resid_pearson^2) / (nrow(fitted) - p)
+}
+
+# Within-match independence: correlation of team 1's and team 2's Pearson residuals in the same match
+# Skellam assumes the two teams' goals are independent given lambda1 and lambda2 (correlation 0)
+#   > 0: open games / cagey games, both teams over- or under-score together -> more draws than Skellam predicts
+#   < 0: one team's goals come at the other's expense
+within_match_cor = function(fitted) {
+  pairs = fitted |>
+    arrange(.row) |>
+    group_by(Year, match_id) |>
+    summarise(resid1 = first(resid_pearson), resid2 = last(resid_pearson), .groups = "drop")
+  cor.test(pairs$resid1, pairs$resid2)
+}
+
+diagnostics_row = function(final, select) {
+  fitted = final_fitted(final)
+  wm = within_match_cor(fitted)
+  tibble(select           = select,
+         dispersion       = dispersion_stat(fitted, final),
+         within_match_cor = unname(wm$estimate),
+         cor_95_lo        = wm$conf.int[1],
+         cor_95_hi        = wm$conf.int[2],
+         cor_p_value      = wm$p.value)
+}
+
+final_diagnostics = bind_rows(
+  diagnostics_row(pois_mse_final,  "mse"),
+  diagnostics_row(pois_rps_final,  "rps"),
+  diagnostics_row(pois_skel_final, "skel")
+)
+print(final_diagnostics, width = Inf)
+
+# Log-linear form: the model assumes log(expected goals) is a straight line in each predictor.
+# Binned mean Pearson residual (+/- 2 SE) against each predictor and against the fitted lambda:
+# points scattered around 0 = fine; a curve or trend = the straight-line assumption misses something.
+# Continuous variables are split into 10 equal-count bins; GroupStage keeps its 2 values
+plot_loglinear_check = function(final, label) {
+  fitted = final_fitted(final)
+  fitted |>
+    select(resid_pearson, lambda, all_of(predictors)) |>
+    pivot_longer(-resid_pearson, names_to = "variable", values_to = "x") |>
+    group_by(variable) |>
+    mutate(bin = if (n_distinct(x) <= 10) as.integer(factor(x)) else ntile(x, 10)) |>
+    group_by(variable, bin) |>
+    summarise(x_mean     = mean(x),
+              resid_mean = mean(resid_pearson),
+              resid_se   = sd(resid_pearson) / sqrt(n()),
+              .groups    = "drop") |>
+    mutate(variable = factor(variable, levels = c("lambda", predictors))) |>
+    ggplot(aes(x = x_mean, y = resid_mean)) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_pointrange(aes(ymin = resid_mean - 2 * resid_se, ymax = resid_mean + 2 * resid_se)) +
+    facet_wrap(~ variable, scales = "free_x") +
+    labs(title = paste("Log-linear form check:", label),
+         subtitle = "Binned mean Pearson residual (+/- 2 SE); lambda = fitted expected goals",
+         x = "bin mean of x", y = "mean Pearson residual") +
+    theme_minimal()
+}
+
+save_plot(plot_loglinear_check(pois_mse_final,  "pois final, selected on mse"),         "loglinear_pois_mse",  width = 10, height = 6)
+save_plot(plot_loglinear_check(pois_rps_final,  "pois final, selected on rps"),         "loglinear_pois_rps",  width = 10, height = 6)
+save_plot(plot_loglinear_check(pois_skel_final, "pois final, selected on skellam nll"), "loglinear_pois_skel", width = 10, height = 6)
+
+# Section 18: LaTeX tables for the presentation----
+# Each table is written with kable (booktabs) to presentations/football-week-4/tables/<name>.tex
+# and pulled into the slides with \input{tables/<name>.tex}, so the slides update with the results.
+# Debug runs (SIMPLE = T) write to results_debug/tables instead, so they can't overwrite these
+TABLE_DIR = if (SIMPLE) file.path(RESULTS_DIR, "tables") else "presentations/football-week-4/tables"
+dir.create(TABLE_DIR, showWarnings = FALSE, recursive = TRUE)
+
+options(knitr.kable.NA = "--")
+
+save_table = function(df, name, digits = 3, ...) {
+  tab = knitr::kable(df, format = "latex", booktabs = TRUE, digits = digits, linesep = "", ...)
+  writeLines(tab, file.path(TABLE_DIR, paste0(name, ".tex")))
+  invisible(tab)
+}
+
+# numbers to 3 significant digits without scientific notation (coefficients span 1e-4 to 1e4)
+fmt_sig = function(x) ifelse(is.na(x), NA, sub("\\.$", "", formatC(signif(x, 3), format = "fg", digits = 3, flag = "#")))
+# penalties span 1e-10 to 1, so these keep scientific notation
+fmt_penalty = function(x) formatC(x, format = "g", digits = 3)
+
+# short labels keep the tables narrow, so they don't have to be shrunk to fit a slide
+# "0.317 (0.011)" -> "0.317 (.011)" to keep the table narrow
+save_table(nested_eval_report |> mutate(across(-metric, \(x) if_else(x == "NA (NA)", NA_character_, gsub("\\(0\\.", "(.", x)))),
+           "nested_eval_report",
+           col.names = c("metric", "baseline", "mse", "rps", "skellam"))
+
+# "Pois + Skellam (range-adjusted), mse" -> "mse, range"
+short_model = function(model) {
+  model |>
+    sub(pattern = "Historical Frequency Baseline", replacement = "baseline") |>
+    sub(pattern = "Pois \\+ Skellam \\((.*)\\), (.*)", replacement = "\\2, \\1") |>
+    sub(pattern = "range-adjusted", replacement = "range")
+}
+
+# probability scores are the same for argmax and range-adjusted, so one row per model
+save_table(model_comparison |>
+             filter(!grepl("range-adjusted", Model)) |>
+             mutate(Model = sub(", argmax", "", short_model(Model))) |>
+             select(Model, Log_Loss, Brier_Score, RPS),
+           "model_comparison_prob",
+           col.names = c("model", "log loss", "Brier", "RPS"))
+save_table(model_comparison |>
+             mutate(Model = short_model(Model)) |>
+             select(Model, Accuracy, Macro_F1, Draws_Predicted, Draw_Precision, Draw_Recall, Draw_F1),
+           "model_comparison_class",
+           col.names = c("model", "accuracy", "macro F1", "draws called", "draw prec.", "draw recall", "draw F1"))
+
+coef_for_table = function(coefs) {
+  coefs |>
+    mutate(across(c(beta_k, exp_beta_k, sd_x, beta_k_sd, exp_beta_k_sd), fmt_sig))
+}
+coef_col_names = c("term", "$\\beta_k$", "$e^{\\beta_k}$", "$sd_x$", "$\\beta_k \\, sd_x$", "$e^{\\beta_k sd_x}$")
+save_table(coef_for_table(pois_mse_coefs),  "pois_mse_coefs",  col.names = coef_col_names, escape = FALSE)
+save_table(coef_for_table(pois_rps_coefs),  "pois_rps_coefs",  col.names = coef_col_names, escape = FALSE)
+save_table(coef_for_table(pois_skel_coefs), "pois_skel_coefs", col.names = coef_col_names, escape = FALSE)
+
+# one "penalty / mixture" cell per selection metric keeps it to 4 columns
+lambda_alpha = function(penalty, mixture) paste(fmt_penalty(penalty), "/", sprintf("%.2f", mixture))
+save_table(selection_comparison |>
+             mutate(id = sub("test ", "", id),
+                    mse  = lambda_alpha(mse_penalty,  mse_mixture),
+                    rps  = lambda_alpha(rps_penalty,  rps_mixture),
+                    skel = lambda_alpha(skel_penalty, skel_mixture)) |>
+             select(id, mse, rps, skel) |>
+             arrange(id),
+           "selection_comparison",
+           col.names = c("held out", "mse $\\lambda$ / $\\alpha$", "rps $\\lambda$ / $\\alpha$",
+                         "skel $\\lambda$ / $\\alpha$"),
+           escape = FALSE)
+
+save_table(pois_select_rule_hyperparams_final |>
+             mutate(penalty = fmt_penalty(penalty)) |>
+             select(select, penalty, mixture),
+           "pois_select_rule_hyperparams_final", digits = 2,
+           col.names = c("selected on", "penalty $\\lambda$", "mixture $\\alpha$"), escape = FALSE)
+
+save_table(final_diagnostics |>
+             mutate(cor_95 = sprintf("[%.2f, %.2f]", cor_95_lo, cor_95_hi)) |>
+             select(select, dispersion, within_match_cor, cor_95, cor_p_value),
+           "final_diagnostics",
+           col.names = c("selected on", "dispersion", "match $r$", "95\\% CI", "$p$"),
+           escape = FALSE)
+
+# Slide-sized copies of the figures used in the presentation: a smaller canvas makes the
+# text relatively larger once the image is scaled into a slide column
+SLIDE_FIG_DIR = if (SIMPLE) file.path(RESULTS_DIR, "tables") else "presentations/football-week-4"
+ggsave(file.path(SLIDE_FIG_DIR, "wdl_pois_rps_box.png"), pois_rps_wdl_plots$box + labs(title = NULL),
+       width = 6, height = 4, bg = "white")
+ggsave(file.path(SLIDE_FIG_DIR, "loglinear_pois_rps.png"),
+       plot_loglinear_check(pois_rps_final, "final model") + labs(title = NULL, subtitle = NULL),
+       width = 6.5, height = 4.5, bg = "white")
