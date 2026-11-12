@@ -1,0 +1,1041 @@
+
+library(dplyr)
+library(tidyr)
+library(readr)
+library(nnet)
+library(ggplot2)
+library(caret)
+
+
+data <- read_csv("C:/Users/962ni/Documents/Eurodata_with_Age.csv")
+
+
+# Predictors
+features <- c(
+  "GDP",
+  "MarketValue",
+  "FifaRank",
+  "UefaPoints",
+  "CLPlayers",
+  "AgeDifference"
+)
+
+predictors <- c(
+  "GroupStage",
+  features
+)
+
+# Neural network tuning grid
+tuning_grid <- expand.grid(
+  size = c(1, 2, 3, 4, 5),
+  decay = c(0.5, 0.7, 0.9, 1.0, 1.1),
+  skip = c(FALSE, TRUE)
+)
+
+# Draw probability thresholds
+threshold_grid <- seq(
+  0.0,
+  0.30,
+  by = 0.025
+)
+
+# Tournament years
+years <- sort(unique(data$Year))
+
+# Outcome classes
+classes <- c("Loss", "Draw", "Win")
+
+print(years)
+print(tuning_grid)
+
+
+fit_goal_nn <- function(train, test,
+                        size,
+                        decay,
+                        skip,
+                        maxit = 1000) {
+  
+  # Create predictor matrices
+  x_train <- as.matrix(
+    train[, predictors]
+  )
+  
+  x_test <- as.matrix(
+    test[, predictors]
+  )
+  
+  storage.mode(x_train) <- "double"
+  storage.mode(x_test) <- "double"
+  
+  # Standardise using training data only
+  train_means <- colMeans(x_train)
+  train_sds <- apply(x_train, 2, sd)
+  
+  train_sds[
+    is.na(train_sds) | train_sds == 0
+  ] <- 1
+  
+  x_train <- scale(
+    x_train,
+    center = train_means,
+    scale = train_sds
+  )
+  
+  x_test <- scale(
+    x_test,
+    center = train_means,
+    scale = train_sds
+  )
+  
+  # Log-transform goals
+  y_train <- log1p(train$Goals)
+  
+  # Fit neural network
+  set.seed(123)
+  
+  model <- nnet(
+    x = x_train,
+    y = y_train,
+    size = size,
+    decay = decay,
+    skip = skip,
+    linout = TRUE,
+    maxit = maxit,
+    trace = FALSE
+  )
+  
+  # Training predictions for smearing correction
+  train_pred <- as.vector(
+    predict(model, x_train)
+  )
+  
+  residuals <- y_train - train_pred
+  
+  smearing <- mean(exp(residuals))
+  
+  # Test predictions
+  test_pred_log <- as.vector(
+    predict(model, x_test)
+  )
+  
+  # Back-transform to goals
+  test_pred <- exp(test_pred_log) * smearing - 1
+  
+  # Expected goals cannot be negative
+  test_pred <- pmax(test_pred, 0)
+  
+  # Return predictions
+  results <- test %>%
+    mutate(
+      Predicted_Goals = test_pred,
+      Actual_Goals = Goals
+    ) %>%
+    select(
+      Year,
+      GroupStage,
+      Team,
+      Opponent,
+      Actual_Goals,
+      Predicted_Goals
+    )
+  
+  return(results)
+}
+
+
+pair_team_predictions <- function(predictions) {
+  
+  matches <- predictions %>%
+    mutate(
+      Team = as.character(Team),
+      Opponent = as.character(Opponent),
+      
+      Team_A = pmin(Team, Opponent),
+      Team_B = pmax(Team, Opponent)
+    ) %>%
+    
+    group_by(
+      Year,
+      GroupStage,
+      Team_A,
+      Team_B
+    ) %>%
+    
+    summarise(
+      
+      lambda_A =
+        Predicted_Goals[Team == first(Team_A)][1],
+      
+      lambda_B =
+        Predicted_Goals[Team == first(Team_B)][1],
+      
+      Goals_A =
+        Actual_Goals[Team == first(Team_A)][1],
+      
+      Goals_B =
+        Actual_Goals[Team == first(Team_B)][1],
+      
+      .groups = "drop"
+    )
+  
+  return(matches)
+}
+
+
+predict_match_probabilities <- function(
+    lambda_A,
+    lambda_B,
+    max_goals = 20) {
+  
+  goals <- 0:max_goals
+  
+  # Individual Poisson probabilities
+  prob_A <- dpois(goals, lambda_A)
+  prob_B <- dpois(goals, lambda_B)
+  
+  # Joint scoreline probabilities
+  score_matrix <- outer(prob_A, prob_B)
+  
+  # Normalise truncated probabilities
+  score_matrix <- score_matrix / sum(score_matrix)
+  
+  # Team A wins
+  p_win <- sum(
+    score_matrix[
+      row(score_matrix) > col(score_matrix)
+    ]
+  )
+  
+  # Draw
+  p_draw <- sum(
+    score_matrix[
+      row(score_matrix) == col(score_matrix)
+    ]
+  )
+  
+  # Team A loses
+  p_loss <- sum(
+    score_matrix[
+      row(score_matrix) < col(score_matrix)
+    ]
+  )
+  
+  return(
+    c(
+      Loss = p_loss,
+      Draw = p_draw,
+      Win = p_win
+    )
+  )
+}
+delta_grid <- seq(0, 0.40, by = 0.025)
+override_grid <- seq(0.35, 0.60, by = 0.025)
+classify_match <- function(p_loss,p_draw,p_win, delta, override_threshold=0.45) {
+  
+  difference <- abs(max(p_win,p_loss,p_draw)-min(p_win,p_loss,p_draw))
+  max_prob <- pmax(p_loss, p_draw, p_win)
+  override <- max_prob >= override_threshold
+  #ifelse(p_draw >0.33
+  normal_pred=ifelse(
+    difference<delta,
+    "Draw",
+    ifelse(
+      p_win < p_loss,
+      "Loss",
+      "Win"
+    )
+  )
+  override_prediction <- case_when(
+    p_loss == max_prob ~ "Loss",
+    p_draw == max_prob ~ "Draw",
+    p_win == max_prob ~ "Win"
+  )
+  ifelse(
+    override,
+    override_prediction,
+    normal_pred
+  )
+}
+
+
+calculate_macro_f1 <- function(actual, predicted) {
+  
+  actual <- factor(actual, levels = classes)
+  predicted <- factor(predicted, levels = classes)
+  
+  cm <- table(
+    Predicted = predicted,
+    Actual = actual
+  )
+  
+  f1_values <- numeric(length(classes))
+  
+  for (i in seq_along(classes)) {
+    
+    tp <- cm[i, i]
+    
+    fp <- sum(cm[i, ]) - tp
+    
+    fn <- sum(cm[, i]) - tp
+    
+    precision <- ifelse(
+      tp + fp == 0,
+      0,
+      tp / (tp + fp)
+    )
+    
+    recall <- ifelse(
+      tp + fn == 0,
+      0,
+      tp / (tp + fn)
+    )
+    
+    f1_values[i] <- ifelse(
+      precision + recall == 0,
+      0,
+      2 * precision * recall /
+        (precision + recall)
+    )
+  }
+  
+  mean(f1_values)
+}
+
+
+tune_goal_nn <- function(
+    outer_train,
+    tuning_grid,
+    inner_years) {
+  
+  results <- list()
+  
+  for (i in seq_len(nrow(tuning_grid))) {
+    
+    size_value <- tuning_grid$size[i]
+    decay_value <- tuning_grid$decay[i]
+    skip_value <- tuning_grid$skip[i]
+    
+    fold_rmse <- c()
+    fold_mae <- c()
+    
+    for (valid_year in inner_years) {
+      
+      inner_train <- outer_train %>%
+        filter(Year != valid_year)
+      
+      inner_valid <- outer_train %>%
+        filter(Year == valid_year)
+      
+      predictions <- fit_goal_nn(
+        train = inner_train,
+        test = inner_valid,
+        size = size_value,
+        decay = decay_value,
+        skip = skip_value
+      )
+      
+      rmse <- sqrt(
+        mean(
+          (predictions$Actual_Goals -
+             predictions$Predicted_Goals)^2
+        )
+      )
+      
+      mae <- mean(
+        abs(
+          predictions$Actual_Goals -
+            predictions$Predicted_Goals
+        )
+      )
+      
+      fold_rmse <- c(fold_rmse, rmse)
+      fold_mae <- c(fold_mae, mae)
+    }
+    
+    results[[i]] <- data.frame(
+      size = size_value,
+      decay = decay_value,
+      skip = skip_value,
+      mean_RMSE = mean(fold_rmse),
+      mean_MAE = mean(fold_mae)
+    )
+  }
+  
+  results <- bind_rows(results)
+  
+  best_params <- results %>%
+    arrange(mean_RMSE, mean_MAE) %>%
+    slice(1)
+  
+  return(
+    list(
+      best_params = best_params,
+      all_results = results
+    )
+  )
+}
+
+
+tune_draw_threshold <- function(
+    outer_train,
+    best_params,
+    inner_years,
+    threshold_grid) {
+  
+  inner_predictions <- list()
+  
+  # Generate inner out-of-fold predictions
+  for (valid_year in inner_years) {
+    
+    inner_train <- outer_train %>%
+      filter(Year != valid_year)
+    
+    inner_valid <- outer_train %>%
+      filter(Year == valid_year)
+    
+    # Fit neural network
+    goal_predictions <- fit_goal_nn(
+      train = inner_train,
+      test = inner_valid,
+      size = best_params$size,
+      decay = best_params$decay,
+      skip = best_params$skip
+    )
+    
+    # Pair team predictions
+    matches <- pair_team_predictions(
+      goal_predictions
+    )
+    
+    # Actual outcomes
+    matches <- matches %>%
+      mutate(
+        Actual = case_when(
+          Goals_A > Goals_B ~ "Win",
+          Goals_A == Goals_B ~ "Draw",
+          TRUE ~ "Loss"
+        )
+      )
+    
+    # Calculate Poisson probabilities
+    probabilities <- t(
+      vapply(
+        seq_len(nrow(matches)),
+        function(i) {
+          
+          predict_match_probabilities(
+            matches$lambda_A[i],
+            matches$lambda_B[i]
+          )
+          
+        },
+        FUN.VALUE = c(
+          Loss = 0,
+          Draw = 0,
+          Win = 0
+        )
+      )
+    )
+    
+    matches <- bind_cols(
+      matches,
+      as.data.frame(probabilities)
+    )
+    
+    inner_predictions[[as.character(valid_year)]] <-
+      matches
+  }
+  
+  # Combine all inner predictions
+  inner_predictions <- bind_rows(
+    inner_predictions
+  )
+  
+  # Evaluate candidate thresholds
+  threshold_results <- list()
+  
+  for (threshold in threshold_grid) {
+    
+    fold_scores <- c()
+    
+    for (valid_year in inner_years) {
+      
+      year_data <- inner_predictions %>%
+        filter(Year == valid_year)
+      
+      predicted <- vapply(
+        seq_len(nrow(year_data)),
+        function(i) {
+          
+          classify_match(
+            p_loss = year_data$Loss[i],
+            p_draw = year_data$Draw[i],
+            p_win = year_data$Win[i],
+            delta = threshold,
+          )
+          
+        },
+        character(1)
+      )
+      
+      fold_scores <- c(
+        fold_scores,
+        calculate_macro_f1(
+          actual = year_data$Actual,
+          predicted = predicted
+        )
+      )
+    }
+    
+    threshold_results[[as.character(threshold)]] <-
+      data.frame(
+        threshold = threshold,
+        mean_macro_F1 = mean(fold_scores)
+      )
+  }
+  
+  threshold_results <- bind_rows(
+    threshold_results
+  )
+  
+  # Select best threshold
+  best_threshold <- threshold_results %>%
+    arrange(
+      desc(mean_macro_F1),
+      threshold
+    ) %>%
+    slice(1)
+  
+  return(
+    list(
+      best_threshold = best_threshold$threshold,
+      all_results = threshold_results,
+      inner_predictions = inner_predictions
+    )
+  )
+}
+
+
+# Store outer predictions
+outer_predictions <- list()
+
+# Store tuning results
+outer_tuning_results <- list()
+
+# Store threshold results
+outer_threshold_results <- list()
+
+
+for (test_year in years) {
+  
+  cat("\n============================\n")
+  cat("Outer test year:", test_year, "\n")
+  cat("============================\n")
+  
+  # Outer split
+  outer_train <- data %>%
+    filter(Year != test_year)
+  
+  outer_test <- data %>%
+    filter(Year == test_year)
+  
+  inner_years <- sort(
+    unique(outer_train$Year)
+  )
+  
+  
+  # --------------------------------
+  # 1. Tune neural network
+  # --------------------------------
+  
+  goal_tuning <- tune_goal_nn(
+    outer_train = outer_train,
+    tuning_grid = tuning_grid,
+    inner_years = inner_years
+  )
+  
+  best_params <- goal_tuning$best_params
+  
+  cat("\nBest NN parameters:\n")
+  print(best_params)
+  
+  
+  # --------------------------------
+  # 2. Tune draw probability threshold
+  # --------------------------------
+  
+  threshold_tuning <- tune_draw_threshold(
+    outer_train = outer_train,
+    best_params = best_params,
+    inner_years = inner_years,
+    threshold_grid = threshold_grid
+  )
+  
+  best_threshold <- threshold_tuning$best_threshold
+  
+  cat("\nBest draw probability threshold:\n")
+  print(best_threshold)
+  
+  
+  # --------------------------------
+  # 3. Fit final goal NN
+  # --------------------------------
+  
+  final_goal_predictions <- fit_goal_nn(
+    train = outer_train,
+    test = outer_test,
+    size = best_params$size,
+    decay = best_params$decay,
+    skip = best_params$skip
+  )
+  
+  
+  # --------------------------------
+  # 4. Pair team predictions
+  # --------------------------------
+  
+  match_predictions <- pair_team_predictions(
+    final_goal_predictions
+  )
+  
+  
+  # --------------------------------
+  # 5. Calculate Poisson probabilities
+  # --------------------------------
+  
+  probabilities <- t(
+    vapply(
+      seq_len(nrow(match_predictions)),
+      function(i) {
+        
+        predict_match_probabilities(
+          match_predictions$lambda_A[i],
+          match_predictions$lambda_B[i]
+        )
+        
+      },
+      FUN.VALUE = c(
+        Loss = 0,
+        Draw = 0,
+        Win = 0
+      )
+    )
+  )
+  
+  match_predictions <- bind_cols(
+    match_predictions,
+    as.data.frame(probabilities)
+  )
+  
+  
+  # --------------------------------
+  # 6. Actual outcomes
+  # --------------------------------
+  
+  match_predictions <- match_predictions %>%
+    mutate(
+      Actual = case_when(
+        Goals_A > Goals_B ~ "Win",
+        Goals_A == Goals_B ~ "Draw",
+        TRUE ~ "Loss"
+      )
+    )
+  
+  
+  # --------------------------------
+  # 7. Apply selected threshold
+  # --------------------------------
+  
+  predicted <- vapply(
+    seq_len(nrow(match_predictions)),
+    function(i) {
+      
+      classify_match(
+        p_loss = match_predictions$Loss[i],
+        p_draw = match_predictions$Draw[i],
+        p_win = match_predictions$Win[i],
+        delta = best_threshold
+      )
+      
+    },
+    character(1)
+  )
+  
+  match_predictions$Predicted <- predicted
+  
+  
+  # --------------------------------
+  # 8. Store outer predictions
+  # --------------------------------
+  
+  outer_predictions[[as.character(test_year)]] <-
+    match_predictions %>%
+    mutate(
+      Best_Threshold = best_threshold,
+      Best_Size = best_params$size,
+      Best_Decay = best_params$decay,
+      Best_Skip = best_params$skip
+    )
+  
+  
+  # --------------------------------
+  # 9. Store tuning results
+  # --------------------------------
+  
+  outer_tuning_results[[as.character(test_year)]] <-
+    goal_tuning$all_results %>%
+    mutate(
+      Outer_Test_Year = test_year
+    )
+  
+  outer_threshold_results[[as.character(test_year)]] <-
+    threshold_tuning$all_results %>%
+    mutate(
+      Outer_Test_Year = test_year
+    )
+  
+  
+  cat("\nOuter test matches:",
+      nrow(match_predictions), "\n")
+  
+  cat("Outer test predictions completed.\n")
+}
+
+
+# Combine all outer predictions
+predictions_nested_poisson <- bind_rows(
+  outer_predictions
+)
+
+# Combine tuning results
+tuning_results_nested <- bind_rows(
+  outer_tuning_results
+)
+
+threshold_results_nested <- bind_rows(
+  outer_threshold_results
+)
+
+# Check the final results
+#View(predictions_nested_poisson)
+
+
+# Ensure consistent factor levels
+predictions_nested_poisson <- predictions_nested_poisson %>%
+  mutate(
+    Actual = factor(Actual, levels = classes),
+    Predicted = factor(Predicted, levels = classes)
+  )
+
+# Confusion matrix
+cm <- table(
+  Actual = predictions_nested_poisson$Actual,
+  Predicted = predictions_nested_poisson$Predicted
+)
+
+print(cm)
+
+# Accuracy
+accuracy <- sum(diag(cm)) / sum(cm)
+
+# Recall per class
+recall <- diag(cm) / rowSums(cm)
+
+# Precision per class
+precision <- diag(cm) / colSums(cm)
+
+# Macro recall
+macro_recall <- mean(recall, na.rm = TRUE)
+
+# Macro precision
+macro_precision <- mean(precision, na.rm = TRUE)
+
+# Macro F1
+overall_macro_f1 <- calculate_macro_f1(
+  predictions_nested_poisson$Actual,
+  predictions_nested_poisson$Predicted
+)
+
+cat("\nAccuracy:", accuracy, "\n")
+cat("Macro Recall:", macro_recall, "\n")
+cat("Macro Precision:", macro_precision, "\n")
+cat("Macro F1:", overall_macro_f1, "\n")
+
+
+cat("\nClass-specific recall:\n")
+print(recall)
+
+cat("\nClass-specific precision:\n")
+print(precision)
+
+
+
+# Actual one-hot outcome matrix
+actual_onehot <- sapply(
+  classes,
+  function(cl) {
+    as.numeric(
+      predictions_nested_poisson$Actual == cl
+    )
+  }
+)
+
+# Predicted probability matrix
+prob_matrix <- as.matrix(
+  predictions_nested_poisson[, classes]
+)
+
+# Multiclass Brier score (lower is better)
+brier_score <- mean(
+  rowSums((prob_matrix - actual_onehot)^2)
+)
+
+# Probability assigned to the actual outcome
+actual_prob <- vapply(
+  seq_len(nrow(predictions_nested_poisson)),
+  function(i) {
+    
+    cl <- as.character(
+      predictions_nested_poisson$Actual[i]
+    )
+    
+    predictions_nested_poisson[[cl]][i]
+  },
+  numeric(1)
+)
+
+# Multiclass log loss (lower is better)
+log_loss <- -mean(
+  log(pmax(actual_prob, 1e-15))
+)
+
+
+
+cat("Brier score:", brier_score, "\n")
+cat("Log loss:", log_loss, "\n")
+
+
+ggplot(
+  threshold_results_nested,
+  aes(
+    x = threshold,
+    y = mean_macro_F1,
+    colour = factor(Outer_Test_Year),
+    group = factor(Outer_Test_Year)
+  )
+) +
+  
+  geom_line() +
+  geom_point() +
+  
+  labs(
+    title = "Inner CV: Draw Probability Threshold Tuning",
+    x = "Draw probability threshold",
+    y = "Mean inner CV Macro F1",
+    colour = "Outer test year"
+  ) +
+  
+  theme_minimal()
+
+predictions_nested=predictions_nested_poisson
+misclassified <- predictions_nested %>%
+  filter(Actual != Predicted) %>%
+  mutate(
+    Error = paste("Actual:", Actual,
+                  "| Predicted:", Predicted)
+  ) %>%
+  arrange(Year, Team_A)
+
+View(misclassified)
+
+ggplot(
+  misclassified,
+  aes(x = Actual, fill = Predicted)
+) +
+  geom_bar(position = "dodge") +
+  labs(
+    title = "Types of Classification Errors",
+    x = "Actual outcome",
+    y = "Number of incorrect predictions",
+    fill = "Predicted outcome"
+  ) +
+  theme_minimal()
+
+predictions_nested <- predictions_nested %>%
+  mutate(
+    ActualProbability = case_when(
+      Actual == "Loss" ~ Loss,
+      Actual == "Draw" ~ Draw,
+      Actual == "Win"  ~ Win
+    ),
+    Correct = ifelse(
+      Actual == Predicted,
+      "Correct",
+      "Incorrect"
+    )
+  )
+
+ggplot(
+  predictions_nested,
+  aes(x = Correct, y = ActualProbability, fill = Correct)
+) +
+  geom_boxplot(alpha = 0.75) +
+  labs(
+    title = "Probability Assigned to the Actual Outcome",
+    x = "Prediction result",
+    y = "Probability of actual outcome"
+  ) +
+  theme_minimal()
+
+worst_predictions <- predictions_nested %>%
+  filter(Actual != Predicted) %>%
+  mutate(
+    PredictedProbability = case_when(
+      Predicted == "Loss" ~ Loss,
+      Predicted == "Draw" ~ Draw,
+      Predicted == "Win"  ~ Win
+    )
+  ) %>%
+  arrange(desc(PredictedProbability)) %>%
+  select(
+    Year, Team_A, Team_B,
+    Actual, Predicted,
+    PredictedProbability,
+Loss, Draw, Win,
+  )
+
+View(worst_predictions)
+
+ggplot(
+  misclassified,
+  aes(x = factor(Year), fill = Actual)
+) +
+  geom_bar(position = "dodge") +
+  labs(
+    title = "Misclassified Matches by Tournament",
+    x = "Euro tournament",
+    y = "Number of errors",
+    fill = "Actual outcome"
+  ) +
+  theme_minimal()
+plot(worst_predictions$PredictedProbability)
+
+misclassified <- predictions_nested %>%
+  filter(Actual != Predicted) %>%
+  mutate(
+    Match = paste(Team_A, "vs", Team_B)
+  ) %>%
+  select(
+    Year, Match, Actual, Predicted,
+    Loss, Draw, Win
+  ) %>%
+  pivot_longer(
+    cols = c(Loss, Draw, Win),
+    names_to = "Outcome",
+    values_to = "Probability"
+  )
+
+ggplot(
+  misclassified,
+  aes(x = reorder(Match, Probability),
+      y = Probability,
+      fill = Outcome)
+) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  facet_wrap(~Year, scales = "free_y") +
+  labs(
+    title = "Predicted Probabilities for Misclassified Matches",
+    x = "Match",
+    y = "Poisson probability",
+    fill = "Outcome"
+  ) +
+  theme_minimal()
+
+
+comparison_data <- predictions_nested %>%
+  mutate(
+    Match = paste(Team_A, "vs", Team_B),
+    
+    ActualProbability = case_when(
+      Actual == "Loss" ~ Loss,
+      Actual == "Draw" ~ Draw,
+      Actual == "Win" ~ Win
+    ),
+    
+    PredictedProbability = case_when(
+      Predicted == "Loss" ~ Loss,
+      Predicted == "Draw" ~ Draw,
+      Predicted == "Win" ~ Win
+    ),
+    
+    Correct = ifelse(
+      Actual == Predicted,
+      "Correct",
+      "Incorrect"
+    )
+  )
+
+ggplot(
+  comparison_data,
+  aes(x = ActualProbability,
+      y = PredictedProbability,
+      color = Correct)
+) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed"
+  ) +
+  geom_point(size = 2.5, alpha = 0.75) +
+  facet_wrap(~Year) +
+  scale_x_continuous(limits = c(0, 1)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  coord_equal() +
+  labs(
+    title = "Predicted Probability vs Actual Outcome Probability",
+    x = "Probability of actual outcome",
+    y = "Probability of predicted outcome",
+    color = "Classification"
+  ) +
+  theme_minimal()
+misclassified_comparison <- comparison_data %>%
+  filter(Correct == "Incorrect") %>%
+  select(
+    Year, Match, Actual, Predicted,
+    ActualProbability, PredictedProbability
+  ) %>%
+  pivot_longer(
+    cols = c(ActualProbability, PredictedProbability),
+    names_to = "ProbabilityType",
+    values_to = "Probability"
+  ) %>%
+  mutate(
+    ProbabilityType = recode(
+      ProbabilityType,
+      ActualProbability = "Actual outcome",
+      PredictedProbability = "Predicted outcome"
+    ),
+    Match = paste0(Match, " (", Actual, " → ", Predicted, ")")
+  )
+
+ggplot(
+  misclassified_comparison,
+  aes(
+    x = reorder(Match, Probability),
+    y = Probability,
+    fill = ProbabilityType
+  )
+) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  facet_wrap(~Year, scales = "free_y") +
+  labs(
+    title = "Probability Comparison for Misclassified Matches",
+    subtitle = "Comparing the probability of what happened against what the model predicted",
+    x = "Match (Actual → Predicted)",
+    y = "Probability",
+    fill = "Probability type"
+  ) +
+  theme_minimal()
+  
