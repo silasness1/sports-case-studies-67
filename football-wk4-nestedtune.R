@@ -7,7 +7,7 @@
 
 # Important objects: 
 #   - resample_struct
-#   - metrics_sel_mse, metrics_sel_rps, metrics_sel_skel (Section 4.3)
+#   - metrics_sel_mae, metrics_sel_rps, metrics_sel_skel (Section 4.3)
 #   - RUN_* switches and the naming scheme (Section 9)
 #   - <model_class>_<select>_nested / _final (Section 10); pois_cov_* = pois + AgeDifference
 #   - pois_results (Section 13)
@@ -38,6 +38,7 @@ library(mirai)
 library(tailor)
 library(caret)
 library(ggplot2)
+library(corrplot)
 
 # Section 2: Read in data ----
 euro_2004 = read_csv("raw-data/euro_2004.csv")
@@ -260,7 +261,7 @@ skellam_nll_by_match <- yardstick::new_groupwise_metric(
 # tells new_groupwise_metric which variable to group_by
 skellam_nll_by_match <- skellam_nll_by_match(match_id)
 
-# Section 4.1.1: why we tune on yardstick::mse instead of rmse-----
+# Section 4.1.1: why we tune on yardstick::mae / mse instead of rmse-----
   # Pooled vs fold-weighted: nestedtune/tune average fold metrics weighted by the resample weights
   # (assessment-row weights, Section 3.1).
   # For metrics that are a mean over rows (mse, mae, poisson_log_loss, skellam_nll, wdl_*)
@@ -376,11 +377,12 @@ wdl_rps            = make_wdl_metric("wdl_rps",            "rps",      "minimize
 # (selection_rule("desirability", minimize(wdl_rps)) errors: desirability can't see the custom groupwise metrics)
 # Sets are lean on purpose: grouped metrics add run time, and all WDL / skellam reporting is done
 # afterwards from the saved predictions (Sections 11-13)
-# mse rather than mae: Skellam needs each team's MEAN goals (lambda); mse is minimized by the mean,
-# mae by the median. mse rather than rmse so fold-weighted averaging is exactly pooled (Section 4.1.1)
-metrics_sel_mse = yardstick::metric_set(
-  mse,
+# mae so the selection matches the teammates' model class comparisons (caveat: mae is minimized by
+# the median, mse by the mean, and Skellam needs each team's MEAN goals (lambda)). Both are means
+# over rows, so fold-weighted averaging is exactly pooled (Section 4.1.1)
+metrics_sel_mae = yardstick::metric_set(
   mae,
+  mse,
   poisson_log_loss
 )
 
@@ -391,7 +393,7 @@ metrics_sel_rps = yardstick::metric_set(
   poisson_log_loss
 )
 
-# skellam_nll_by_match first (selection), plus wdl_rps and mse so this one run has all three
+# skellam_nll_by_match first (selection), plus wdl_rps and mae so this one run has all three
 # selection criteria computed on exactly the same fits (Section 15.1)
 metrics_sel_skel = yardstick::metric_set(
   skellam_nll_by_match,
@@ -569,22 +571,22 @@ xg_cov_wf = workflow() |>
 # Section 9: Experiment settings----
 
 # Naming scheme: <model_class>_<selection metric>_<stage>
-#   pois_mse_nested        nested_tune_grid result, hyperparameters selected on mse (old pois_tuned-style object)
+#   pois_mae_nested        nested_tune_grid result, hyperparameters selected on mae (old pois_tuned-style object)
 #   pois_skel_nested       same, selected on the skellam negative log likelihood of each match
-#   pois_cov_mse_nested    pois_mse_nested with AgeDifference added (pois_cov_wf); same for every stage
+#   pois_cov_mae_nested    pois_mae_nested with AgeDifference added (pois_cov_wf); same for every stage
 #   pois_rps_final         nested_final_fit: tuning pass on all 6 years + fit on all data (for 2028)
-#   pois_mse_preds_outer   goal predictions from the nested outer folds (honest)
-#   pois_mse_preds_tuning  goal predictions from the tuning pass at the chosen config (optimistic,
+#   pois_mae_preds_outer   goal predictions from the nested outer folds (honest)
+#   pois_mae_preds_tuning  goal predictions from the tuning pass at the chosen config (optimistic,
 #                          comparable to Random_Forest_LOTOCV.Rmd and xgboost_with_skellam.R)
-#   pois_mse_wdl_outer_raw match-level win/draw/loss built from preds_outer: probabilities + argmax, no threshold
-#   pois_mse_wdl_outer     the same with the leave-one-tournament-out draw threshold added (draw_t, pred_wdl_t)
+#   pois_mae_wdl_outer_raw match-level win/draw/loss built from preds_outer: probabilities + argmax, no threshold
+#   pois_mae_wdl_outer     the same with the leave-one-tournament-out draw threshold added (draw_t, pred_wdl_t)
 # To add rf / xg / nnet: copy a Section 10 block and rename pois -> rf etc.
 
 # TRUE = refit and overwrite results/<name>.rds, FALSE = load the last saved fit (no refit)
-RUN_POIS_MSE = FALSE
+RUN_POIS_MAE = FALSE
 RUN_POIS_RPS = FALSE
 RUN_POIS_SKEL = FALSE
-RUN_POIS_COV_MSE  = FALSE
+RUN_POIS_COV_MAE  = FALSE
 RUN_POIS_COV_RPS  = FALSE
 RUN_POIS_COV_SKEL = FALSE
 
@@ -645,7 +647,7 @@ nested_final_fit_mirai = function(...) {
     #- across all combos of hyperparams
     #- using our selection rule
     #- using our model class & formula
-    # nested_tune_grid produced 6 model fits and produced the score (e.g. collect_metrics(pois_mse_nested))
+    # nested_tune_grid produced 6 model fits and produced the score (e.g. collect_metrics(pois_mae_nested))
     # the reason we do this is so we can compare across model_classes
         # (and potentially selection rules determining hyperparameters)
 
@@ -668,24 +670,24 @@ name_final_ids = function(final) {
 
 # Section 10: Running the experiments----
 
-# Section 10.1: pois, hyperparameters selected on mse----
-if (RUN_POIS_MSE) {
-  pois_mse_nested = nested_tune_grid_mirai(          # full run: ~121s
+# Section 10.1: pois, hyperparameters selected on mae----
+if (RUN_POIS_MAE) {
+  pois_mae_nested = nested_tune_grid_mirai(          # full run: ~121s
     object     = pois_wf,
     resamples  = resample_struct,
     grid       = pois_grid,
-    metrics    = metrics_sel_mse,
-    select     = selection_rule(rule = "best"),     # best on mse (first in metrics_sel_mse)
+    metrics    = metrics_sel_mae,
+    select     = selection_rule(rule = "best"),     # best on mae (first in metrics_sel_mae)
     control    = nested_control
   )
-  pois_mse_final = nested_final_fit_mirai(object = pois_wf, results = pois_mse_nested)
+  pois_mae_final = nested_final_fit_mirai(object = pois_wf, results = pois_mae_nested)
 
-  saveRDS(list(nested = pois_mse_nested, final = pois_mse_final),
-          file.path(RESULTS_DIR, "pois_mse.rds"))
+  saveRDS(list(nested = pois_mae_nested, final = pois_mae_final),
+          file.path(RESULTS_DIR, "pois_mae.rds"))
 } else {
-  pois_mse_saved  = readRDS(file.path(RESULTS_DIR, "pois_mse.rds"))
-  pois_mse_nested = pois_mse_saved$nested
-  pois_mse_final  = pois_mse_saved$final
+  pois_mae_saved  = readRDS(file.path(RESULTS_DIR, "pois_mae.rds"))
+  pois_mae_nested = pois_mae_saved$nested
+  pois_mae_final  = pois_mae_saved$final
 }
 
 # Section 10.2: pois, hyperparameters selected on wdl_rps----
@@ -728,24 +730,24 @@ if (RUN_POIS_SKEL) {
   pois_skel_final  = pois_skel_saved$final
 }
 
-# Section 10.4: pois + age, hyperparameters selected on mse----
-if (RUN_POIS_COV_MSE) {
-  pois_cov_mse_nested = nested_tune_grid_mirai(          # full run: ~?s
+# Section 10.4: pois + age, hyperparameters selected on mae----
+if (RUN_POIS_COV_MAE) {
+  pois_cov_mae_nested = nested_tune_grid_mirai(          # full run: ~?s
     object     = pois_cov_wf,
     resamples  = resample_struct,
     grid       = pois_grid,
-    metrics    = metrics_sel_mse,
-    select     = selection_rule(rule = "best"),     # best on mse (first in metrics_sel_mse)
+    metrics    = metrics_sel_mae,
+    select     = selection_rule(rule = "best"),     # best on mae (first in metrics_sel_mae)
     control    = nested_control
   )
-  pois_cov_mse_final = nested_final_fit_mirai(object = pois_cov_wf, results = pois_cov_mse_nested)
+  pois_cov_mae_final = nested_final_fit_mirai(object = pois_cov_wf, results = pois_cov_mae_nested)
 
-  saveRDS(list(nested = pois_cov_mse_nested, final = pois_cov_mse_final),
-          file.path(RESULTS_DIR, "pois_cov_mse.rds"))
+  saveRDS(list(nested = pois_cov_mae_nested, final = pois_cov_mae_final),
+          file.path(RESULTS_DIR, "pois_cov_mae.rds"))
 } else {
-  pois_cov_mse_saved  = readRDS(file.path(RESULTS_DIR, "pois_cov_mse.rds"))
-  pois_cov_mse_nested = pois_cov_mse_saved$nested
-  pois_cov_mse_final  = pois_cov_mse_saved$final
+  pois_cov_mae_saved  = readRDS(file.path(RESULTS_DIR, "pois_cov_mae.rds"))
+  pois_cov_mae_nested = pois_cov_mae_saved$nested
+  pois_cov_mae_final  = pois_cov_mae_saved$final
 }
 
 # Section 10.5: pois + age, hyperparameters selected on wdl_rps----
@@ -789,28 +791,28 @@ if (RUN_POIS_COV_SKEL) {
 }
 
 # Section 10.7: Name the final fits' tuning-pass resamples "test YYYY"----
-pois_mse_final  = name_final_ids(pois_mse_final)
+pois_mae_final  = name_final_ids(pois_mae_final)
 pois_rps_final  = name_final_ids(pois_rps_final)
 pois_skel_final = name_final_ids(pois_skel_final)
-pois_cov_mse_final  = name_final_ids(pois_cov_mse_final)
+pois_cov_mae_final  = name_final_ids(pois_cov_mae_final)
 pois_cov_rps_final  = name_final_ids(pois_cov_rps_final)
 pois_cov_skel_final = name_final_ids(pois_cov_skel_final)
 
 # Section 10.8: Run times----
 # (selections, final hyperparameters and nested metrics are reported in Sections 13-15)
 pois_timing = tibble(
-  experiment  = c("pois_mse_nested", "pois_mse_final", "pois_rps_nested", "pois_rps_final",
+  experiment  = c("pois_mae_nested", "pois_mae_final", "pois_rps_nested", "pois_rps_final",
                   "pois_skel_nested", "pois_skel_final",
-                  "pois_cov_mse_nested", "pois_cov_mse_final", "pois_cov_rps_nested", "pois_cov_rps_final",
+                  "pois_cov_mae_nested", "pois_cov_mae_final", "pois_cov_rps_nested", "pois_cov_rps_final",
                   "pois_cov_skel_nested", "pois_cov_skel_final"),
-  started_at  = do.call(c, map(list(pois_mse_nested, pois_mse_final, pois_rps_nested, pois_rps_final,
+  started_at  = do.call(c, map(list(pois_mae_nested, pois_mae_final, pois_rps_nested, pois_rps_final,
                                     pois_skel_nested, pois_skel_final,
-                                    pois_cov_mse_nested, pois_cov_mse_final, pois_cov_rps_nested, pois_cov_rps_final,
+                                    pois_cov_mae_nested, pois_cov_mae_final, pois_cov_rps_nested, pois_cov_rps_final,
                                     pois_cov_skel_nested, pois_cov_skel_final),
                                \(x) attr(x, "started_at"))),
-  elapsed_sec = map_dbl(list(pois_mse_nested, pois_mse_final, pois_rps_nested, pois_rps_final,
+  elapsed_sec = map_dbl(list(pois_mae_nested, pois_mae_final, pois_rps_nested, pois_rps_final,
                              pois_skel_nested, pois_skel_final,
-                             pois_cov_mse_nested, pois_cov_mse_final, pois_cov_rps_nested, pois_cov_rps_final,
+                             pois_cov_mae_nested, pois_cov_mae_final, pois_cov_rps_nested, pois_cov_rps_final,
                              pois_cov_skel_nested, pois_cov_skel_final),
                         \(x) attr(x, "elapsed_sec"))
 )
@@ -992,14 +994,14 @@ baseline_preds = function() {
 # Section 12: pois predictions & win/draw/loss----
 
 # Section 12.1: Goal predictions----
-pois_mse_preds_outer  = collect_predictions(pois_mse_nested)
-pois_mse_preds_tuning = get_tuning_preds(pois_mse_final)
+pois_mae_preds_outer  = collect_predictions(pois_mae_nested)
+pois_mae_preds_tuning = get_tuning_preds(pois_mae_final)
 pois_rps_preds_outer  = collect_predictions(pois_rps_nested)
 pois_rps_preds_tuning = get_tuning_preds(pois_rps_final)
 pois_skel_preds_outer  = collect_predictions(pois_skel_nested)
 pois_skel_preds_tuning = get_tuning_preds(pois_skel_final)
-pois_cov_mse_preds_outer  = collect_predictions(pois_cov_mse_nested)
-pois_cov_mse_preds_tuning = get_tuning_preds(pois_cov_mse_final)
+pois_cov_mae_preds_outer  = collect_predictions(pois_cov_mae_nested)
+pois_cov_mae_preds_tuning = get_tuning_preds(pois_cov_mae_final)
 pois_cov_rps_preds_outer  = collect_predictions(pois_cov_rps_nested)
 pois_cov_rps_preds_tuning = get_tuning_preds(pois_cov_rps_final)
 pois_cov_skel_preds_outer  = collect_predictions(pois_cov_skel_nested)
@@ -1007,44 +1009,44 @@ pois_cov_skel_preds_tuning = get_tuning_preds(pois_cov_skel_final)
 
 # Section 12.2: Win/draw/loss with leave-one-tournament-out draw threshold----
 # _raw: one row per match with Skellam probabilities, p_range and the argmax prediction (no threshold)
-pois_mse_wdl_outer_raw  = convert_preds_to_wdl(pois_mse_preds_outer)
+pois_mae_wdl_outer_raw  = convert_preds_to_wdl(pois_mae_preds_outer)
 pois_rps_wdl_outer_raw  = convert_preds_to_wdl(pois_rps_preds_outer)
 pois_skel_wdl_outer_raw = convert_preds_to_wdl(pois_skel_preds_outer)
-pois_cov_mse_wdl_outer_raw  = convert_preds_to_wdl(pois_cov_mse_preds_outer)
+pois_cov_mae_wdl_outer_raw  = convert_preds_to_wdl(pois_cov_mae_preds_outer)
 pois_cov_rps_wdl_outer_raw  = convert_preds_to_wdl(pois_cov_rps_preds_outer)
 pois_cov_skel_wdl_outer_raw = convert_preds_to_wdl(pois_cov_skel_preds_outer)
 
 # adds draw_t (each year's threshold, chosen on the other years) and pred_wdl_t
-pois_mse_wdl_outer  = tune_draw_range(pois_mse_wdl_outer_raw)
+pois_mae_wdl_outer  = tune_draw_range(pois_mae_wdl_outer_raw)
 pois_rps_wdl_outer  = tune_draw_range(pois_rps_wdl_outer_raw)
 pois_skel_wdl_outer = tune_draw_range(pois_skel_wdl_outer_raw)
-pois_cov_mse_wdl_outer  = tune_draw_range(pois_cov_mse_wdl_outer_raw)
+pois_cov_mae_wdl_outer  = tune_draw_range(pois_cov_mae_wdl_outer_raw)
 pois_cov_rps_wdl_outer  = tune_draw_range(pois_cov_rps_wdl_outer_raw)
 pois_cov_skel_wdl_outer = tune_draw_range(pois_cov_skel_wdl_outer_raw)
 
 # tuning pass: no final threshold is taken from these, so convert and threshold in one go
-pois_mse_wdl_tuning  = pois_mse_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
+pois_mae_wdl_tuning  = pois_mae_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
 pois_rps_wdl_tuning  = pois_rps_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
 pois_skel_wdl_tuning = pois_skel_preds_tuning |> convert_preds_to_wdl() |> tune_draw_range()
-pois_cov_mse_wdl_tuning  = pois_cov_mse_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
+pois_cov_mae_wdl_tuning  = pois_cov_mae_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
 pois_cov_rps_wdl_tuning  = pois_cov_rps_preds_tuning  |> convert_preds_to_wdl() |> tune_draw_range()
 pois_cov_skel_wdl_tuning = pois_cov_skel_preds_tuning |> convert_preds_to_wdl() |> tune_draw_range()
 
 # thresholds chosen per held-out year
-pois_mse_wdl_outer |> distinct(Year, draw_t)
+pois_mae_wdl_outer |> distinct(Year, draw_t)
 pois_rps_wdl_outer |> distinct(Year, draw_t)
 pois_skel_wdl_outer |> distinct(Year, draw_t)
-pois_cov_mse_wdl_outer |> distinct(Year, draw_t)
+pois_cov_mae_wdl_outer |> distinct(Year, draw_t)
 pois_cov_rps_wdl_outer |> distinct(Year, draw_t)
 pois_cov_skel_wdl_outer |> distinct(Year, draw_t)
 
 # Section 12.3: Final draw threshold for the 2028 rule----
 # best t on all pooled outer matches (the _raw tables: best_draw_t doesn't use the per-year
 # draw_t / pred_wdl_t columns). This is a decision rule, not a performance estimate
-pois_mse_t_final  = best_draw_t(pois_mse_wdl_outer_raw)
+pois_mae_t_final  = best_draw_t(pois_mae_wdl_outer_raw)
 pois_rps_t_final  = best_draw_t(pois_rps_wdl_outer_raw)
 pois_skel_t_final = best_draw_t(pois_skel_wdl_outer_raw)
-pois_cov_mse_t_final  = best_draw_t(pois_cov_mse_wdl_outer_raw)
+pois_cov_mae_t_final  = best_draw_t(pois_cov_mae_wdl_outer_raw)
 pois_cov_rps_t_final  = best_draw_t(pois_cov_rps_wdl_outer_raw)
 pois_cov_skel_t_final = best_draw_t(pois_cov_skel_wdl_outer_raw)
 
@@ -1062,8 +1064,8 @@ baseline_wdl_outer |> distinct(Year, p_win, p_draw, p_loss, draw_t)
 # Section 13.1: Score table----
 # preds = nested_outer is the honest estimate, tuning_pass is optimistic (comparable to teammates)
 pois_results = bind_rows(
-  bind_rows(goal_scores(pois_mse_preds_outer),  wdl_scores(pois_mse_wdl_outer))  |> mutate(select = "mse", preds = "nested_outer"),
-  bind_rows(goal_scores(pois_mse_preds_tuning), wdl_scores(pois_mse_wdl_tuning)) |> mutate(select = "mse", preds = "tuning_pass"),
+  bind_rows(goal_scores(pois_mae_preds_outer),  wdl_scores(pois_mae_wdl_outer))  |> mutate(select = "mae", preds = "nested_outer"),
+  bind_rows(goal_scores(pois_mae_preds_tuning), wdl_scores(pois_mae_wdl_tuning)) |> mutate(select = "mae", preds = "tuning_pass"),
   bind_rows(goal_scores(pois_rps_preds_outer),  wdl_scores(pois_rps_wdl_outer))  |> mutate(select = "rps", preds = "nested_outer"),
   bind_rows(goal_scores(pois_rps_preds_tuning), wdl_scores(pois_rps_wdl_tuning)) |> mutate(select = "rps", preds = "tuning_pass"),
   bind_rows(goal_scores(pois_skel_preds_outer),  wdl_scores(pois_skel_wdl_outer))  |> mutate(select = "skel", preds = "nested_outer"),
@@ -1072,8 +1074,8 @@ pois_results = bind_rows(
   mutate(model_class = "pois")
 
 pois_cov_results = bind_rows(
-  bind_rows(goal_scores(pois_cov_mse_preds_outer),  wdl_scores(pois_cov_mse_wdl_outer))  |> mutate(select = "mse", preds = "nested_outer"),
-  bind_rows(goal_scores(pois_cov_mse_preds_tuning), wdl_scores(pois_cov_mse_wdl_tuning)) |> mutate(select = "mse", preds = "tuning_pass"),
+  bind_rows(goal_scores(pois_cov_mae_preds_outer),  wdl_scores(pois_cov_mae_wdl_outer))  |> mutate(select = "mae", preds = "nested_outer"),
+  bind_rows(goal_scores(pois_cov_mae_preds_tuning), wdl_scores(pois_cov_mae_wdl_tuning)) |> mutate(select = "mae", preds = "tuning_pass"),
   bind_rows(goal_scores(pois_cov_rps_preds_outer),  wdl_scores(pois_cov_rps_wdl_outer))  |> mutate(select = "rps", preds = "nested_outer"),
   bind_rows(goal_scores(pois_cov_rps_preds_tuning), wdl_scores(pois_cov_rps_wdl_tuning)) |> mutate(select = "rps", preds = "tuning_pass"),
   bind_rows(goal_scores(pois_cov_skel_preds_outer),  wdl_scores(pois_cov_skel_wdl_outer))  |> mutate(select = "skel", preds = "nested_outer"),
@@ -1097,27 +1099,27 @@ wdl_conf_mat = function(wdl, pred_col) {
   yardstick::conf_mat(wdl, truth = actual_wdl, estimate = {{ pred_col }})
 }
 
-pois_mse_cm_tuning_raw = wdl_conf_mat(pois_mse_wdl_tuning, pred_wdl_raw)
-pois_mse_cm_tuning_t   = wdl_conf_mat(pois_mse_wdl_tuning, pred_wdl_t)
+pois_mae_cm_tuning_raw = wdl_conf_mat(pois_mae_wdl_tuning, pred_wdl_raw)
+pois_mae_cm_tuning_t   = wdl_conf_mat(pois_mae_wdl_tuning, pred_wdl_t)
 pois_rps_cm_tuning_raw = wdl_conf_mat(pois_rps_wdl_tuning, pred_wdl_raw)
 pois_rps_cm_tuning_t   = wdl_conf_mat(pois_rps_wdl_tuning, pred_wdl_t)
 pois_skel_cm_tuning_raw = wdl_conf_mat(pois_skel_wdl_tuning, pred_wdl_raw)
 pois_skel_cm_tuning_t   = wdl_conf_mat(pois_skel_wdl_tuning, pred_wdl_t)
-pois_cov_mse_cm_tuning_raw = wdl_conf_mat(pois_cov_mse_wdl_tuning, pred_wdl_raw)
-pois_cov_mse_cm_tuning_t   = wdl_conf_mat(pois_cov_mse_wdl_tuning, pred_wdl_t)
+pois_cov_mae_cm_tuning_raw = wdl_conf_mat(pois_cov_mae_wdl_tuning, pred_wdl_raw)
+pois_cov_mae_cm_tuning_t   = wdl_conf_mat(pois_cov_mae_wdl_tuning, pred_wdl_t)
 pois_cov_rps_cm_tuning_raw = wdl_conf_mat(pois_cov_rps_wdl_tuning, pred_wdl_raw)
 pois_cov_rps_cm_tuning_t   = wdl_conf_mat(pois_cov_rps_wdl_tuning, pred_wdl_t)
 pois_cov_skel_cm_tuning_raw = wdl_conf_mat(pois_cov_skel_wdl_tuning, pred_wdl_raw)
 pois_cov_skel_cm_tuning_t   = wdl_conf_mat(pois_cov_skel_wdl_tuning, pred_wdl_t)
 
-pois_mse_cm_outer_raw  = wdl_conf_mat(pois_mse_wdl_outer, pred_wdl_raw)
-pois_mse_cm_outer_t    = wdl_conf_mat(pois_mse_wdl_outer, pred_wdl_t)
+pois_mae_cm_outer_raw  = wdl_conf_mat(pois_mae_wdl_outer, pred_wdl_raw)
+pois_mae_cm_outer_t    = wdl_conf_mat(pois_mae_wdl_outer, pred_wdl_t)
 pois_rps_cm_outer_raw  = wdl_conf_mat(pois_rps_wdl_outer, pred_wdl_raw)
 pois_rps_cm_outer_t    = wdl_conf_mat(pois_rps_wdl_outer, pred_wdl_t)
 pois_skel_cm_outer_raw  = wdl_conf_mat(pois_skel_wdl_outer, pred_wdl_raw)
 pois_skel_cm_outer_t    = wdl_conf_mat(pois_skel_wdl_outer, pred_wdl_t)
-pois_cov_mse_cm_outer_raw  = wdl_conf_mat(pois_cov_mse_wdl_outer, pred_wdl_raw)
-pois_cov_mse_cm_outer_t    = wdl_conf_mat(pois_cov_mse_wdl_outer, pred_wdl_t)
+pois_cov_mae_cm_outer_raw  = wdl_conf_mat(pois_cov_mae_wdl_outer, pred_wdl_raw)
+pois_cov_mae_cm_outer_t    = wdl_conf_mat(pois_cov_mae_wdl_outer, pred_wdl_t)
 pois_cov_rps_cm_outer_raw  = wdl_conf_mat(pois_cov_rps_wdl_outer, pred_wdl_raw)
 pois_cov_rps_cm_outer_t    = wdl_conf_mat(pois_cov_rps_wdl_outer, pred_wdl_t)
 pois_cov_skel_cm_outer_raw  = wdl_conf_mat(pois_cov_skel_wdl_outer, pred_wdl_raw)
@@ -1125,31 +1127,31 @@ pois_cov_skel_cm_outer_t    = wdl_conf_mat(pois_cov_skel_wdl_outer, pred_wdl_t)
 
 baseline_cm_outer_raw  = wdl_conf_mat(baseline_wdl_outer, pred_wdl_raw)
 
-pois_mse_cm_tuning_raw
-pois_mse_cm_tuning_t
+pois_mae_cm_tuning_raw
+pois_mae_cm_tuning_t
 pois_rps_cm_tuning_raw
 pois_rps_cm_tuning_t
 pois_skel_cm_tuning_raw
 pois_skel_cm_tuning_t
-pois_cov_mse_cm_tuning_raw
-pois_cov_mse_cm_tuning_t
+pois_cov_mae_cm_tuning_raw
+pois_cov_mae_cm_tuning_t
 pois_cov_rps_cm_tuning_raw
 pois_cov_rps_cm_tuning_t
 pois_cov_skel_cm_tuning_raw
 pois_cov_skel_cm_tuning_t
 
-pois_mse_cm_outer_t
+pois_mae_cm_outer_t
 pois_rps_cm_outer_t
 pois_skel_cm_outer_t
-pois_cov_mse_cm_outer_t
+pois_cov_mae_cm_outer_t
 pois_cov_rps_cm_outer_t
 pois_cov_skel_cm_outer_t
 baseline_cm_outer_raw
 
-save_plot(autoplot(pois_mse_cm_tuning_raw, type = "heatmap") + labs(title = "pois, selected on mse: tuning pass, argmax"),
-          "cm_pois_mse_tuning_raw", width = 5, height = 4)
-save_plot(autoplot(pois_mse_cm_tuning_t,   type = "heatmap") + labs(title = "pois, selected on mse: tuning pass, range-adjusted"),
-          "cm_pois_mse_tuning_t", width = 5, height = 4)
+save_plot(autoplot(pois_mae_cm_tuning_raw, type = "heatmap") + labs(title = "pois, selected on mae: tuning pass, argmax"),
+          "cm_pois_mae_tuning_raw", width = 5, height = 4)
+save_plot(autoplot(pois_mae_cm_tuning_t,   type = "heatmap") + labs(title = "pois, selected on mae: tuning pass, range-adjusted"),
+          "cm_pois_mae_tuning_t", width = 5, height = 4)
 save_plot(autoplot(pois_rps_cm_tuning_raw, type = "heatmap") + labs(title = "pois, selected on rps: tuning pass, argmax"),
           "cm_pois_rps_tuning_raw", width = 5, height = 4)
 save_plot(autoplot(pois_rps_cm_tuning_t,   type = "heatmap") + labs(title = "pois, selected on rps: tuning pass, range-adjusted"),
@@ -1158,10 +1160,10 @@ save_plot(autoplot(pois_skel_cm_tuning_raw, type = "heatmap") + labs(title = "po
           "cm_pois_skel_tuning_raw", width = 5, height = 4)
 save_plot(autoplot(pois_skel_cm_tuning_t,   type = "heatmap") + labs(title = "pois, selected on skellam nll: tuning pass, range-adjusted"),
           "cm_pois_skel_tuning_t", width = 5, height = 4)
-save_plot(autoplot(pois_cov_mse_cm_tuning_raw, type = "heatmap") + labs(title = "pois + age, selected on mse: tuning pass, argmax"),
-          "cm_pois_cov_mse_tuning_raw", width = 5, height = 4)
-save_plot(autoplot(pois_cov_mse_cm_tuning_t,   type = "heatmap") + labs(title = "pois + age, selected on mse: tuning pass, range-adjusted"),
-          "cm_pois_cov_mse_tuning_t", width = 5, height = 4)
+save_plot(autoplot(pois_cov_mae_cm_tuning_raw, type = "heatmap") + labs(title = "pois + age, selected on mae: tuning pass, argmax"),
+          "cm_pois_cov_mae_tuning_raw", width = 5, height = 4)
+save_plot(autoplot(pois_cov_mae_cm_tuning_t,   type = "heatmap") + labs(title = "pois + age, selected on mae: tuning pass, range-adjusted"),
+          "cm_pois_cov_mae_tuning_t", width = 5, height = 4)
 save_plot(autoplot(pois_cov_rps_cm_tuning_raw, type = "heatmap") + labs(title = "pois + age, selected on rps: tuning pass, argmax"),
           "cm_pois_cov_rps_tuning_raw", width = 5, height = 4)
 save_plot(autoplot(pois_cov_rps_cm_tuning_t,   type = "heatmap") + labs(title = "pois + age, selected on rps: tuning pass, range-adjusted"),
@@ -1195,10 +1197,10 @@ per_year_scores = function(preds, wdl) {
 
 nested_per_year = bind_rows(
   per_year_scores(baseline_preds_outer, baseline_wdl_outer) |> mutate(experiment = "baseline"),
-  per_year_scores(pois_mse_preds_outer, pois_mse_wdl_outer) |> mutate(experiment = "pois_mse"),
+  per_year_scores(pois_mae_preds_outer, pois_mae_wdl_outer) |> mutate(experiment = "pois_mae"),
   per_year_scores(pois_rps_preds_outer, pois_rps_wdl_outer) |> mutate(experiment = "pois_rps"),
   per_year_scores(pois_skel_preds_outer, pois_skel_wdl_outer) |> mutate(experiment = "pois_skel"),
-  per_year_scores(pois_cov_mse_preds_outer,  pois_cov_mse_wdl_outer)  |> mutate(experiment = "pois_cov_mse"),
+  per_year_scores(pois_cov_mae_preds_outer,  pois_cov_mae_wdl_outer)  |> mutate(experiment = "pois_cov_mae"),
   per_year_scores(pois_cov_rps_preds_outer,  pois_cov_rps_wdl_outer)  |> mutate(experiment = "pois_cov_rps"),
   per_year_scores(pois_cov_skel_preds_outer, pois_cov_skel_wdl_outer) |> mutate(experiment = "pois_cov_skel")
 )
@@ -1276,14 +1278,14 @@ plot_model_comparison = function(comparison, title) {
 # honest: nested outer predictions, leave-one-year-out baseline
 model_comparison = bind_rows(
   comparison_row(baseline_wdl_outer, "pred_wdl_raw", "Historical Frequency Baseline"),
-  comparison_row(pois_mse_wdl_outer, "pred_wdl_raw", "Pois + Skellam (argmax), mse"),
-  comparison_row(pois_mse_wdl_outer, "pred_wdl_t",   "Pois + Skellam (range-adjusted), mse"),
+  comparison_row(pois_mae_wdl_outer, "pred_wdl_raw", "Pois + Skellam (argmax), mae"),
+  comparison_row(pois_mae_wdl_outer, "pred_wdl_t",   "Pois + Skellam (range-adjusted), mae"),
   comparison_row(pois_rps_wdl_outer, "pred_wdl_raw", "Pois + Skellam (argmax), rps"),
   comparison_row(pois_rps_wdl_outer, "pred_wdl_t",   "Pois + Skellam (range-adjusted), rps"),
   comparison_row(pois_skel_wdl_outer, "pred_wdl_raw", "Pois + Skellam (argmax), skel"),
   comparison_row(pois_skel_wdl_outer, "pred_wdl_t",   "Pois + Skellam (range-adjusted), skel"),
-  comparison_row(pois_cov_mse_wdl_outer,  "pred_wdl_raw", "Pois + Skellam (argmax), mse + age"),
-  comparison_row(pois_cov_mse_wdl_outer,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), mse + age"),
+  comparison_row(pois_cov_mae_wdl_outer,  "pred_wdl_raw", "Pois + Skellam (argmax), mae + age"),
+  comparison_row(pois_cov_mae_wdl_outer,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), mae + age"),
   comparison_row(pois_cov_rps_wdl_outer,  "pred_wdl_raw", "Pois + Skellam (argmax), rps + age"),
   comparison_row(pois_cov_rps_wdl_outer,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), rps + age"),
   comparison_row(pois_cov_skel_wdl_outer, "pred_wdl_raw", "Pois + Skellam (argmax), skel + age"),
@@ -1294,14 +1296,14 @@ print(model_comparison, width = Inf)
 # optimistic: tuning pass and in-sample baseline, to line up with the teammates' numbers
 model_comparison_tuning = bind_rows(
   comparison_row(baseline_wdl_insample, "pred_wdl_raw", "Historical Frequency Baseline"),
-  comparison_row(pois_mse_wdl_tuning,   "pred_wdl_raw", "Pois + Skellam (argmax), mse"),
-  comparison_row(pois_mse_wdl_tuning,   "pred_wdl_t",   "Pois + Skellam (range-adjusted), mse"),
+  comparison_row(pois_mae_wdl_tuning,   "pred_wdl_raw", "Pois + Skellam (argmax), mae"),
+  comparison_row(pois_mae_wdl_tuning,   "pred_wdl_t",   "Pois + Skellam (range-adjusted), mae"),
   comparison_row(pois_rps_wdl_tuning,   "pred_wdl_raw", "Pois + Skellam (argmax), rps"),
   comparison_row(pois_rps_wdl_tuning,   "pred_wdl_t",   "Pois + Skellam (range-adjusted), rps"),
   comparison_row(pois_skel_wdl_tuning,  "pred_wdl_raw", "Pois + Skellam (argmax), skel"),
   comparison_row(pois_skel_wdl_tuning,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), skel"),
-  comparison_row(pois_cov_mse_wdl_tuning,  "pred_wdl_raw", "Pois + Skellam (argmax), mse + age"),
-  comparison_row(pois_cov_mse_wdl_tuning,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), mse + age"),
+  comparison_row(pois_cov_mae_wdl_tuning,  "pred_wdl_raw", "Pois + Skellam (argmax), mae + age"),
+  comparison_row(pois_cov_mae_wdl_tuning,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), mae + age"),
   comparison_row(pois_cov_rps_wdl_tuning,  "pred_wdl_raw", "Pois + Skellam (argmax), rps + age"),
   comparison_row(pois_cov_rps_wdl_tuning,  "pred_wdl_t",   "Pois + Skellam (range-adjusted), rps + age"),
   comparison_row(pois_cov_skel_wdl_tuning, "pred_wdl_raw", "Pois + Skellam (argmax), skel + age"),
@@ -1309,10 +1311,21 @@ model_comparison_tuning = bind_rows(
 )
 print(model_comparison_tuning, width = Inf)
 
-save_plot(plot_model_comparison(model_comparison, "Baseline vs Skellam (nested outer)"),
+# base models only under the original names; base vs + age (range-adjusted only, so the bars
+# stay readable) under _before_after
+is_age = \(model) grepl("+ age", model, fixed = TRUE)
+keep_before_after = \(model) grepl("range-adjusted", model) | model == "Historical Frequency Baseline"
+
+save_plot(plot_model_comparison(model_comparison |> filter(!is_age(Model)), "Baseline vs Skellam (nested outer)"),
           "model_comparison_outer")
-save_plot(plot_model_comparison(model_comparison_tuning, "Baseline vs Skellam (tuning pass)"),
+save_plot(plot_model_comparison(model_comparison_tuning |> filter(!is_age(Model)), "Baseline vs Skellam (tuning pass)"),
           "model_comparison_tuning")
+save_plot(plot_model_comparison(model_comparison |> filter(keep_before_after(Model)),
+                                "Baseline vs range-adjusted Skellam, base vs + age (nested outer)"),
+          "model_comparison_outer_before_after", width = 10)
+save_plot(plot_model_comparison(model_comparison_tuning |> filter(keep_before_after(Model)),
+                                "Baseline vs range-adjusted Skellam, base vs + age (tuning pass)"),
+          "model_comparison_tuning_before_after", width = 10)
 
 # Section 14: Final model coefficients----
 # glmnet coefficients of the final (2028) model, on the original scale of each predictor
@@ -1343,9 +1356,9 @@ coef_table = function(final) {
            exp_beta_k_sd = exp(beta_k_sd))
 }
 
-pois_mse_final$selected
-pois_mse_coefs = coef_table(pois_mse_final)
-pois_mse_coefs
+pois_mae_final$selected
+pois_mae_coefs = coef_table(pois_mae_final)
+pois_mae_coefs
 
 pois_rps_final$selected
 pois_rps_coefs = coef_table(pois_rps_final)
@@ -1355,9 +1368,9 @@ pois_skel_final$selected
 pois_skel_coefs = coef_table(pois_skel_final)
 pois_skel_coefs
 
-pois_cov_mse_final$selected
-pois_cov_mse_coefs = coef_table(pois_cov_mse_final)
-pois_cov_mse_coefs
+pois_cov_mae_final$selected
+pois_cov_mae_coefs = coef_table(pois_cov_mae_final)
+pois_cov_mae_coefs
 
 pois_cov_rps_final$selected
 pois_cov_rps_coefs = coef_table(pois_cov_rps_final)
@@ -1381,125 +1394,261 @@ coef_before_after = full_join(
 )
 coef_before_after
 
+# Rate ratios e^beta_k as horizontal bars starting at 1: right of the line = more expected goals,
+# left = fewer, per 1-unit difference in the predictor (so bar lengths depend on each predictor's units).
+# Bars are drawn as ratio - 1 so they grow out of 1; the axis labels add the 1 back.
+# Terms with beta_k = 0 were dropped by the lasso: no bar, just a label
+plot_coef_effects = function(coefs, title) {
+  effects = coefs |>
+    filter(term != "(Intercept)") |>
+    mutate(term      = reorder(term, exp_beta_k),
+           direction = if_else(exp_beta_k >= 1, "above", "below"),
+           # 4 decimals near 1, so e.g. FifaRank's 0.9996 per rank doesn't print as "1.000"
+           label     = case_when(beta_k == 0 ~ "dropped by lasso",
+                                 abs(exp_beta_k - 1) < 0.005 ~ sprintf("%.4f", exp_beta_k),
+                                 TRUE ~ sprintf("%.3f", exp_beta_k)))
+
+  ggplot(effects, aes(x = exp_beta_k - 1, y = term)) +
+    geom_col(aes(fill = direction), width = 0.6, show.legend = FALSE) +
+    geom_vline(xintercept = 0, colour = "grey30") +
+    geom_text(aes(label = label, hjust = if_else(exp_beta_k >= 1, -0.15, 1.15),
+                  colour = beta_k == 0), size = 3.5, show.legend = FALSE) +
+    scale_x_continuous(labels = \(x) format(x + 1), expand = expansion(mult = 0.3)) +
+    scale_fill_manual(values = c(above = "#2c7fb8", below = "#f0a830")) +
+    scale_colour_manual(values = c(`FALSE` = "grey15", `TRUE` = "grey50")) +
+    labs(title = title,
+         subtitle = "Multiplicative change in a team's expected goals per 1-unit difference",
+         x = expression("Rate ratio " * e^{beta[k]}), y = NULL,
+         caption = "Penalty = .0215 Mixture = 1 selected on MAE") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title         = element_text(face = "bold"),
+          plot.subtitle      = element_text(colour = "grey30"),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor   = element_blank())
+}
+
+save_plot(plot_coef_effects(pois_cov_mae_coefs, "Poisson incl. Age Final Model: Coefficient Effects"),
+          "coef_effects_pois_cov_mae", width = 11, height = 5)
+
+# (football graph4) correlogram 
+#        Obs: Lots of correlation between MarketValue, FifaRank, UefaPoints, CLPlayers
+euro_cov %>%
+  select(MarketValue, GDP, FifaRank, CLPlayers, GroupStage, UefaPoints, AgeDifference) %>%
+  mutate(across(everything(), as.numeric)) %>%   #https://dplyr.tidyverse.org/reference/across.html
+  cor() %>%
+  corrplot(diag = F, tl.srt = 45, tl.col = "black")
+
+# The same correlogram rebuilt in ggplot, so it can be inset into the coefficient plot
+# (corrplot draws base graphics, which patchwork can't place without the gridGraphics package).
+# Circles sized by |r| and coloured red (-1) to blue (+1) like corrplot; lower triangle only, to fit the inset
+plot_cor_inset = function(data, vars) {
+  r = data |>
+    select(all_of(vars)) |>
+    mutate(across(everything(), as.numeric)) |>
+    cor()
+  cors = as.data.frame(as.table(r)) |>
+    rename(x = Var1, y = Var2, r = Freq) |>
+    mutate(x = factor(x, levels = vars), y = factor(y, levels = rev(vars))) |>
+    filter(as.integer(x) < match(y, vars))
+
+  ggplot(cors, aes(x = x, y = y)) +
+    geom_tile(fill = "white", colour = "grey85") +
+    geom_point(aes(size = abs(r), colour = r)) +
+    scale_size_area(max_size = 7, limits = c(0, 1), guide = "none") +
+    scale_colour_gradient2(low = "#b2182b", mid = "white", high = "#2166ac", limits = c(-1, 1),
+                           breaks = c(-1, 0, 1)) +
+    scale_x_discrete(limits = vars[-length(vars)]) +
+    scale_y_discrete(limits = rev(vars[-1])) +
+    coord_equal() +
+    labs(title = "Predictor Correlations", x = NULL, y = NULL, colour = "r") +
+    theme_minimal(base_size = 9) +
+    theme(plot.title      = element_text(face = "bold", size = 9),
+          axis.text.x     = element_text(angle = 45, hjust = 1, colour = "black"),
+          axis.text.y     = element_text(colour = "black"),
+          panel.grid      = element_blank(),
+          legend.key.height = unit(0.4, "cm"),
+          legend.key.width  = unit(0.25, "cm"),
+          plot.background = element_rect(fill = "white", colour = "grey70"))
+}
+
+coef_cor_vars = c("MarketValue", "GDP", "CLPlayers", "GroupStage", "UefaPoints", "AgeDifference")
+coef_effects_pois_cov_mae_cor =
+  plot_coef_effects(pois_cov_mae_coefs, "Poisson incl. Age Final Model: Coefficient Effects") +
+  patchwork::inset_element(plot_cor_inset(euro_cov, coef_cor_vars),
+                           left = 0.66, bottom = 0.02, right = 1, top = 0.62)
+save_plot(coef_effects_pois_cov_mae_cor, "coef_effects_pois_cov_mae_cor", width = 11, height = 6.5)
+
 # Section 15: Hyperparameter selection variability----
 # Each outer fold runs its own inner tuning. These heatmaps show every candidate's inner CV score
-# per outer fold; the black outline is the candidate that fold selected. Lower is better for mse
+# per outer fold; the black outline is the candidate that fold selected. Lower is better for mae
 # and wdl_rps. fill = "std_err" shows how much that candidate's score varies across inner folds
+# Shared look for the hyperparameter heatmaps: readable tick labels (penalty in 2 significant digits,
+# mixture in 2 decimals), Greek axis titles, no grid lines behind the tiles. Labels are plain strings
+# and the axis order is fixed from the grid, so every layer (selections, final pick) lands on the same cells
+heat_x = function(penalty) formatC(signif(penalty, 2), format = "g", digits = 2)
+heat_y = function(mixture) sprintf("%.2f", mixture)
+heat_scales = function(inner) {
+  list(scale_x_discrete(limits = heat_x(sort(unique(inner$penalty))), expand = c(0, 0)),
+       scale_y_discrete(limits = heat_y(sort(unique(inner$mixture))), expand = c(0, 0)))
+}
+metric_label = c(mae = "MAE", mse = "MSE", wdl_rps = "RPS", skellam_nll_by_match = "Skellam NLL")
+theme_heatmap = function() {
+  theme_minimal(base_size = 13) +
+    theme(plot.title       = element_text(face = "bold"),
+          plot.subtitle    = element_text(colour = "grey30"),
+          panel.grid       = element_blank(),
+          strip.text       = element_text(face = "bold"),
+          axis.text.x      = element_text(angle = 45, hjust = 1),
+          legend.key.height = unit(1.2, "cm"))
+}
+
 plot_inner_heatmap = function(nested, metric_name, fill_stat = c("mean", "std_err"), title) {
   fill_stat = match.arg(fill_stat)
   inner  = collect_inner_metrics(nested) |> filter(.metric == metric_name)
   chosen = collect_selections(nested)
 
-  ggplot(inner, aes(x = factor(signif(penalty, 2)), y = factor(mixture))) +
+  ggplot(inner, aes(x = heat_x(penalty), y = heat_y(mixture))) +
     geom_tile(aes(fill = .data[[fill_stat]])) +
-    geom_tile(data = chosen, fill = NA, colour = "black", linewidth = 1) +
-    facet_wrap(~ id) +
+    geom_tile(data = chosen, fill = NA, colour = "red", linewidth = 1) +
+    facet_wrap(~ id, labeller = as_labeller(\(id) sub("test", "Held Out", id))) +
     scale_fill_viridis_c() +
-    labs(title = title, x = "penalty", y = "mixture", fill = paste(metric_name, fill_stat)) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    heat_scales(inner) +
+    labs(title = title, subtitle = "Red outline: candidate selected by that outer fold",
+         x = expression("Penalty " * lambda), y = expression("Mixture " * alpha),
+         fill = paste("Inner", metric_label[[metric_name]], if (fill_stat == "mean") "Mean" else "Std. Err.")) +
+    theme_heatmap()
 }
 
 # Across outer folds: each candidate's mean inner score (stat = "mean") or how much it moves
-# between outer folds (stat = "sd")
-plot_inner_summary = function(nested, metric_name, stat = c("mean", "sd"), title) {
-  stat = match.arg(stat)
-  collect_inner_metrics(nested) |>
+# between outer folds (stat = "sd"). Cells are labelled with the value, outlined in red with the
+# number of outer folds that selected them, and the final (2028) model's pick is outlined in white
+plot_inner_summary = function(nested, final, metric_name, stat = c("mean", "sd"), title) {
+  stat   = match.arg(stat)
+  picked = collect_selections(nested) |> count(penalty, mixture, name = "n_folds")
+  summary = collect_inner_metrics(nested) |>
     filter(.metric == metric_name) |>
     group_by(penalty, mixture) |>
-    summarise(value = if (stat == "mean") mean(mean) else sd(mean), .groups = "drop") |>
-    ggplot(aes(x = factor(signif(penalty, 2)), y = factor(mixture), fill = value)) +
-    geom_tile() +
+    summarise(value = if (stat == "mean") mean(mean) else sd(mean), .groups = "drop")
+
+  ggplot(summary, aes(x = heat_x(penalty), y = heat_y(mixture))) +
+    geom_tile(aes(fill = value)) +
+    # dark text on the bright (high) end of viridis, light text on the dark end
+    geom_text(aes(label = sprintf(if (stat == "mean") "%.3f" else "%.4f", value),
+                  colour = value > mean(range(value))), size = 4, show.legend = FALSE) +
+    scale_colour_manual(values = c(`TRUE` = "grey10", `FALSE` = "grey90")) +
+    geom_tile(data = picked, fill = NA, colour = "red", linewidth = 1) +
+    geom_label(data = picked, aes(label = paste0(n_folds, "x")), size = 3, vjust = -0.6,
+               linewidth = 0, fill = "red", colour = "white") +
+    # drawn slightly inside the cell so it stays visible when the final pick is also a red cell
+    geom_tile(data = final$selected, width = 0.85, height = 0.85,
+              fill = NA, colour = "white", linewidth = 0.7, linetype = "dashed") +
     scale_fill_viridis_c() +
-    labs(title = title, x = "penalty", y = "mixture",
-         fill = paste(stat, "of", metric_name, "\nacross outer folds")) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    heat_scales(summary) +
+    labs(title = title,
+         subtitle = "Red: selected by n outer folds; dashed white: final (2028) model",
+         x = expression("Penalty " * lambda), y = expression("Mixture " * alpha),
+         fill = paste(if (stat == "mean") "Mean" else "SD", "of Inner", metric_label[[metric_name]], "Across Outer Folds")) +
+    guides(fill = guide_colourbar(title.position = "top", title.hjust = 0.5)) +
+    theme_heatmap() +
+    # legend below with a wide horizontal colour bar, so the tiles get the full plot width
+    theme(legend.position   = "bottom",
+          legend.key.width  = unit(3, "cm"),
+          legend.key.height = unit(0.4, "cm"))
 }
 
-save_plot(plot_inner_heatmap(pois_mse_nested, "mse", "mean",    "pois, selected on mse: inner mean mse by outer fold"),
-          "heatmap_pois_mse_mean", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_mse_nested, "mse", "std_err", "pois, selected on mse: inner std_err of mse by outer fold"),
-          "heatmap_pois_mse_std_err", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_rps_nested, "wdl_rps", "mean",    "pois, selected on rps: inner mean wdl_rps by outer fold"),
+save_plot(plot_inner_heatmap(pois_mae_nested, "mae", "mean",    "Poisson, Selected on MAE: Inner Mean MAE by Outer Fold"),
+          "heatmap_pois_mae_mean", width = 10, height = 6)
+save_plot(plot_inner_heatmap(pois_mae_nested, "mae", "std_err", "Poisson, Selected on MAE: Inner Std. Err. of MAE by Outer Fold"),
+          "heatmap_pois_mae_std_err", width = 10, height = 6)
+save_plot(plot_inner_heatmap(pois_rps_nested, "wdl_rps", "mean",    "Poisson, Selected on RPS: Inner Mean RPS by Outer Fold"),
           "heatmap_pois_rps_mean", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_rps_nested, "wdl_rps", "std_err", "pois, selected on rps: inner std_err of wdl_rps by outer fold"),
+save_plot(plot_inner_heatmap(pois_rps_nested, "wdl_rps", "std_err", "Poisson, Selected on RPS: Inner Std. Err. of RPS by Outer Fold"),
           "heatmap_pois_rps_std_err", width = 10, height = 6)
-
-save_plot(plot_inner_heatmap(pois_skel_nested, "skellam_nll_by_match", "mean",    "pois, selected on skellam nll: inner mean by outer fold"),
+save_plot(plot_inner_heatmap(pois_skel_nested, "skellam_nll_by_match", "mean",    "Poisson, Selected on Skellam NLL: Inner Mean Skellam NLL by Outer Fold"),
           "heatmap_pois_skel_mean", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_skel_nested, "skellam_nll_by_match", "std_err", "pois, selected on skellam nll: inner std_err by outer fold"),
+save_plot(plot_inner_heatmap(pois_skel_nested, "skellam_nll_by_match", "std_err", "Poisson, Selected on Skellam NLL: Inner Std. Err. of Skellam NLL by Outer Fold"),
           "heatmap_pois_skel_std_err", width = 10, height = 6)
 
-save_plot(plot_inner_summary(pois_mse_nested, "mse", "mean", "pois, mse: mean across outer folds"),     "summary_pois_mse_mean")
-save_plot(plot_inner_summary(pois_mse_nested, "mse", "sd",   "pois, mse: sd across outer folds"),       "summary_pois_mse_sd")
-save_plot(plot_inner_summary(pois_rps_nested, "wdl_rps", "mean", "pois, rps: mean across outer folds"), "summary_pois_rps_mean")
-save_plot(plot_inner_summary(pois_rps_nested, "wdl_rps", "sd",   "pois, rps: sd across outer folds"),   "summary_pois_rps_sd")
-save_plot(plot_inner_summary(pois_skel_nested, "skellam_nll_by_match", "mean", "pois, skellam nll: mean across outer folds"), "summary_pois_skel_mean")
-save_plot(plot_inner_summary(pois_skel_nested, "skellam_nll_by_match", "sd",   "pois, skellam nll: sd across outer folds"),   "summary_pois_skel_sd")
+save_plot(plot_inner_summary(pois_mae_nested, pois_mae_final, "mae", "mean", "Poisson, Selected on MAE: Mean Across Outer Folds"),
+          "summary_pois_mae_mean", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_mae_nested, pois_mae_final, "mae", "sd",   "Poisson, Selected on MAE: SD Across Outer Folds"),
+          "summary_pois_mae_sd", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_rps_nested, pois_rps_final, "wdl_rps", "mean", "Poisson, Selected on RPS: Mean Across Outer Folds"),
+          "summary_pois_rps_mean", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_rps_nested, pois_rps_final, "wdl_rps", "sd",   "Poisson, Selected on RPS: SD Across Outer Folds"),
+          "summary_pois_rps_sd", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_skel_nested, pois_skel_final, "skellam_nll_by_match", "mean", "Poisson, Selected on Skellam NLL: Mean Across Outer Folds"),
+          "summary_pois_skel_mean", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_skel_nested, pois_skel_final, "skellam_nll_by_match", "sd",   "Poisson, Selected on Skellam NLL: SD Across Outer Folds"),
+          "summary_pois_skel_sd", width = 9, height = 6)
 
-save_plot(plot_inner_heatmap(pois_cov_mse_nested, "mse", "mean",    "pois + age, selected on mse: inner mean mse by outer fold"),
-          "heatmap_pois_cov_mse_mean", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_cov_mse_nested, "mse", "std_err", "pois + age, selected on mse: inner std_err of mse by outer fold"),
-          "heatmap_pois_cov_mse_std_err", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_cov_rps_nested, "wdl_rps", "mean",    "pois + age, selected on rps: inner mean wdl_rps by outer fold"),
+save_plot(plot_inner_heatmap(pois_cov_mae_nested, "mae", "mean",    "Poisson + Age, Selected on MAE: Inner Mean MAE by Outer Fold"),
+          "heatmap_pois_cov_mae_mean", width = 10, height = 6)
+save_plot(plot_inner_heatmap(pois_cov_mae_nested, "mae", "std_err", "Poisson + Age, Selected on MAE: Inner Std. Err. of MAE by Outer Fold"),
+          "heatmap_pois_cov_mae_std_err", width = 10, height = 6)
+save_plot(plot_inner_heatmap(pois_cov_rps_nested, "wdl_rps", "mean",    "Poisson + Age, Selected on RPS: Inner Mean RPS by Outer Fold"),
           "heatmap_pois_cov_rps_mean", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_cov_rps_nested, "wdl_rps", "std_err", "pois + age, selected on rps: inner std_err of wdl_rps by outer fold"),
+save_plot(plot_inner_heatmap(pois_cov_rps_nested, "wdl_rps", "std_err", "Poisson + Age, Selected on RPS: Inner Std. Err. of RPS by Outer Fold"),
           "heatmap_pois_cov_rps_std_err", width = 10, height = 6)
-
-save_plot(plot_inner_heatmap(pois_cov_skel_nested, "skellam_nll_by_match", "mean",    "pois + age, selected on skellam nll: inner mean by outer fold"),
+save_plot(plot_inner_heatmap(pois_cov_skel_nested, "skellam_nll_by_match", "mean",    "Poisson + Age, Selected on Skellam NLL: Inner Mean Skellam NLL by Outer Fold"),
           "heatmap_pois_cov_skel_mean", width = 10, height = 6)
-save_plot(plot_inner_heatmap(pois_cov_skel_nested, "skellam_nll_by_match", "std_err", "pois + age, selected on skellam nll: inner std_err by outer fold"),
+save_plot(plot_inner_heatmap(pois_cov_skel_nested, "skellam_nll_by_match", "std_err", "Poisson + Age, Selected on Skellam NLL: Inner Std. Err. of Skellam NLL by Outer Fold"),
           "heatmap_pois_cov_skel_std_err", width = 10, height = 6)
 
-save_plot(plot_inner_summary(pois_cov_mse_nested, "mse", "mean", "pois + age, mse: mean across outer folds"),     "summary_pois_cov_mse_mean")
-save_plot(plot_inner_summary(pois_cov_mse_nested, "mse", "sd",   "pois + age, mse: sd across outer folds"),       "summary_pois_cov_mse_sd")
-save_plot(plot_inner_summary(pois_cov_rps_nested, "wdl_rps", "mean", "pois + age, rps: mean across outer folds"), "summary_pois_cov_rps_mean")
-save_plot(plot_inner_summary(pois_cov_rps_nested, "wdl_rps", "sd",   "pois + age, rps: sd across outer folds"),   "summary_pois_cov_rps_sd")
-save_plot(plot_inner_summary(pois_cov_skel_nested, "skellam_nll_by_match", "mean", "pois + age, skellam nll: mean across outer folds"), "summary_pois_cov_skel_mean")
-save_plot(plot_inner_summary(pois_cov_skel_nested, "skellam_nll_by_match", "sd",   "pois + age, skellam nll: sd across outer folds"),   "summary_pois_cov_skel_sd")
+save_plot(plot_inner_summary(pois_cov_mae_nested, pois_cov_mae_final, "mae", "mean", "Poisson + Age, Selected on MAE: Mean Across Outer Folds"),
+          "summary_pois_cov_mae_mean", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_cov_mae_nested, pois_cov_mae_final, "mae", "sd",   "Poisson + Age, Selected on MAE: SD Across Outer Folds"),
+          "summary_pois_cov_mae_sd", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_cov_rps_nested, pois_cov_rps_final, "wdl_rps", "mean", "Poisson + Age, Selected on RPS: Mean Across Outer Folds"),
+          "summary_pois_cov_rps_mean", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_cov_rps_nested, pois_cov_rps_final, "wdl_rps", "sd",   "Poisson + Age, Selected on RPS: SD Across Outer Folds"),
+          "summary_pois_cov_rps_sd", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_cov_skel_nested, pois_cov_skel_final, "skellam_nll_by_match", "mean", "Poisson + Age, Selected on Skellam NLL: Mean Across Outer Folds"),
+          "summary_pois_cov_skel_mean", width = 9, height = 6)
+save_plot(plot_inner_summary(pois_cov_skel_nested, pois_cov_skel_final, "skellam_nll_by_match", "sd",   "Poisson + Age, Selected on Skellam NLL: SD Across Outer Folds"),
+          "summary_pois_cov_skel_sd", width = 9, height = 6)
 
-# Section 15.1: Did the selection metric (mse / rps / skellam nll) change the hyperparameters?----
+# Section 15.1: Did the selection metric (mae / rps / skellam nll) change the hyperparameters?----
 # per outer fold, side by side
 selection_comparison = full_join(
-  collect_selections(pois_mse_nested) |> select(id, mse_penalty = penalty, mse_mixture = mixture),
+  collect_selections(pois_mae_nested) |> select(id, mae_penalty = penalty, mae_mixture = mixture),
   collect_selections(pois_rps_nested) |> select(id, rps_penalty = penalty, rps_mixture = mixture),
   by = "id"
 ) |>
   full_join(collect_selections(pois_skel_nested) |> select(id, skel_penalty = penalty, skel_mixture = mixture),
             by = "id") |>
-  mutate(mse_vs_rps  = mse_penalty == rps_penalty  & mse_mixture == rps_mixture,
-         skel_vs_mse = skel_penalty == mse_penalty & skel_mixture == mse_mixture,
+  mutate(mae_vs_rps  = mae_penalty == rps_penalty  & mae_mixture == rps_mixture,
+         skel_vs_mae = skel_penalty == mae_penalty & skel_mixture == mae_mixture,
          skel_vs_rps = skel_penalty == rps_penalty & skel_mixture == rps_mixture)
 selection_comparison
 
 # same for the + age runs
 selection_comparison_cov = full_join(
-  collect_selections(pois_cov_mse_nested) |> select(id, mse_penalty = penalty, mse_mixture = mixture),
+  collect_selections(pois_cov_mae_nested) |> select(id, mae_penalty = penalty, mae_mixture = mixture),
   collect_selections(pois_cov_rps_nested) |> select(id, rps_penalty = penalty, rps_mixture = mixture),
   by = "id"
 ) |>
   full_join(collect_selections(pois_cov_skel_nested) |> select(id, skel_penalty = penalty, skel_mixture = mixture),
             by = "id") |>
-  mutate(mse_vs_rps  = mse_penalty == rps_penalty  & mse_mixture == rps_mixture,
-         skel_vs_mse = skel_penalty == mse_penalty & skel_mixture == mse_mixture,
+  mutate(mae_vs_rps  = mae_penalty == rps_penalty  & mae_mixture == rps_mixture,
+         skel_vs_mae = skel_penalty == mae_penalty & skel_mixture == mae_mixture,
          skel_vs_rps = skel_penalty == rps_penalty & skel_mixture == rps_mixture)
 selection_comparison_cov
 
 # how often each config was picked across the 6 outer folds
-agreement(pois_mse_nested)
+agreement(pois_mae_nested)
 agreement(pois_rps_nested)
 agreement(pois_skel_nested)
-agreement(pois_cov_mse_nested)
+agreement(pois_cov_mae_nested)
 agreement(pois_cov_rps_nested)
 agreement(pois_cov_skel_nested)
 
 # final (2028) models
-bind_rows(pois_mse_final$selected |> mutate(select = "mse"),
+bind_rows(pois_mae_final$selected |> mutate(select = "mae"),
           pois_rps_final$selected |> mutate(select = "rps"),
           pois_skel_final$selected |> mutate(select = "skel")) -> pois_select_rule_hyperparams_final
 
-bind_rows(pois_cov_mse_final$selected  |> mutate(select = "mse"),
+bind_rows(pois_cov_mae_final$selected  |> mutate(select = "mae"),
           pois_cov_rps_final$selected  |> mutate(select = "rps"),
           pois_cov_skel_final$selected |> mutate(select = "skel")) -> pois_cov_select_rule_hyperparams_final
 
@@ -1514,8 +1663,8 @@ pois_select_rule_hyperparams_final_before_after
 
 pois_select_rule_hyperparams_final
 
-# Same check within ONE run: the rps run also computed mse on the inner folds, so we can read off
-# what mse would have picked from exactly the same fits (no run-to-run randomness)
+# Same check within ONE run: the rps run also computed mae on the inner folds, so we can read off
+# what mae would have picked from exactly the same fits (no run-to-run randomness)
 best_inner = function(nested, metric_name) {
   collect_inner_metrics(nested) |>
     filter(.metric == metric_name) |>
@@ -1527,10 +1676,10 @@ best_inner = function(nested, metric_name) {
 
 within_rps_run = full_join(
   best_inner(pois_rps_nested, "wdl_rps") |> rename(rps_penalty = penalty, rps_mixture = mixture),
-  best_inner(pois_rps_nested, "mse")     |> rename(mse_penalty = penalty, mse_mixture = mixture),
+  best_inner(pois_rps_nested, "mae")     |> rename(mae_penalty = penalty, mae_mixture = mixture),
   by = "id"
 ) |>
-  mutate(same = mse_penalty == rps_penalty & mse_mixture == rps_mixture)
+  mutate(same = mae_penalty == rps_penalty & mae_mixture == rps_mixture)
 within_rps_run
 
 # The skellam run computed all three criteria on the same inner fits, so this is the cleanest
@@ -1538,10 +1687,46 @@ within_rps_run
 within_skel_run = best_inner(pois_skel_nested, "skellam_nll_by_match") |>
   rename(skel_penalty = penalty, skel_mixture = mixture) |>
   full_join(best_inner(pois_skel_nested, "wdl_rps") |> rename(rps_penalty = penalty, rps_mixture = mixture), by = "id") |>
-  full_join(best_inner(pois_skel_nested, "mse")     |> rename(mse_penalty = penalty, mse_mixture = mixture), by = "id") |>
-  mutate(skel_vs_mse = skel_penalty == mse_penalty & skel_mixture == mse_mixture,
+  full_join(best_inner(pois_skel_nested, "mae")     |> rename(mae_penalty = penalty, mae_mixture = mixture), by = "id") |>
+  mutate(skel_vs_mae = skel_penalty == mae_penalty & skel_mixture == mae_mixture,
          skel_vs_rps = skel_penalty == rps_penalty & skel_mixture == rps_mixture)
 within_skel_run
+
+# Section 15.2: Why + age classifies better although AgeDifference is dropped----
+# Per held-out Euro: the lambda / alpha that fold's inner tuning picked and the draw threshold t it
+# was given (tuned on the other years' outer predictions), without and with AgeDifference.
+# The inner mae surface is flat, so the extra column flips near-ties in some folds; the changed
+# probabilities then move t in every fold. The final (2028) row uses t_final (Section 12.3)
+fold_picks = function(nested, final, wdl_outer, t_final) {
+  per_year = collect_selections(nested) |>
+    mutate(held_out = sub("test ", "", id)) |>
+    select(held_out, penalty, mixture) |>
+    left_join(wdl_outer |> distinct(Year, draw_t) |> mutate(held_out = as.character(Year)),
+              by = "held_out") |>
+    select(held_out, penalty, mixture, draw_t) |>
+    arrange(held_out)
+  final_row = final$selected |>
+    transmute(held_out = "Final (2028)", penalty, mixture, draw_t = t_final)
+  bind_rows(per_year, final_row)
+}
+
+age_fold_picks = full_join(
+  fold_picks(pois_mae_nested, pois_mae_final, pois_mae_wdl_outer, pois_mae_t_final) |>
+    rename(base_penalty = penalty, base_mixture = mixture, base_t = draw_t),
+  fold_picks(pois_cov_mae_nested, pois_cov_mae_final, pois_cov_mae_wdl_outer, pois_cov_mae_t_final) |>
+    rename(age_penalty = penalty, age_mixture = mixture, age_t = draw_t),
+  by = "held_out"
+) |>
+  mutate(same_hyperparams = base_penalty == age_penalty & base_mixture == age_mixture)
+age_fold_picks
+
+# pooled nested outer classification scores (range-adjusted) for the bottom rows of the slide table
+age_fold_scores = bind_rows(pois_results |> mutate(covariates = "base"),
+                            pois_cov_results |> mutate(covariates = "age")) |>
+  filter(select == "mae", preds == "nested_outer", metric %in% c("macro_f1_t", "accuracy_t")) |>
+  select(metric, covariates, value) |>
+  pivot_wider(names_from = covariates, values_from = value)
+age_fold_scores
 
 # Section 16: Win/draw/loss probability plots (as in Random_Forest_LOTOCV.Rmd section 17)----
 # Built from the nested outer predictions
@@ -1588,24 +1773,24 @@ plot_wdl_probs = function(wdl, label) {
   list(hist = hist, box = box, calib = calib)
 }
 
-pois_mse_wdl_plots = plot_wdl_probs(pois_mse_wdl_outer, "pois, selected on mse")
+pois_mae_wdl_plots = plot_wdl_probs(pois_mae_wdl_outer, "pois, selected on mae")
 pois_rps_wdl_plots = plot_wdl_probs(pois_rps_wdl_outer, "pois, selected on rps")
 pois_skel_wdl_plots = plot_wdl_probs(pois_skel_wdl_outer, "pois, selected on skellam nll")
-pois_cov_mse_wdl_plots = plot_wdl_probs(pois_cov_mse_wdl_outer, "pois + age, selected on mse")
+pois_cov_mae_wdl_plots = plot_wdl_probs(pois_cov_mae_wdl_outer, "pois + age, selected on mae")
 pois_cov_rps_wdl_plots = plot_wdl_probs(pois_cov_rps_wdl_outer, "pois + age, selected on rps")
 pois_cov_skel_wdl_plots = plot_wdl_probs(pois_cov_skel_wdl_outer, "pois + age, selected on skellam nll")
 
-iwalk(pois_mse_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_mse_", name)))
+iwalk(pois_mae_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_mae_", name)))
 iwalk(pois_rps_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_rps_", name)))
 iwalk(pois_skel_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_skel_", name)))
-iwalk(pois_cov_mse_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_cov_mse_", name)))
+iwalk(pois_cov_mae_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_cov_mae_", name)))
 iwalk(pois_cov_rps_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_cov_rps_", name)))
 iwalk(pois_cov_skel_wdl_plots, \(plot, name) save_plot(plot, paste0("wdl_pois_cov_skel_", name)))
 
 # Section 17: Poisson assumption diagnostics (final models)----
 # Checked on the final models (fit on all data): they're the models we interpret and use for 2028.
 # The hundreds of nested fits evaluate the tuning procedure; they share these assumptions
-# pois_mse_final and pois_rps_final picked the same hyperparameters, and pois_skel_final is
+# pois_mae_final and pois_rps_final picked the same hyperparameters, and pois_skel_final is
 # nearly the same model, so the summary table covers all three and the plots can use any one
 
 # Fitted expected goals (lambda) and Pearson residuals for every row of euro
@@ -1652,10 +1837,10 @@ diagnostics_row = function(final, select) {
 }
 
 final_diagnostics = bind_rows(
-  diagnostics_row(pois_mse_final,  "mse"),
+  diagnostics_row(pois_mae_final,  "mae"),
   diagnostics_row(pois_rps_final,  "rps"),
   diagnostics_row(pois_skel_final, "skel"),
-  diagnostics_row(pois_cov_mse_final,  "mse + age"),
+  diagnostics_row(pois_cov_mae_final,  "mae + age"),
   diagnostics_row(pois_cov_rps_final,  "rps + age"),
   diagnostics_row(pois_cov_skel_final, "skel + age")
 )
@@ -1688,12 +1873,44 @@ plot_loglinear_check = function(final, label) {
     theme_minimal()
 }
 
-save_plot(plot_loglinear_check(pois_mse_final,  "pois final, selected on mse"),         "loglinear_pois_mse",  width = 10, height = 6)
+save_plot(plot_loglinear_check(pois_mae_final,  "pois final, selected on mae"),         "loglinear_pois_mae",  width = 10, height = 6)
 save_plot(plot_loglinear_check(pois_rps_final,  "pois final, selected on rps"),         "loglinear_pois_rps",  width = 10, height = 6)
 save_plot(plot_loglinear_check(pois_skel_final, "pois final, selected on skellam nll"), "loglinear_pois_skel", width = 10, height = 6)
-save_plot(plot_loglinear_check(pois_cov_mse_final,  "pois + age final, selected on mse"),         "loglinear_pois_cov_mse",  width = 10, height = 6)
+save_plot(plot_loglinear_check(pois_cov_mae_final,  "pois + age final, selected on mae"),         "loglinear_pois_cov_mae",  width = 10, height = 6)
 save_plot(plot_loglinear_check(pois_cov_rps_final,  "pois + age final, selected on rps"),         "loglinear_pois_cov_rps",  width = 10, height = 6)
 save_plot(plot_loglinear_check(pois_cov_skel_final, "pois + age final, selected on skellam nll"), "loglinear_pois_cov_skel", width = 10, height = 6)
+
+# Poisson QQ plot: observed goals against Poisson theoretical quantiles. Every row has its own
+# lambda_i, so the theoretical distribution is the mixture of the fitted Pois(lambda_i):
+#   F(k) = mean_i ppois(k, lambda_i), quantile(p) = smallest k with F(k) >= p, at p = ppoints(n)
+# Goals are counts, so points stack on whole numbers; point size = how many rows sit there.
+# On the 45-degree line = the fitted Poisson model reproduces the goal distribution
+plot_poisson_qq = function(final, title, label_size = 3.5) {
+  fitted = final_fitted(final)
+  n      = nrow(fitted)
+  k      = 0:(max(fitted$Goals) + 5)
+  mix_cdf = sapply(k, \(kk) mean(ppois(kk, fitted$lambda)))
+  theoretical = sapply(ppoints(n), \(p) k[which(mix_cdf >= p)[1]])
+
+  tibble(theoretical = theoretical, observed = sort(fitted$Goals)) |>
+    count(theoretical, observed) |>
+    ggplot(aes(x = theoretical, y = observed)) +
+    geom_abline(slope = 1, intercept = 0, colour = "grey50", linetype = "dashed") +
+    geom_point(aes(size = n), colour = "#2c7fb8", alpha = 0.8) +
+    geom_text(aes(label = n), nudge_x = 0.4, hjust = 0, size = label_size, colour = "grey30") +
+    scale_x_continuous(breaks = k) +
+    scale_y_continuous(breaks = k) +
+    scale_size_area(max_size = 12, guide = "none") +
+    coord_equal(xlim = c(-0.3, max(theoretical, fitted$Goals) + 0.8), ylim = c(-0.3, max(fitted$Goals) + 0.3)) +
+    labs(title = title,
+         subtitle = "Fitted Poisson mixture quantiles; labels = number of rows",
+         x = "Theoretical quantile (Poisson)", y = "Observed goals") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank())
+}
+
+save_plot(plot_poisson_qq(pois_mae_final, "Poisson QQ Plot: Final Model Selected on MAE"),
+          "qq_pois_mae", width = 7, height = 7)
 
 # Section 18: LaTeX tables for the presentation----
 # Each table is written with kable (booktabs) to presentations/football-week-4/tables/<name>.tex
@@ -1718,12 +1935,12 @@ fmt_penalty = function(x) formatC(x, format = "g", digits = 3)
 # short labels keep the tables narrow, so they don't have to be shrunk to fit a slide
 # "0.317 (0.011)" -> "0.317 (.011)" to keep the table narrow
 save_table(nested_eval_report |>
-             select(metric, baseline, pois_mse, pois_rps, pois_skel) |>
+             select(metric, baseline, pois_mae, pois_rps, pois_skel) |>
              mutate(across(-metric, \(x) if_else(x == "NA (NA)", NA_character_, gsub("\\(0\\.", "(.", x)))),
            "nested_eval_report",
-           col.names = c("metric", "baseline", "mse", "rps", "skellam"))
+           col.names = c("metric", "baseline", "mae", "rps", "skellam"))
 
-# "Pois + Skellam (range-adjusted), mse" -> "mse, range"
+# "Pois + Skellam (range-adjusted), mae" -> "mae, range"
 short_model = function(model) {
   model |>
     sub(pattern = "Historical Frequency Baseline", replacement = "baseline") |>
@@ -1750,7 +1967,7 @@ coef_for_table = function(coefs) {
     mutate(across(c(beta_k, exp_beta_k, sd_x, beta_k_sd, exp_beta_k_sd), fmt_sig))
 }
 coef_col_names = c("term", "$\\beta_k$", "$e^{\\beta_k}$", "$sd_x$", "$\\beta_k \\, sd_x$", "$e^{\\beta_k sd_x}$")
-save_table(coef_for_table(pois_mse_coefs),  "pois_mse_coefs",  col.names = coef_col_names, escape = FALSE)
+save_table(coef_for_table(pois_mae_coefs),  "pois_mae_coefs",  col.names = coef_col_names, escape = FALSE)
 save_table(coef_for_table(pois_rps_coefs),  "pois_rps_coefs",  col.names = coef_col_names, escape = FALSE)
 save_table(coef_for_table(pois_skel_coefs), "pois_skel_coefs", col.names = coef_col_names, escape = FALSE)
 
@@ -1758,13 +1975,13 @@ save_table(coef_for_table(pois_skel_coefs), "pois_skel_coefs", col.names = coef_
 lambda_alpha = function(penalty, mixture) paste(fmt_penalty(penalty), "/", sprintf("%.2f", mixture))
 save_table(selection_comparison |>
              mutate(id = sub("test ", "", id),
-                    mse  = lambda_alpha(mse_penalty,  mse_mixture),
+                    mae  = lambda_alpha(mae_penalty,  mae_mixture),
                     rps  = lambda_alpha(rps_penalty,  rps_mixture),
                     skel = lambda_alpha(skel_penalty, skel_mixture)) |>
-             select(id, mse, rps, skel) |>
+             select(id, mae, rps, skel) |>
              arrange(id),
            "selection_comparison",
-           col.names = c("held out", "mse $\\lambda$ / $\\alpha$", "rps $\\lambda$ / $\\alpha$",
+           col.names = c("held out", "mae $\\lambda$ / $\\alpha$", "rps $\\lambda$ / $\\alpha$",
                          "skel $\\lambda$ / $\\alpha$"),
            escape = FALSE)
 
@@ -1790,13 +2007,18 @@ ggsave(file.path(SLIDE_FIG_DIR, "wdl_pois_rps_box.png"), pois_rps_wdl_plots$box 
 ggsave(file.path(SLIDE_FIG_DIR, "loglinear_pois_rps.png"),
        plot_loglinear_check(pois_rps_final, "final model") + labs(title = NULL, subtitle = NULL),
        width = 6.5, height = 4.5, bg = "white")
+ggsave(file.path(SLIDE_FIG_DIR, "qq_pois_mae.png"),
+       plot_poisson_qq(pois_mae_final, "Poisson QQ Plot: Final Model (MAE)", label_size = 5) +
+         labs(subtitle = NULL) + theme(text = element_text(size = 17), axis.title = element_text(size = 14),
+               plot.title = element_text(size = 15, face = "bold"), plot.title.position = "plot"),
+       width = 5, height = 5.4, bg = "white")
 
 # Before / after tables: base covariates vs + AgeDifference
 save_table(nested_eval_report |>
-             select(metric, baseline, pois_mse, pois_cov_mse, pois_rps, pois_cov_rps, pois_skel, pois_cov_skel) |>
+             select(metric, baseline, pois_mae, pois_cov_mae, pois_rps, pois_cov_rps, pois_skel, pois_cov_skel) |>
              mutate(across(-metric, \(x) if_else(x == "NA (NA)", NA_character_, gsub("\\(0\\.", "(.", x)))),
            "nested_eval_report_before_after",
-           col.names = c("metric", "baseline", "mse", "mse + age", "rps", "rps + age", "skellam", "skellam + age"))
+           col.names = c("metric", "baseline", "mae", "mae + age", "rps", "rps + age", "skellam", "skellam + age"))
 
 save_table(model_comparison |>
              filter(grepl("range-adjusted", Model) | Model == "Historical Frequency Baseline") |>
@@ -1805,7 +2027,7 @@ save_table(model_comparison |>
            "model_comparison_class_before_after",
            col.names = c("model", "accuracy", "macro F1", "draws called", "draw prec.", "draw recall", "draw F1"))
 
-save_table(coef_for_table(pois_cov_mse_coefs),  "pois_cov_mse_coefs",  col.names = coef_col_names, escape = FALSE)
+save_table(coef_for_table(pois_cov_mae_coefs),  "pois_cov_mae_coefs",  col.names = coef_col_names, escape = FALSE)
 save_table(coef_for_table(pois_cov_rps_coefs),  "pois_cov_rps_coefs",  col.names = coef_col_names, escape = FALSE)
 save_table(coef_for_table(pois_cov_skel_coefs), "pois_cov_skel_coefs", col.names = coef_col_names, escape = FALSE)
 
@@ -1815,13 +2037,13 @@ save_table(coef_before_after |> mutate(across(-term, fmt_sig)),
 
 save_table(selection_comparison_cov |>
              mutate(id = sub("test ", "", id),
-                    mse  = lambda_alpha(mse_penalty,  mse_mixture),
+                    mae  = lambda_alpha(mae_penalty,  mae_mixture),
                     rps  = lambda_alpha(rps_penalty,  rps_mixture),
                     skel = lambda_alpha(skel_penalty, skel_mixture)) |>
-             select(id, mse, rps, skel) |>
+             select(id, mae, rps, skel) |>
              arrange(id),
            "selection_comparison_cov",
-           col.names = c("held out", "mse $\\lambda$ / $\\alpha$", "rps $\\lambda$ / $\\alpha$",
+           col.names = c("held out", "mae $\\lambda$ / $\\alpha$", "rps $\\lambda$ / $\\alpha$",
                          "skel $\\lambda$ / $\\alpha$"),
            escape = FALSE)
 
@@ -1829,6 +2051,65 @@ save_table(pois_select_rule_hyperparams_final_before_after |>
              mutate(penalty = fmt_penalty(penalty)),
            "pois_select_rule_hyperparams_final_before_after", digits = 2,
            col.names = c("selected on", "covariates", "penalty $\\lambda$", "mixture $\\alpha$"), escape = FALSE)
+
+# Per-fold picks with and without age (Section 15.2), for the "Effect of AgeDifference" slide.
+# Written by hand rather than kable: grouped headers and the spanning score rows need kableExtra,
+# which isn't installed. Cells where the two runs picked different hyperparameters are bold
+fmt_pick = function(x, differs) {
+  x = trimws(x)
+  ifelse(differs, paste0("\\textbf{", x, "}"), x)
+}
+age_fold_rows = age_fold_picks |>
+  mutate(differs = !same_hyperparams,
+         row = paste(held_out,
+                     fmt_pick(fmt_penalty(base_penalty), differs), fmt_pick(as.character(signif(base_mixture, 2)), differs),
+                     sprintf("%.3g", base_t),
+                     fmt_pick(fmt_penalty(age_penalty), differs), fmt_pick(as.character(signif(age_mixture, 2)), differs),
+                     sprintf("%.3g", age_t),
+                     sep = " & "))
+score_row = function(name, metric_name) {
+  s = filter(age_fold_scores, metric == metric_name)
+  sprintf("%s & \\multicolumn{3}{c}{%.3f} & \\multicolumn{3}{c}{%.3f} \\\\", name, s$base, s$age)
+}
+writeLines(c(
+  "\\begin{tabular}{lrrr@{\\hspace{10pt}}rrr}",
+  "\\toprule",
+  "& \\multicolumn{3}{c}{\\textbf{Without Age}} & \\multicolumn{3}{c}{\\textbf{$+$Age}} \\\\",
+  "\\cmidrule(r{10pt}){2-4} \\cmidrule(l){5-7}",
+  "Held out & $\\lambda$ & $\\alpha$ & $t$ & $\\lambda$ & $\\alpha$ & $t$ \\\\",
+  "\\midrule",
+  paste(head(age_fold_rows$row, -1), "\\\\"),
+  "\\midrule",
+  paste(tail(age_fold_rows$row, 1), "\\\\"),
+  "\\midrule",
+  score_row("Macro F1", "macro_f1_t"),
+  score_row("Accuracy", "accuracy_t"),
+  "\\bottomrule",
+  "\\end{tabular}"
+), file.path(TABLE_DIR, "age_fold_picks.tex"))
+
+# Draw-range tuning results without / with age (mae selection): the leave-one-Euro-out t's,
+# the 2028 t_final, and what the range-adjusted rule then does on the pooled outer matches
+t_summary = function(t) {
+  counts = sort(table(t), decreasing = TRUE)
+  paste(sprintf("%s (%dx)", names(counts), as.integer(counts)), collapse = ", ")
+}
+draw_row = function(model) filter(model_comparison, Model == model)
+age_draw_base = draw_row("Pois + Skellam (range-adjusted), mae")
+age_draw_age  = draw_row("Pois + Skellam (range-adjusted), mae + age")
+age_draw_tuning = tibble(
+  quantity = c("$t$ per held-out Euro", "Final $t$ (2028)", "Draws called (of 246)",
+               "Draw recall", "Macro F1", "Accuracy"),
+  base = c(t_summary(head(age_fold_picks$base_t, -1)), tail(age_fold_picks$base_t, 1),
+           age_draw_base$Draws_Predicted,
+           sprintf("%.3f", c(age_draw_base$Draw_Recall, age_draw_base$Macro_F1, age_draw_base$Accuracy))),
+  age  = c(t_summary(head(age_fold_picks$age_t, -1)), tail(age_fold_picks$age_t, 1),
+           age_draw_age$Draws_Predicted,
+           sprintf("%.3f", c(age_draw_age$Draw_Recall, age_draw_age$Macro_F1, age_draw_age$Accuracy)))
+)
+age_draw_tuning
+save_table(age_draw_tuning, "age_draw_tuning", align = "lrr",
+           col.names = c("", "Without Age", "$+$Age"), escape = FALSE)
 
 save_table(final_diagnostics |>
              mutate(cor_95 = sprintf("[%.2f, %.2f]", cor_95_lo, cor_95_hi)) |>
