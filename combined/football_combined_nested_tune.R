@@ -31,7 +31,16 @@ RERUN = c(
   cov_pois  = FALSE, cov_rf  = FALSE, cov_xg  = FALSE, cov_nnet  = FALSE
 )
 QUICK = FALSE  # TRUE = 3 candidates per grid, for checking the script runs (saved separately)
-RESULTS_DIR = if (QUICK) "results_debug/combined" else "results/combined"
+
+# Outer resampling (Section 2), each saved in its own folder:
+#   "loto":      leave one tournament out, every year is the test year once     -> results/combined
+#   "expanding": train only on earlier tournaments, test years 2012-2024        -> results/combined_expanding
+#                (base covariates only: it's the resampling sub-experiment)
+# Another script can set RESAMPLING before sourcing this one (like LOAD_ONLY), otherwise it's "loto"
+if (!exists("RESAMPLING")) RESAMPLING = "loto"
+stopifnot(RESAMPLING %in% c("loto", "expanding"))
+RESULTS_DIR = file.path(if (QUICK) "results_debug" else "results",
+                        if (RESAMPLING == "loto") "combined" else "combined_expanding")
 
 library(readr)
 library(dplyr)
@@ -70,12 +79,23 @@ euro$match_id = rep(1:(nrow(euro) / 2), each = 2)
 odd = seq(1, nrow(euro), by = 2)
 stopifnot(all(euro$Team[odd] == euro$Opponent[odd + 1])) # checks if Team matches Opponent of nextline
 
-# Section 2: Nested leave-one-tournament-out splits----
-# outer: hold out one tournament (honest test), inner: hold out one of the other five (tuning)
+# Section 2: Nested splits----
+# outer = the honest test of one tournament, inner = tuning, always leave one tournament out of the
+#   outer fold's training years
+# "loto":      outer holds out one tournament and trains on the other five
+# "expanding": outer trains only on the tournaments before the test year, like predicting the next
+#   Euro for real. 2004 has nothing before it and 2008 only one year (no inner folds to tune on),
+#   so the test years are 2012-2024 (inner: 2, 3, 4 and 5 folds)
 set.seed(67676769)
-folds = nested_resamples(euro,
-                         outside = group_vfold_cv(group = Year),
-                         inside  = group_vfold_cv(group = Year))
+if (RESAMPLING == "loto") {
+  outer = group_vfold_cv(euro, group = Year)
+} else {
+  expanding_split = function(year) {
+    make_splits(list(analysis = which(euro$Year < year), assessment = which(euro$Year == year)), data = euro)
+  }
+  outer = manual_rset(map(c(2012, 2016, 2020, 2024), expanding_split), ids = paste0("Resample", 1:4))
+}
+folds = nested_resamples(euro, outside = outer, inside = group_vfold_cv(group = Year))
 
 # Name each fold by its held-out year instead of Resample1, Resample2, ... (which aren't in year order)
 #   outer: "test 2016", inner: "test 2016 / eval 2004" (2016 is the outer test year, 2004 the inner one)
@@ -194,6 +214,7 @@ wf_set = workflowsets::workflow_set(
                  xg = xg_spec, 
                  nnet = nnet_spec)) |> 
   filter(wflow_id != "cov_null")
+if (RESAMPLING == "expanding") wf_set = filter(wf_set, startsWith(wflow_id, "base_")) # sub-experiment: base only
 
 # attach each workflow's grid
 for (id in setdiff(wf_set$wflow_id, "base_null")) {
@@ -291,12 +312,12 @@ names(f1_metrics) = rules$metric_name
 run_metrics = do.call(metric_set, c(list(mae = mae, poisson_log_loss = poisson_log_loss), f1_metrics))
 
 # Section 8: Run----
-# - For each workflow and each outer year: tune on the other 5 years (inner folds, best mae),
+# - For each workflow and each outer year: tune on its training years (inner folds, best mae),
 #     refit the winner on those 5 years, and predict the held-out year
 # - Each workflow is saved to its own file, so only the ones marked in RERUN have to run again
 # - Every workflow starts from the same random state (set.seed before each), so a workflow's result
 #     doesn't depend on which other workflows ran with it
-stopifnot(setequal(names(RERUN), wf_set$wflow_id)) # one switch per workflow, no typos
+stopifnot(all(wf_set$wflow_id %in% names(RERUN))) # a switch for every workflow
 result_file = function(id) file.path(RESULTS_DIR, paste0(id, ".rds"))
 
 # a saved result from before a metric was added (or changed), or one whose folds all failed, can't be
@@ -416,7 +437,7 @@ stopifnot(nrow(anti_join(distinct(filter(choices, target == "mae"), wflow_id, id
 
 # Section 10: Outer predictions for every algorithm----
 # choices -> fits -> preds:
-# - every pick in choices is refit by hand: fit the picked candidate on the 5 outer-training years and
+# - every pick in choices is refit by hand: fit the picked candidate on the outer training years and
 #     predict the held-out year (what nestedtune does after its own pick, done here for every target)
 # - several algorithms often share a pick (e.g. argmax / range / p_draw under mae), so each is fit once
 # - the fits are saved to RESULTS_DIR/outer_fits.rds, so sourcing this script again doesn't refit them
@@ -465,7 +486,9 @@ preds = choices |>
   select(algorithm, wflow_id, covariates, model_class, target, rule, id, Year, match_id, .row,
          t, params_label, Goals, .pred)
 
-stopifnot(all(count(preds, algorithm)$n == nrow(euro))) # every row predicted exactly once per algorithm
+# every held-out row predicted exactly once per algorithm
+n_test_rows = sum(map_int(folds$splits, \(split) nrow(assessment(split))))
+stopifnot(all(count(preds, algorithm)$n == n_test_rows))
 
 # Section 11: Win/draw/loss----
 # wdl: one row per match per algorithm, with the call under that algorithm's rule and t
@@ -478,19 +501,24 @@ wdl = preds |>
          actual = actual_result(goals1, goals2),
          call   = call_result(p_win, p_draw, p_loss, rule, t))
 
-# historical frequency baseline: each match gets the win / draw / loss shares of the other 5 years
+# historical frequency baseline: each match gets the win / draw / loss shares of its outer training years
+#   (the other 5 years for "loto", the earlier years for "expanding")
+all_matches = tibble(Year = euro$Year[odd], actual = actual_result(euro$Goals[odd], euro$Goals[odd + 1]))
+training_shares = function(year) {
+  split = folds$splits[[which(folds$id == paste("test", year))]]
+  prop.table(table(filter(all_matches, Year %in% analysis(split)$Year)$actual))
+}
 matches = wdl |> distinct(Year, match_id, goals1, goals2, actual)
-shares_without = function(year) prop.table(table(filter(matches, Year != year)$actual))
 baseline_wdl = matches |>
-  mutate(p_win  = map_dbl(Year, \(y) shares_without(y)[["win"]]),
-         p_draw = map_dbl(Year, \(y) shares_without(y)[["draw"]]),
-         p_loss = map_dbl(Year, \(y) shares_without(y)[["loss"]]),
+  mutate(p_win  = map_dbl(Year, \(y) training_shares(y)[["win"]]),
+         p_draw = map_dbl(Year, \(y) training_shares(y)[["draw"]]),
+         p_loss = map_dbl(Year, \(y) training_shares(y)[["loss"]]),
          call   = call_result(p_win, p_draw, p_loss, "argmax", NA),
          algorithm = "historical | none | argmax", wflow_id = "historical", covariates = "none",
          model_class = "historical", target = "none", rule = "argmax")
 wdl = bind_rows(wdl, baseline_wdl)
 
-stopifnot(all(count(wdl, algorithm)$n == nrow(euro) / 2)) # one row per match per algorithm
+stopifnot(all(count(wdl, algorithm)$n == n_test_rows / 2)) # one row per held-out match per algorithm
 
 # Section 12: Scores----
 # Every score is pooled: computed once over all held-out rows / matches, not averaged per year

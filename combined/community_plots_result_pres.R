@@ -7,6 +7,8 @@
 # - To change a model or refit: edit and run football_combined_nested_tune.R directly, not from here
 # - After sourcing you have its objects (see the README at its top): euro, folds, nested_res,
 #       inner_scores, choices, fits, preds, wdl, scores
+#   and in Section 4 the expanding-window results as expanding$wdl, expanding$scores, ...
+#   (needs results/combined_expanding, made by running it with RESAMPLING = "expanding")
 #   e.g. filter(scores, model_class == "rf", rule == "range"). Section 0.2 shows what each looks like
 # - Put shared plots/tables below, one section each. Personal results go in your own script
 # - Save with save_plot(plot, "name") and save_table(df, "name") (Section 0.2), so everything lands in
@@ -173,12 +175,14 @@ save_plot(plot_headline("rps", "RPS"), "headline_rps", width = 10, height = 4)
 
 # Section 2: Paired effects: does a change help on the same 246 matches?----
 # compare_algorithms(a, b): algorithm a (the change) against b (what it's compared to)
+#   wdl_a / wdl_b: where to find each one, e.g. expanding$wdl for the expanding-window results (Section 4)
+#   only matches both have are compared (so expanding vs LOTO is on 2012-2024 only)
 #   delta_macro_f1 / delta_accuracy: a minus b, pooled over all matches
 #   years_better: in how many of the 6 held-out years a had the higher macro F1
 #   mcnemar_p: McNemar's test on right / wrong per match (it tests accuracy, not macro F1)
-compare_algorithms = function(a, b) {
-  both = inner_join(filter(wdl, algorithm == a) |> select(Year, match_id, actual, call_a = call),
-                    filter(wdl, algorithm == b) |> select(Year, match_id, call_b = call),
+compare_algorithms = function(a, b, wdl_a = wdl, wdl_b = wdl) {
+  both = inner_join(filter(wdl_a, algorithm == a) |> select(Year, match_id, actual, call_a = call),
+                    filter(wdl_b, algorithm == b) |> select(Year, match_id, call_b = call),
                     by = c("Year", "match_id"))
   per_year = both |>
     group_by(Year) |>
@@ -189,6 +193,7 @@ compare_algorithms = function(a, b) {
          delta_macro_f1 = macro_f1(both$actual, both$call_a) - macro_f1(both$actual, both$call_b),
          delta_accuracy = mean(right_a == "TRUE") - mean(right_b == "TRUE"),
          years_better   = sum(per_year$f1_a > per_year$f1_b),
+         n_years        = nrow(per_year),
          mcnemar_p      = if (all(right_a == right_b)) 1 else mcnemar.test(table(right_a, right_b))$p.value)
 }
 
@@ -242,3 +247,74 @@ choices |>
 
 # confusion matrix of one algorithm (rows = called, columns = actual)
 with(filter(wdl, algorithm == "base_pois | mae | range"), table(called = call, actual = actual))
+
+# Section 4: Sub-experiments: is the reference choice justified, does the headline survive?----
+# Each sub-result changes ONE thing from the reference slice (LOTO, base covariates, target mae, every
+# model x rule) and asks: does the winner (model, rule) change, and how much does the score move?
+
+# The expanding-window results, loaded into their own environment so their objects (scores, wdl, ...)
+#   don't overwrite the LOTO ones: use expanding$wdl, expanding$scores, ...
+#   (they come from running football_combined_nested_tune.R with RESAMPLING = "expanding")
+expanding = new.env()
+local({
+  RESAMPLING = "expanding"
+  LOAD_ONLY  = TRUE
+  source(NESTED_TUNE_FILE, local = TRUE)
+}, envir = expanding)
+expanding_years = unique(expanding$wdl$Year) # 2012-2024: the years both schemes test on
+
+# slice_scores(): macro F1 and RPS of every model x rule at target mae, on some covariates and years
+#   one row per (model_class, rule)
+slice_scores = function(wdl, covariates_used, years) {
+  wdl |>
+    filter(covariates == covariates_used, target == "mae", Year %in% years) |>
+    group_by(model_class, rule, algorithm) |>
+    summarise(macro_f1 = macro_f1(actual, call),
+              rps      = mean(((p_win - (actual == "win"))^2 + (p_win + p_draw - (actual != "loss"))^2) / 2),
+              .groups  = "drop")
+}
+
+# the slices: the reference on all 6 years and on 2012-2024 (to compare with expanding), and the changes
+reference_all       = slice_scores(wdl, "base", unique(wdl$Year))
+reference_2012_2024 = slice_scores(wdl, "base", expanding_years)
+with_age            = slice_scores(wdl, "cov", unique(wdl$Year))
+expanding_window    = slice_scores(expanding$wdl, "base", expanding_years)
+
+# robustness_row(): one row of the robustness table
+#   winner = best (model, rule) on macro F1. The paired columns compare the reference winner's
+#   (model, rule) with and without the change, on the same matches
+robustness_row = function(sub_result, reference, changed, wdl_changed = wdl) {
+  w_ref = slice_max(reference, macro_f1, n = 1, with_ties = FALSE)
+  w_new = slice_max(changed, macro_f1, n = 1, with_ties = FALSE)
+  same  = filter(changed, model_class == w_ref$model_class, rule == w_ref$rule) # the reference winner, changed
+  paired = compare_algorithms(same$algorithm, w_ref$algorithm, wdl_a = wdl_changed)
+  tibble(sub_result,
+         reference_winner = paste(w_ref$model_class, w_ref$rule),
+         winner           = paste(w_new$model_class, w_new$rule),
+         same_winner      = reference_winner == winner,
+         winner_macro_f1  = w_new$macro_f1,
+         winner_rps       = w_new$rps,
+         delta_macro_f1   = w_new$macro_f1 - w_ref$macro_f1,  # new winner vs reference winner
+         ref_winner_delta = paired$delta_macro_f1,              # reference winner, changed vs not
+         years_better     = paste0(paired$years_better, "/", paired$n_years),
+         mcnemar_p        = paired$mcnemar_p)
+}
+
+robustness = bind_rows(
+  robustness_row("reference: LOTO, base covariates, target mae", reference_all, reference_all),
+  robustness_row("+ AgeFitDiff", reference_all, with_age),
+  robustness_row("expanding window (vs LOTO on 2012-2024)", reference_2012_2024, expanding_window,
+                 wdl_changed = expanding$wdl))
+print(robustness, width = Inf)
+save_table(robustness, "robustness")
+
+# backup slide: every model x rule, expanding vs LOTO on the same matches (2012-2024)
+resampling_effects = expanding_window |>
+  select(algorithm) |>
+  mutate(result = map(algorithm, \(a) compare_algorithms(a, a, wdl_a = expanding$wdl))) |>
+  select(result) |>
+  unnest(result) |>
+  left_join(select(reference_2012_2024, algorithm, macro_f1_loto = macro_f1), by = c("b" = "algorithm")) |>
+  left_join(select(expanding_window, algorithm, macro_f1_expanding = macro_f1), by = c("a" = "algorithm"))
+print(resampling_effects, width = Inf)
+save_table(resampling_effects, "resampling_effects")

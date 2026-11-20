@@ -1,47 +1,47 @@
 
-\begin{tabular}{lllrrrr}
+\begin{tabular}{lllrrrrr}
 \toprule
-effect & a & b & delta\_macro\_f1 & delta\_accuracy & years\_better & mcnemar\_p\\
+effect & a & b & delta\_macro\_f1 & delta\_accuracy & years\_better & n\_years & mcnemar\_p\\
 \midrule
-threshold & base\_nnet | mae | p\_draw & base\_nnet | mae | argmax & 0.097 & -0.004 & 5 & 1.000\\
-threshold & base\_nnet | mae | range & base\_nnet | mae | argmax & 0.070 & -0.033 & 5 & 0.358\\
-threshold & base\_nnet | poisson\_log\_loss | p\_draw & base\_nnet | poisson\_log\_loss | argmax & 0.060 & -0.057 & 4 & 0.189\\
-threshold & base\_nnet | poisson\_log\_loss | range & base\_nnet | poisson\_log\_loss | argmax & 0.076 & -0.037 & 5 & 0.374\\
-threshold & base\_pois | mae | p\_draw & base\_pois | mae | argmax & 0.086 & -0.020 & 5 & 0.614\\
-threshold & base\_pois | mae | range & base\_pois | mae | argmax & 0.103 & -0.008 & 5 & 0.910\\
-threshold & base\_pois | poisson\_log\_loss | p\_draw & base\_pois | poisson\_log\_loss | argmax & 0.076 & -0.037 & 5 & 0.380\\
-threshold & base\_pois | poisson\_log\_loss | range & base\_pois | poisson\_log\_loss | argmax & 0.072 & -0.041 & 5 & 0.302\\
-threshold & base\_rf | mae | p\_draw & base\_rf | mae | argmax & 0.071 & -0.012 & 5 & 0.728\\
-threshold & base\_rf | mae | range & base\_rf | mae | argmax & 0.082 & -0.020 & 6 & 0.583\\
-threshold & base\_rf | poisson\_log\_loss | p\_draw & base\_rf | poisson\_log\_loss | argmax & 0.086 & -0.008 & 5 & 0.877\\
-threshold & base\_rf | poisson\_log\_loss | range & base\_rf | poisson\_log\_loss | argmax & 0.053 & -0.053 & 6 & 0.118\\
-threshold & base\_xg | mae | p\_draw & base\_xg | mae | argmax & 0.032 & -0.081 & 4 & 0.027\\
-threshold & base\_xg | mae | range & base\_xg | mae | argmax & 0.043 & -0.069 & 3 & 0.051\\
-threshold & base\_xg | poisson\_log\_loss | p\_draw & base\_xg | poisson\_log\_loss | argmax & 0.072 & -0.028 & 5 & 0.410\\
-threshold & base\_xg | poisson\_log\_loss | range & base\_xg | poisson\_log\_loss | argmax & 0.076 & -0.016 & 6 & 0.643\\
-selection & base\_nnet | macro\_f1 | argmax & base\_nnet | mae | argmax & -0.007 & -0.008 & 1 & 0.683\\
-selection & base\_nnet | macro\_f1 | p\_draw & base\_nnet | mae | p\_draw & -0.061 & -0.061 & 1 & 0.012\\
-selection & base\_nnet | macro\_f1 | range & base\_nnet | mae | range & 0.030 & 0.028 & 4 & 0.337\\
-selection & base\_pois | macro\_f1 | argmax & base\_pois | mae | argmax & 0.022 & 0.028 & 5 & 0.121\\
-selection & base\_pois | macro\_f1 | p\_draw & base\_pois | mae | p\_draw & 0.022 & 0.020 & 2 & 0.383\\
-selection & base\_pois | macro\_f1 | range & base\_pois | mae | range & -0.029 & -0.020 & 2 & 0.424\\
-selection & base\_rf | macro\_f1 | argmax & base\_rf | mae | argmax & -0.005 & -0.008 & 2 & 0.752\\
-selection & base\_rf | macro\_f1 | p\_draw & base\_rf | mae | p\_draw & 0.006 & 0.004 & 3 & 1.000\\
-selection & base\_rf | macro\_f1 | range & base\_rf | mae | range & 0.022 & 0.020 & 4 & 0.302\\
-selection & base\_xg | macro\_f1 | argmax & base\_xg | mae | argmax & -0.018 & -0.061 & 3 & 0.021\\
-selection & base\_xg | macro\_f1 | p\_draw & base\_xg | mae | p\_draw & 0.016 & 0.033 & 3 & 0.302\\
-selection & base\_xg | macro\_f1 | range & base\_xg | mae | range & -0.008 & 0.012 & 3 & 0.700\\
-covariates & cov\_nnet | mae | argmax & base\_nnet | mae | argmax & 0.002 & 0.004 & 2 & 1.000\\
-covariates & cov\_nnet | mae | p\_draw & base\_nnet | mae | p\_draw & -0.013 & -0.020 & 2 & 0.532\\
-covariates & cov\_nnet | mae | range & base\_nnet | mae | range & 0.019 & 0.016 & 3 & 0.596\\
-covariates & cov\_pois | mae | argmax & base\_pois | mae | argmax & -0.003 & -0.004 & 1 & 1.000\\
-covariates & cov\_pois | mae | p\_draw & base\_pois | mae | p\_draw & 0.011 & 0.012 & 2 & 0.505\\
-covariates & cov\_pois | mae | range & base\_pois | mae | range & -0.009 & -0.008 & 1 & 0.789\\
-covariates & cov\_rf | mae | argmax & base\_rf | mae | argmax & 0.000 & 0.000 & 2 & 1.000\\
-covariates & cov\_rf | mae | p\_draw & base\_rf | mae | p\_draw & -0.012 & -0.012 & 3 & 0.719\\
-covariates & cov\_rf | mae | range & base\_rf | mae | range & -0.020 & -0.028 & 3 & 0.230\\
-covariates & cov\_xg | mae | argmax & base\_xg | mae | argmax & 0.000 & 0.000 & 1 & 1.000\\
-covariates & cov\_xg | mae | p\_draw & base\_xg | mae | p\_draw & 0.010 & 0.012 & 3 & 0.579\\
-covariates & cov\_xg | mae | range & base\_xg | mae | range & 0.000 & 0.012 & 2 & 0.646\\
+threshold & base\_nnet | mae | p\_draw & base\_nnet | mae | argmax & 0.097 & -0.004 & 5 & 6 & 1.000\\
+threshold & base\_nnet | mae | range & base\_nnet | mae | argmax & 0.070 & -0.033 & 5 & 6 & 0.358\\
+threshold & base\_nnet | poisson\_log\_loss | p\_draw & base\_nnet | poisson\_log\_loss | argmax & 0.060 & -0.057 & 4 & 6 & 0.189\\
+threshold & base\_nnet | poisson\_log\_loss | range & base\_nnet | poisson\_log\_loss | argmax & 0.076 & -0.037 & 5 & 6 & 0.374\\
+threshold & base\_pois | mae | p\_draw & base\_pois | mae | argmax & 0.086 & -0.020 & 5 & 6 & 0.614\\
+threshold & base\_pois | mae | range & base\_pois | mae | argmax & 0.103 & -0.008 & 5 & 6 & 0.910\\
+threshold & base\_pois | poisson\_log\_loss | p\_draw & base\_pois | poisson\_log\_loss | argmax & 0.076 & -0.037 & 5 & 6 & 0.380\\
+threshold & base\_pois | poisson\_log\_loss | range & base\_pois | poisson\_log\_loss | argmax & 0.072 & -0.041 & 5 & 6 & 0.302\\
+threshold & base\_rf | mae | p\_draw & base\_rf | mae | argmax & 0.071 & -0.012 & 5 & 6 & 0.728\\
+threshold & base\_rf | mae | range & base\_rf | mae | argmax & 0.082 & -0.020 & 6 & 6 & 0.583\\
+threshold & base\_rf | poisson\_log\_loss | p\_draw & base\_rf | poisson\_log\_loss | argmax & 0.086 & -0.008 & 5 & 6 & 0.877\\
+threshold & base\_rf | poisson\_log\_loss | range & base\_rf | poisson\_log\_loss | argmax & 0.053 & -0.053 & 6 & 6 & 0.118\\
+threshold & base\_xg | mae | p\_draw & base\_xg | mae | argmax & 0.032 & -0.081 & 4 & 6 & 0.027\\
+threshold & base\_xg | mae | range & base\_xg | mae | argmax & 0.043 & -0.069 & 3 & 6 & 0.051\\
+threshold & base\_xg | poisson\_log\_loss | p\_draw & base\_xg | poisson\_log\_loss | argmax & 0.072 & -0.028 & 5 & 6 & 0.410\\
+threshold & base\_xg | poisson\_log\_loss | range & base\_xg | poisson\_log\_loss | argmax & 0.076 & -0.016 & 6 & 6 & 0.643\\
+selection & base\_nnet | macro\_f1 | argmax & base\_nnet | mae | argmax & -0.007 & -0.008 & 1 & 6 & 0.683\\
+selection & base\_nnet | macro\_f1 | p\_draw & base\_nnet | mae | p\_draw & -0.061 & -0.061 & 1 & 6 & 0.012\\
+selection & base\_nnet | macro\_f1 | range & base\_nnet | mae | range & 0.030 & 0.028 & 4 & 6 & 0.337\\
+selection & base\_pois | macro\_f1 | argmax & base\_pois | mae | argmax & 0.022 & 0.028 & 5 & 6 & 0.121\\
+selection & base\_pois | macro\_f1 | p\_draw & base\_pois | mae | p\_draw & 0.022 & 0.020 & 2 & 6 & 0.383\\
+selection & base\_pois | macro\_f1 | range & base\_pois | mae | range & -0.029 & -0.020 & 2 & 6 & 0.424\\
+selection & base\_rf | macro\_f1 | argmax & base\_rf | mae | argmax & -0.005 & -0.008 & 2 & 6 & 0.752\\
+selection & base\_rf | macro\_f1 | p\_draw & base\_rf | mae | p\_draw & 0.006 & 0.004 & 3 & 6 & 1.000\\
+selection & base\_rf | macro\_f1 | range & base\_rf | mae | range & 0.022 & 0.020 & 4 & 6 & 0.302\\
+selection & base\_xg | macro\_f1 | argmax & base\_xg | mae | argmax & -0.018 & -0.061 & 3 & 6 & 0.021\\
+selection & base\_xg | macro\_f1 | p\_draw & base\_xg | mae | p\_draw & 0.016 & 0.033 & 3 & 6 & 0.302\\
+selection & base\_xg | macro\_f1 | range & base\_xg | mae | range & -0.008 & 0.012 & 3 & 6 & 0.700\\
+covariates & cov\_nnet | mae | argmax & base\_nnet | mae | argmax & 0.002 & 0.004 & 2 & 6 & 1.000\\
+covariates & cov\_nnet | mae | p\_draw & base\_nnet | mae | p\_draw & -0.013 & -0.020 & 2 & 6 & 0.532\\
+covariates & cov\_nnet | mae | range & base\_nnet | mae | range & 0.019 & 0.016 & 3 & 6 & 0.596\\
+covariates & cov\_pois | mae | argmax & base\_pois | mae | argmax & -0.003 & -0.004 & 1 & 6 & 1.000\\
+covariates & cov\_pois | mae | p\_draw & base\_pois | mae | p\_draw & 0.011 & 0.012 & 2 & 6 & 0.505\\
+covariates & cov\_pois | mae | range & base\_pois | mae | range & -0.009 & -0.008 & 1 & 6 & 0.789\\
+covariates & cov\_rf | mae | argmax & base\_rf | mae | argmax & 0.000 & 0.000 & 2 & 6 & 1.000\\
+covariates & cov\_rf | mae | p\_draw & base\_rf | mae | p\_draw & -0.012 & -0.012 & 3 & 6 & 0.719\\
+covariates & cov\_rf | mae | range & base\_rf | mae | range & -0.020 & -0.028 & 3 & 6 & 0.230\\
+covariates & cov\_xg | mae | argmax & base\_xg | mae | argmax & 0.000 & 0.000 & 1 & 6 & 1.000\\
+covariates & cov\_xg | mae | p\_draw & base\_xg | mae | p\_draw & 0.010 & 0.012 & 3 & 6 & 0.579\\
+covariates & cov\_xg | mae | range & base\_xg | mae | range & 0.000 & 0.012 & 2 & 6 & 0.646\\
 \bottomrule
 \end{tabular}
