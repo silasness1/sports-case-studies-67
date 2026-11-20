@@ -424,7 +424,8 @@ stopifnot(nrow(anti_join(distinct(filter(choices, target == "mae"), wflow_id, id
 # one refit: one row per held-out team-game
 refit_outer = function(wflow_id, outer_id, params) {
   split = folds$splits[[which(folds$id == outer_id)]]
-  wf = extract_workflow(wf_set, wflow_id) |> finalize_workflow(params)
+  wf = extract_workflow(wf_set, wflow_id)
+  if (ncol(params) > 0) wf = finalize_workflow(wf, params) # base_null has no hyperparameters to fill in
   set.seed(6769)
   fitted = fit(wf, analysis(split))
   tibble(.row  = as.integer(split, data = "assessment"),
