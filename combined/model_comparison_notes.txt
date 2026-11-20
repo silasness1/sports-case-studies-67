@@ -1,0 +1,139 @@
+How the individual RF / xgboost / nnet scripts differ from football_combined_nested_tune.R
+==========================================================================================
+Written 2026-11-20. Compared against the latest version of each model's script:
+
+  random forest  Random_Forest_Nested_CV_Macro_F1.R            (Sriram, last commit 2026-11-11)
+  xgboost        xgboost_with_skellam/xgboost_with_skellam.R   (Rohit,  last commit 2026-11-07)
+  neural net     NN-Mess/How did this get 51%.R                (Nick,   last commit 2026-11-12 09:26)
+                 + "results/Neural Networks/NNet(Range Crit w Vis Diagnostics)" (2026-11-12 07:02),
+                   which is mostly the same code with a few important differences (see section 4)
+
+"combined" below always means combined/football_combined_nested_tune.R.
+Things that are the SAME in all of them are not listed: 6 predictors as differences team - opponent,
+Skellam (or equivalent Poisson x Poisson) for win/draw/loss, leave-one-tournament-out outer folds.
+
+
+1. Differences that apply to all three individual scripts
+-----------------------------------------------------------
+a) Inner-CV averaging (how the 5 inner scores become one number for picking hyperparameters)
+   individual: plain mean of the 5 per-year scores, so a 62-row year counts as much as a 102-row year
+   combined:   weighted by held-out rows (assessment_weights), = the score pooled over all inner rows
+   -> can pick different hyperparameters when two candidates are close.
+
+b) Which team is "team 1" in a match
+   individual: alphabetically first team (pmin(Team, Opponent))
+   combined:   the first of the two rows (the order in the data)
+   -> flips win <-> loss for some matches. Accuracy, log loss, Brier and RPS are unchanged by this
+      (RPS is symmetric in the order), but macro F1 and the per-class F1s can differ slightly.
+
+c) Draw threshold tuning (where t is chosen)
+   individual (RF, nnet): inside the nested CV. For each outer year, the best hyperparameters are refit
+              on the inner folds, t is picked on those inner held-out predictions, and then applied to
+              the outer year. Strictly nested.
+   xgboost:   no draw threshold at all, argmax only (so it essentially never predicts a draw).
+   combined:  after the nested CV, on the outer held-out predictions: year y gets the t with the best
+              macro F1 on the other 5 years. y's own outcomes are never used, but the other years'
+              predictions come from models that were trained on y, so it is not quite as strict as the
+              RF / nnet version.
+   Also: combined pools the macro F1 over the 5 years, RF and nnet average the per-year macro F1s.
+
+d) Baseline
+   individual (RF, xgboost): "historical frequency": predict P(win/draw/loss) = the training years'
+              share of wins / draws / losses for every match. xgboost also reports constant mean /
+              median goal predictions.
+   combined:  null model = training mean goals for every team, pushed through Skellam (base_null).
+   -> not the same baseline, so "beats the baseline" numbers aren't comparable across scripts.
+
+e) Randomness: each script has its own seeds (RF: 6769 + fold offsets per fit, xgboost: 42,
+   nnet: 123 before every fit, combined: one set.seed(6769) for nested_workflow_map). Expect small
+   differences in RF / xgboost / nnet numbers even when everything else matches.
+
+
+2. Random forest (Random_Forest_Nested_CV_Macro_F1.R)
+-------------------------------------------------------
+Closest to combined. Same model and the same grid.
+
+  same:  ranger, 1000 trees, mtry 1:6, min.node.size {3, 5, 10, 15} (= min_n in combined),
+         sample.fraction {0.7, 0.85, 1.0} (72 candidates), selected on inner MAE. Same data: the
+         per-year csvs with euro_2024_fixed.csv match combined's data (2024 GroupStage fix included)
+         to within 5e-10.
+  different:
+  - inner MAE averaging and team-1 order, see 1a, 1b
+  - draw rule: only the range rule (draw if max(p) - min(p) < t), t in {0.05, 0.10, 0.15, 0.20, 0.25},
+    tuned in the inner CV (1c). combined: range grid 0 to 0.30 by 0.025, plus the p_draw rule
+  - baseline: historical frequency (1d)
+  - reports per-tournament means and pooled scores; combined only pooled
+  - needs euro_2004 ... euro_2024_fixed already loaded in the session (it doesn't read the files)
+  - no predictor standardization (doesn't matter for trees)
+
+
+3. xgboost (xgboost_with_skellam/xgboost_with_skellam.R)
+----------------------------------------------------------
+  same:  Poisson objective, max_depth {1, 2, 3}, eta {0.01, 0.05, 0.1}, subsample {0.5, 0.8},
+         min_child_weight {1, 5, 10}
+  different:
+  - TUNING METRIC: Poisson NLL ("poisson-nloglik"), combined tunes on MAE
+  - NUMBER OF TREES: early stopping (up to 2000 rounds, stop after 50 without improvement), so each
+    candidate gets its own best nrounds. combined: trees is a grid {100, 250, 500, 1000}
+  - COLUMN SAMPLING: colsample_bytree = 0.8 (columns sampled once per tree).
+    combined uses mtry = 0.8 with counts = FALSE, and parsnip passes mtry to xgboost as
+    colsample_bynode (sampled again at every split), NOT colsample_bytree. The comment in combined
+    ("= colsample_bytree 0.8") is wrong. To match: drop mtry and add colsample_bytree = 0.8 in
+    set_engine("xgboost", ...).
+  - DATA: reads euro_2024.csv, not euro_2024_fixed.csv, so GroupStage = 0 for every 2024 game
+    (combined fixes the first 72 rows)
+  - WIN/DRAW/LOSS ARE NOT NESTED: sections 8-12 make the match predictions with final_combo, the
+    hyperparameters tuned on ALL 6 years, so every year helped pick the settings used to predict it.
+    The goal-level numbers in section 4 are properly nested, the log loss / Brier / RPS / accuracy
+    are optimistic. combined uses the nested predictions for both.
+  - argmax only, no draw threshold (1c)
+  - inner CV: xgb.cv's plain mean over folds (1a)
+  - the path at the top is a D:/ path, so it only runs on Rohit's machine
+
+
+4. Neural net (NN-Mess/How did this get 51%.R, and the "Range Crit" version)
+------------------------------------------------------------------------------
+Furthest from combined, and the latest version has a data bug that probably explains its numbers.
+
+  BUG 1, opponent features (51% version only): prepare_team_data() joins each row to the opponent's
+    features by (Year, Opponent). An opponent has 3-7 rows per tournament, so every row gets copied
+    3-7 times: 492 rows become 2,184, most with the opponent's features from a DIFFERENT game.
+    The model trains on the duplicated rows and the scoring picks one copy per team ([1]).
+    The extra _opp features are also redundant: the original predictors are already team - opponent.
+    The Range Crit version doesn't have this join.
+  BUG 2, rematches merged (51% version only):
+    matches are found with group_by(Year, Team_A, Team_B). Three pairs met twice in one tournament,
+    so the 51% version has 243 matches instead of 246 and drops one game of each rematch.
+    The Range Crit version adds GroupStage to the grouping, which fixes this (as xgboost does).
+
+  other differences:
+  - response: log1p(Goals) with a smearing back-transform, then clamped at 0.
+    combined: raw Goals with linear output (clamped at 1e-6 for Skellam)
+  - grid: size 1-5 (same), decay {0.5, 0.7, 0.9, 1.0, 1.1} (combined adds 2.0), and
+    skip = TRUE / FALSE (skip-layer connections). combined has no skip option
+  - selection metric: inner RMSE (Range Crit: RMSE, ties by MAE). combined: MAE
+  - GroupStage as a factor (dummy) instead of numeric 0/1. Same thing for 2 levels
+  - data: EuroTest + EuroTraining with no 2024 GroupStage fix (Range Crit: Eurodata_with_Age.csv,
+    also no fix)
+  - covariates: 51% = base 5 + GroupStage. Range Crit adds AgeDifference.
+    combined's cov set uses AgeFitDiff, a different age variable
+  - draw rule, 51%: draw if p_draw >= t, t from 0.10 to 0.50 by 0.025, else win vs loss
+      (close to combined's p_draw rule, which uses 0.10 to 0.40 by 0.0125)
+    draw rule, Range Crit: range rule like combined's t_range (0 to 0.30 by 0.025), BUT with an
+      override: if the biggest probability is >= 0.45, predict it regardless of t
+  - threshold tuned in the inner CV on mean per-year macro F1, ties go to the smallest t (1c)
+  - RPS uses rowMeans over the 2 cumulative terms (= the / 2 in combined, so the same)
+  - set.seed(123) before every single fit, so every candidate starts from the same random weights
+  - C:/ and Documents/ paths, so it only runs on Nick's machine
+
+
+5. If the goal is for combined to reproduce the individual results
+---------------------------------------------------------------------
+Easy / probably worth it:
+  - xgboost: colsample_bytree = 0.8 instead of mtry = 0.8 (3, a real mismatch, not a design choice)
+Design choices to agree on as a group (combined is defensible as is):
+  - inner-CV weighting (1a), draw threshold inside vs after the nested CV (1c), which baseline (1d)
+  - xgboost tuned on MAE vs Poisson NLL, trees grid vs early stopping
+  - nnet: log1p response and skip connections
+Don't port: the nnet opponent join (bug 1), grouping matches without GroupStage (bug 2), xgboost's
+  non-nested win/draw/loss predictions, the unfixed 2024 GroupStage.
