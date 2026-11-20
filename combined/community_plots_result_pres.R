@@ -288,6 +288,7 @@ robustness_row = function(sub_result, reference, changed, wdl_changed = wdl) {
   w_new = slice_max(changed, macro_f1, n = 1, with_ties = FALSE)
   same  = filter(changed, model_class == w_ref$model_class, rule == w_ref$rule) # the reference winner, changed
   paired = compare_algorithms(same$algorithm, w_ref$algorithm, wdl_a = wdl_changed)
+  if (identical(reference, changed)) paired[] = NA # the reference row: nothing to compare with
   tibble(sub_result,
          reference_winner = paste(w_ref$model_class, w_ref$rule),
          winner           = paste(w_new$model_class, w_new$rule),
@@ -296,12 +297,37 @@ robustness_row = function(sub_result, reference, changed, wdl_changed = wdl) {
          winner_rps       = w_new$rps,
          delta_macro_f1   = w_new$macro_f1 - w_ref$macro_f1,  # new winner vs reference winner
          ref_winner_delta = paired$delta_macro_f1,              # reference winner, changed vs not
-         years_better     = paste0(paired$years_better, "/", paired$n_years),
+         years_better     = if (is.na(paired$n_years)) NA else paste0(paired$years_better, "/", paired$n_years),
          mcnemar_p        = paired$mcnemar_p)
 }
 
+# seed noise: the reference slice again, with rf / xg / nnet refit with other seeds (Section 13 of the
+#   nested tune file). pois doesn't depend on the seed, so its scores are the same at every seed
+#   seed_reference: one row per (model, rule) per seed. seed_winners: the best (model, rule) per seed
+all_seeds = unique(seed_scores$seed)
+seed_reference = bind_rows(
+  reference_all |> filter(model_class == "pois") |> crossing(seed = all_seeds),
+  seed_scores |> filter(covariates == "base", target == "mae") |> select(model_class, rule, algorithm, seed, macro_f1, rps))
+seed_winners = seed_reference |>
+  group_by(seed) |>
+  slice_max(macro_f1, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  mutate(winner = paste(model_class, rule))
+seed_row = local({
+  w_ref = slice_max(reference_all, macro_f1, n = 1, with_ties = FALSE)
+  other = filter(seed_winners, seed != 6769) # the 5 other seeds
+  tibble(sub_result       = "refit seed (5 other seeds, nothing re-tuned)",
+         reference_winner = paste(w_ref$model_class, w_ref$rule),
+         winner           = paste0(names(table(other$winner)), " (", table(other$winner), "/", nrow(other), ")", collapse = ", "),
+         same_winner      = all(other$winner == reference_winner),
+         winner_macro_f1  = mean(other$macro_f1),            # averaged over the seeds
+         winner_rps       = mean(other$rps),
+         delta_macro_f1   = mean(other$macro_f1) - w_ref$macro_f1)
+})
+
 robustness = bind_rows(
   robustness_row("reference: LOTO, base covariates, target mae", reference_all, reference_all),
+  seed_row,
   robustness_row("+ AgeFitDiff", reference_all, with_age),
   robustness_row("expanding window (vs LOTO on 2012-2024)", reference_2012_2024, expanding_window,
                  wdl_changed = expanding$wdl))
@@ -318,3 +344,17 @@ resampling_effects = expanding_window |>
   left_join(select(expanding_window, algorithm, macro_f1_expanding = macro_f1), by = c("a" = "algorithm"))
 print(resampling_effects, width = Inf)
 save_table(resampling_effects, "resampling_effects")
+
+# backup slide: how much each algorithm's macro F1 moves from the refit seed alone (6 seeds)
+#   pois and null aren't here: they're deterministic, so the seed doesn't move them at all
+seed_noise = seed_scores |>
+  group_by(algorithm, covariates, model_class, target, rule) |>
+  summarise(sd_macro_f1    = sd(macro_f1),
+            min_macro_f1   = min(macro_f1),
+            max_macro_f1   = max(macro_f1),
+            range_macro_f1 = max_macro_f1 - min_macro_f1,
+            .groups = "drop") |>
+  arrange(desc(range_macro_f1))
+print(seed_noise, n = Inf)
+save_table(seed_noise, "seed_noise")
+

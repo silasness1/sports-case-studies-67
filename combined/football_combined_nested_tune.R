@@ -443,11 +443,12 @@ stopifnot(nrow(anti_join(distinct(filter(choices, target == "mae"), wflow_id, id
 # - the fits are saved to RESULTS_DIR/outer_fits.rds, so sourcing this script again doesn't refit them
 
 # one refit: one row per held-out team-game
-refit_outer = function(wflow_id, outer_id, params) {
+#   seed: rf, xg and nnet are random, so the seed changes their predictions a little (Section 13)
+refit_outer = function(wflow_id, outer_id, params, seed = 6769) {
   split = folds$splits[[which(folds$id == outer_id)]]
   wf = extract_workflow(wf_set, wflow_id)
   if (ncol(params) > 0) wf = finalize_workflow(wf, params) # base_null has no hyperparameters to fill in
-  set.seed(6769)
+  set.seed(seed)
   fitted = fit(wf, analysis(split))
   tibble(.row  = as.integer(split, data = "assessment"),
          Goals = assessment(split)$Goals,
@@ -476,30 +477,39 @@ if (length(to_run) == 0 && !is.null(saved_fits) && identical(select(saved_fits, 
 # - ".row" is the row in euro, which gives back Year and match_id
 # - lambda must be > 0 for Skellam, so clamp (the neural net can predict slightly negative goals;
 #     moving a negative prediction to ~0 can only shrink its error, since Goals >= 0)
-preds = choices |>
-  select(-params) |>
-  left_join(select(fits, -params), by = c("wflow_id", "id", ".config")) |>
-  unnest(pred) |>
-  mutate(.pred = pmax(.pred, 1e-6),
-         Year = euro$Year[.row], match_id = euro$match_id[.row],
-         algorithm = paste(wflow_id, target, rule, sep = " | ")) |>
-  select(algorithm, wflow_id, covariates, model_class, target, rule, id, Year, match_id, .row,
-         t, params_label, Goals, .pred)
+# - to_preds() is a function so Section 13 can run the same steps on its other seeds
+#     (fits = one row per pick and seed, with the predictions in its pred column)
+to_preds = function(fits) {
+  choices |>
+    select(-params) |>
+    inner_join(select(fits, -params), by = c("wflow_id", "id", ".config"), relationship = "many-to-many") |>
+    unnest(pred) |>
+    mutate(.pred = pmax(.pred, 1e-6),
+           Year = euro$Year[.row], match_id = euro$match_id[.row],
+           algorithm = paste(wflow_id, target, rule, sep = " | ")) |>
+    select(algorithm, wflow_id, covariates, model_class, target, rule, id, Year, match_id, .row,
+           t, params_label, seed, Goals, .pred)
+}
+preds = to_preds(mutate(fits, seed = 6769)) # every fit in Section 10 used seed 6769
 
 # every held-out row predicted exactly once per algorithm
 n_test_rows = sum(map_int(folds$splits, \(split) nrow(assessment(split))))
 stopifnot(all(count(preds, algorithm)$n == n_test_rows))
 
 # Section 11: Win/draw/loss----
-# wdl: one row per match per algorithm, with the call under that algorithm's rule and t
-wdl = preds |>
-  arrange(.row) |>
-  group_by(algorithm, wflow_id, covariates, model_class, target, rule, Year, match_id) |>
-  summarise(t = first(t), lambda1 = first(.pred), lambda2 = last(.pred),
-            goals1  = first(Goals), goals2  = last(Goals), .groups = "drop") |>
-  mutate(wdl_probs(lambda1, lambda2),
-         actual = actual_result(goals1, goals2),
-         call   = call_result(p_win, p_draw, p_loss, rule, t))
+# to_wdl(): team-game predictions -> one row per match per algorithm (and seed), with the
+#   Skellam probabilities and the call under the algorithm's rule and t (also used in Section 13)
+to_wdl = function(preds) {
+  preds |>
+    arrange(.row) |>
+    group_by(algorithm, wflow_id, covariates, model_class, target, rule, seed, Year, match_id) |>
+    summarise(t = first(t), lambda1 = first(.pred), lambda2 = last(.pred),
+              goals1  = first(Goals), goals2  = last(Goals), .groups = "drop") |>
+    mutate(wdl_probs(lambda1, lambda2),
+           actual = actual_result(goals1, goals2),
+           call   = call_result(p_win, p_draw, p_loss, rule, t))
+}
+wdl = to_wdl(preds)
 
 # historical frequency baseline: each match gets the win / draw / loss shares of its outer training years
 #   (the other 5 years for "loto", the earlier years for "expanding")
@@ -552,3 +562,39 @@ scores = full_join(goal_scores, match_scores,
                    by = c("algorithm", "wflow_id", "covariates", "model_class", "target", "rule")) |>
   pivot_longer(-c(algorithm, wflow_id, covariates, model_class, target, rule),
                names_to = "metric", values_to = "value")
+
+# Section 13: Seed noise (sensitivity, LOTO only)----
+# rf, xg and nnet are random: the same pick refit with another seed predicts a little differently.
+# To see how much that alone moves the scores, every rf / xg / nnet pick is refit with SEEDS
+# (same hyperparameters, same t, nothing re-tuned). pois and null are deterministic, so they're skipped
+# seed_scores: one row per algorithm per seed (6769 = the main run), macro F1 and RPS
+SEEDS = 1:5
+if (RESAMPLING == "loto") {
+  seed_fits = fits |>
+    filter(!endsWith(wflow_id, "_pois"), wflow_id != "base_null") |>
+    select(wflow_id, id, .config, params) |>
+    crossing(seed = SEEDS)
+
+  # cached like fits (Section 10): reused only if it's for exactly these picks and seeds
+  SEED_FILE = file.path(RESULTS_DIR, "seed_fits.rds")
+  saved_seed_fits = if (file.exists(SEED_FILE)) readRDS(SEED_FILE)
+  if (length(to_run) == 0 && !is.null(saved_seed_fits) && identical(select(saved_seed_fits, -pred), seed_fits)) {
+    seed_fits = saved_seed_fits
+  } else {
+    if (isTRUE(get0("LOAD_ONLY"))) stop("LOAD_ONLY: the seed fits are missing or out of date, run this script directly")
+    cat("refitting", nrow(seed_fits), "picks with other seeds\n")
+    seed_fits$pred = pmap(list(seed_fits$wflow_id, seed_fits$id, seed_fits$params, seed_fits$seed), refit_outer)
+    saveRDS(seed_fits, SEED_FILE)
+  }
+
+  # the same steps as preds -> wdl -> scores, with one copy of each algorithm per seed
+  seed_wdl = to_wdl(to_preds(seed_fits))
+  seed_scores = bind_rows(wdl, seed_wdl) |>
+    filter(model_class %in% c("rf", "xg", "nnet")) |>
+    group_by(algorithm, wflow_id, covariates, model_class, target, rule, seed) |>
+    summarise(macro_f1 = macro_f1(actual, call),
+              rps      = mean(((p_win - (actual == "win"))^2 + (p_win + p_draw - (actual != "loss"))^2) / 2),
+              .groups  = "drop")
+  stopifnot(all(count(seed_scores, algorithm)$n == length(SEEDS) + 1)) # every algorithm at every seed
+}
+
