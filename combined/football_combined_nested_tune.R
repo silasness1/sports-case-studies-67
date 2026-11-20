@@ -1,19 +1,24 @@
 # README: every model class (poisson, random forest, xgboost, neural net), each with and without the
 # AgeDifference and _____ covariates, run through ONE nested leave-one-tournament-out design
 #
+# An algorithm = workflow (covariates + model class) + selection target + decision rule:
+#   goal model -> Skellam win/draw/loss probabilities -> decision rule (argmax, range t, p_draw t)
+#   selection target = the inner score that picks the hyperparameters: "mae" / "poisson_log_loss"
+#   (two-stage: t picked afterwards on inner macro F1) or "macro_f1" (joint: hyperparameters and t together)
+#   algorithm ids look like "base_rf | mae | range"
+#
 # Important intermediates
-#       euro
-#       folds
-#       predictor_sets
-#       wf_sets
-#       selections
-#       
+#       euro, folds, predictor_sets, wf_set
+#       nested_res     one row per workflow (wflow_id = <covariates>_<model_class>), the nestedtune results
+#       inner_scores   one row per workflow x outer year x candidate x metric (inner-fold means)
+#       choices        one row per workflow x outer year x target x rule: the picked hyperparameters and t
+#       fits           one row per distinct pick (workflow x outer year x candidate): its outer predictions
+#
 # Results live in tables with one column per choice, so use filters to get specific:
-#   nested_res   one row per workflow (wflow_id = <covariates>_<model_class>), the nestedtune results
-#   preds        one row per team-game per workflow: Goals and the predicted lambda (.pred)
-#   wdl          one row per match per workflow: Skellam win/draw/loss probabilities + draw-threshold call
-#   scores       one row per metric per workflow
-# e.g. filter(scores, model_class == "rf", covariates == "cov")
+#   preds        one row per team-game per algorithm: Goals and the predicted lambda (.pred)
+#   wdl          one row per match per algorithm: Skellam probabilities, the actual result and the call
+#   scores       one row per metric per algorithm
+# e.g. filter(scores, model_class == "rf", rule == "range", metric == "macro_f1")
 
 # Section 0: Settings----
 # Which workflows to rerun. TRUE = run its nested tuning and overwrite <RESULTS_DIR>/<wflow_id>.rds,
@@ -135,16 +140,17 @@ rf_spec = parsnip::rand_forest(mtry = tune(),
 
 # xg: xgboost with a Poisson objective, so predictions are expected goals (> 0)
 #    min_n = xgboost's min_child_weight, sample_size = subsample, learn_rate = eta,
-#    mtry = 0.8 with counts = FALSE = colsample_bytree 0.8 (as in xgboost_with_skellam.R)
+#    colsample_bytree = 0.8: each tree sees a random 80% of the predictors (as in xgboost_with_skellam.R)
+#    (not mtry = 0.8: parsnip passes mtry to xgboost as colsample_bynode, which re-samples at every split)
 xg_spec = parsnip::boost_tree(trees = tune(),
                               tree_depth = tune(),
                               learn_rate = tune(),
-                              sample_size = tune(), 
-                              min_n = tune(), 
-                              mtry = 0.8) |>
-  set_engine("xgboost", 
-             objective = "count:poisson", 
-             counts = FALSE, 
+                              sample_size = tune(),
+                              min_n = tune()) |>
+  set_engine("xgboost",
+             objective = "count:poisson",
+             colsample_bytree = 0.8,
+             counts = FALSE,   # 0.8 is a share of the predictors, not a count
              nthread = 1) |>
   set_mode("regression")
 
@@ -159,9 +165,10 @@ nnet_spec =  parsnip::mlp(hidden_units = tune(),
 # n_pred = number of predictors, so rf's mtry goes up to all of them in each predictor set
 make_grid = function(model_class, n_pred) {
   switch(model_class,
-    pois = dials::grid_regular(penalty(), 
-                               mixture(), 
-                               levels = 7),
+    # penalty: 11 values evenly spaced on the log scale from 0.001 to 0.32 (4 per factor of 10),
+    #   since the earlier grid picked 0.02 almost every year and its other values were near 0 or 1
+    pois = expand.grid(penalty = 10^seq(-3, -0.5, by = 0.25),
+                       mixture = c(0, 0.25, 0.5, 0.75, 1)),
     rf   = expand.grid(mtry = 1:n_pred, 
                        min_n = c(3, 5, 10, 15), 
                        sample.fraction = c(0.7, 0.85, 1.0)),
@@ -188,11 +195,6 @@ wf_set = workflowsets::workflow_set(
                  nnet = nnet_spec)) |> 
   filter(wflow_id != "cov_null")
 
-# keep the held-out predictions. The null model has nothing to tune, so nestedtune runs it through
-# nested_fit_resamples, which ignores the shared control: it needs its own
-keep_preds = control_grid(save_pred = TRUE)
-wf_set = option_add(wf_set, control = keep_preds, id = "base_null")
-
 # attach each workflow's grid
 for (id in setdiff(wf_set$wflow_id, "base_null")) {
   covariates  = sub("_.*", "", id) # e.g. "cov_pois" -> "cov"
@@ -202,16 +204,110 @@ for (id in setdiff(wf_set$wflow_id, "base_null")) {
   wf_set = option_add(wf_set, grid = grid, id = id)
 }
 
-# Section 7: Run----
+# Section 7: Match-level helpers and the macro F1 metrics----
+# The fits run on parallel workers (mirai), which don't see this script's global environment or its
+# loaded packages. The macro F1 metrics run on those workers, so everything they use is defined inside
+# local() (functions keep the environment they were made in, and it travels with them to the workers)
+# and package functions are called as package::function
+match_helpers = local({
+  # team 1 = first row of a match. Goal difference G1 - G2 ~ Skellam(lambda1, lambda2)
+  lvls = c("win", "draw", "loss")
+
+  # win / draw / loss probabilities for team 1. Returns a tibble, so inside mutate() it adds 3 columns
+  wdl_probs = function(lambda1, lambda2) {
+    tibble::tibble(p_win  = skellam::pskellam(0, lambda1, lambda2, lower.tail = FALSE),  # G1 - G2 >= 1
+                   p_draw = skellam::dskellam(0, lambda1, lambda2),                      # G1 - G2 = 0
+                   p_loss = skellam::pskellam(-1, lambda1, lambda2))                     # G1 - G2 <= -1
+  }
+
+  # the actual result from team 1's view
+  actual_result = function(goals1, goals2) {
+    factor(dplyr::case_when(goals1 > goals2 ~ "win", goals1 == goals2 ~ "draw", TRUE ~ "loss"), lvls)
+  }
+
+  # Decision rules: turn the three probabilities into a call
+  #   argmax: the most likely outcome (Skellam almost never makes draw the most likely, so ~no draws)
+  #   range:  draw when the three probabilities are within t of each other, otherwise argmax
+  #   p_draw: draw when P(draw) > t, otherwise argmax
+  call_result = function(p_win, p_draw, p_loss, rule, t) {
+    argmax  = lvls[max.col(cbind(p_win, p_draw, p_loss), ties.method = "first")]
+    p_range = pmax(p_win, p_draw, p_loss) - pmin(p_win, p_draw, p_loss)
+    factor(dplyr::case_when(rule == "range"  & p_range < t ~ "draw",
+                            rule == "p_draw" & p_draw > t  ~ "draw",
+                            TRUE ~ argmax), lvls)
+  }
+
+  # Macro F1: F1 of each class, then the plain average, so draws count as much as wins
+  macro_f1 = function(truth, estimate) {
+    mean(sapply(lvls, function(k) {
+      tp = sum(estimate == k & truth == k)
+      fp = sum(estimate == k & truth != k)
+      fn = sum(estimate != k & truth == k)
+      if (2 * tp + fp + fn == 0) 0 else 2 * tp / (2 * tp + fp + fn)
+    }))
+  }
+
+  # macro F1 of one fold's held-out rows under one rule and t
+  #   tune hands a metric each fold's rows in data order, and folds hold out whole tournaments, so
+  #   rows 1-2 are one match, rows 3-4 the next, ... (checked on a test run)
+  fold_macro_f1 = function(goals, pred, rule, t) {
+    stopifnot(length(goals) %% 2 == 0)
+    team1  = seq(1, length(goals), by = 2)
+    team2  = team1 + 1
+    lambda = pmax(pred, 1e-6) # lambda must be > 0 for Skellam (the neural net can predict < 0)
+    p = wdl_probs(lambda[team1], lambda[team2])
+    macro_f1(actual_result(goals[team1], goals[team2]),
+             call_result(p$p_win, p$p_draw, p$p_loss, rule, t))
+  }
+
+  # Turn one (rule, t) into a yardstick metric that tune computes for every fold and every candidate
+  #   numeric_metric_summarizer() keeps tune's grouping, so there's one value per candidate
+  make_f1_metric = function(name, rule, t) {
+    metric = function(data, truth, estimate, na_rm = TRUE, case_weights = NULL, ...) {
+      yardstick::numeric_metric_summarizer(
+        name = name,
+        fn = function(truth, estimate, ...) fold_macro_f1(truth, estimate, rule, t),
+        data = data, truth = !!rlang::enquo(truth), estimate = !!rlang::enquo(estimate),
+        na_rm = na_rm, case_weights = !!rlang::enquo(case_weights))
+    }
+    yardstick::new_numeric_metric(metric, direction = "maximize")
+  }
+
+  environment() # local() returns the environment holding the functions above
+})
+list2env(as.list(match_helpers), envir = globalenv()) # so the rest of the script can call them by name
+
+# The decision rules and thresholds tried: one row per (rule, t), argmax has no t
+rules = bind_rows(tibble(rule = "argmax", t = NA),
+                  tibble(rule = "range",  t = seq(0, 0.30, by = 0.025)),
+                  tibble(rule = "p_draw", t = seq(0.10, 0.40, by = 0.025))) |>
+  mutate(metric_name = if_else(rule == "argmax", "f1_argmax", sprintf("f1_%s_%.3f", rule, t)))
+
+f1_metrics = pmap(list(rules$metric_name, rules$rule, rules$t), make_f1_metric)
+names(f1_metrics) = rules$metric_name
+
+# Every metric computed on every inner fold for every candidate (stored in the results)
+#   mae first = the metric nestedtune itself selects on. The others are for the other selection targets
+run_metrics = do.call(metric_set, c(list(mae = mae, poisson_log_loss = poisson_log_loss), f1_metrics))
+
+# Section 8: Run----
 # - For each workflow and each outer year: tune on the other 5 years (inner folds, best mae),
 #     refit the winner on those 5 years, and predict the held-out year
 # - Each workflow is saved to its own file, so only the ones marked in RERUN have to run again
-# - Mixing fresh and saved results gives the same numbers as one run of everything: nested_workflow_map
-#     starts every workflow from the same random state after set.seed(), so a workflow's result doesn't
-#     depend on which other workflows ran with it
+# - Every workflow starts from the same random state (set.seed before each), so a workflow's result
+#     doesn't depend on which other workflows ran with it
 stopifnot(setequal(names(RERUN), wf_set$wflow_id)) # one switch per workflow, no typos
 result_file = function(id) file.path(RESULTS_DIR, paste0(id, ".rds"))
-to_run = wf_set$wflow_id[RERUN[wf_set$wflow_id] | !file.exists(result_file(wf_set$wflow_id))]
+
+# a saved result from before a metric was added (or changed), or one whose folds all failed, can't be
+# used, so it runs again too (base_null has no inner folds, so it has no inner metrics to check)
+lacks_metrics = function(id) {
+  if (id == "base_null" || !file.exists(result_file(id))) return(FALSE)
+  saved_metrics = unique(unlist(map(readRDS(result_file(id))$.inner_metrics, ".metric")))
+  !all(rules$metric_name %in% saved_metrics)
+}
+to_run = wf_set$wflow_id[RERUN[wf_set$wflow_id] | !file.exists(result_file(wf_set$wflow_id)) |
+                         map_lgl(wf_set$wflow_id, lacks_metrics)]
 
 # LOAD_ONLY = TRUE is set by scripts that source this one (e.g. community_plots_result_pres.R)
 # get0 checks for LOAD_ONLY's existence and stop instead of refitting or loading the QUICK debug fits
@@ -222,161 +318,208 @@ if (isTRUE(get0("LOAD_ONLY")) && (length(to_run) > 0 || QUICK)) {
 
 if (length(to_run) > 0) {
   mirai::daemons(2) # sets up parallelization based on 2 physical cores
-  set.seed(6769)
-  fresh = nestedtune::nested_workflow_map(
-    filter(wf_set, wflow_id %in% to_run),
-    fn        = "nested_tune_grid",
-    resamples = folds,
-    metrics   = metric_set(mae, rmse),             # mae first = the selection metric
-    select    = selection_rule(rule = "best"),
-    control   = keep_preds,
-    verbose   = TRUE
-  )
-  mirai::daemons(0)
   dir.create(RESULTS_DIR, showWarnings = FALSE, recursive = TRUE)
-  for (i in seq_len(nrow(fresh))) saveRDS(fresh$result[[i]], result_file(fresh$wflow_id[i]))
+  for (id in to_run) {
+    set.seed(6769)
+    elapsed = system.time({
+      fresh = nestedtune::nested_workflow_map(
+        filter(wf_set, wflow_id == id),
+        fn        = "nested_tune_grid",
+        resamples = folds,
+        metrics   = run_metrics,
+        select    = selection_rule(rule = "best"),
+        verbose   = TRUE
+      )
+    })[["elapsed"]]
+    result = fresh$result[[1]]
+    attr(result, "elapsed_sec") = elapsed # how long the run took, to plan the next ones
+    saveRDS(result, result_file(id))       # saved right away, so a crash keeps the finished ones
+    cat(id, "took", round(elapsed / 60, 1), "min\n")
+  }
+  mirai::daemons(0)
 }
 
 # nested_res: one row per workflow, with its nested results (fresh or saved) in the result column
 nested_res = tibble(wflow_id = wf_set$wflow_id,
                     result   = map(wflow_id, \(id) readRDS(result_file(id))))
 
-# hyperparameters each outer year chose, per workflow
-selections = nested_res |>
+# Section 9: Selections: which hyperparameters and t each algorithm uses----
+# An algorithm = workflow + selection target + decision rule. For each outer year it picks, using
+# only that year's inner folds:
+#   target "mae" or "poisson_log_loss" (two-stage): the candidate with the best inner goal score,
+#       then the t with the best inner macro F1 for that candidate
+#   target "macro_f1" (joint): the (candidate, t) with the best inner macro F1, picked together
+# Ties go to the smallest t, then to the first candidate in the grid
+# base_null has nothing to tune, so it gets one row per outer year: target "none", rule argmax
+# cov workflows only get target "mae": they're compared with base under that target only
+
+# inner_scores: one row per workflow x outer year x candidate x metric, the metric's mean over the
+#   5 inner folds. The models have different hyperparameters, so they're packed into one list
+#   column (params), and params_label shows them as text, e.g. "penalty=0.0215, mixture=1"
+inner_scores_of = function(result) {
+  scores = collect_inner_metrics(result)
+  param_cols = setdiff(names(scores), c("id", ".metric", ".estimator", "mean", "n", "std_err", ".config"))
+  scores |>
+    nest(params = all_of(param_cols)) |>
+    mutate(params_label = map_chr(params, \(p) paste(names(p), signif(unlist(p), 3), sep = "=", collapse = ", ")))
+}
+inner_scores = nested_res |>
+  filter(wflow_id != "base_null") |>
+  mutate(scores = map(result, inner_scores_of)) |>
+  select(wflow_id, scores) |>
+  unnest(scores) |>
+  left_join(select(rules, metric_name, rule, t), by = c(".metric" = "metric_name")) # NA for mae / NLL
+
+f1_scores = inner_scores |> filter(!is.na(rule)) |> arrange(t)       # arranged so ties -> smallest t
+
+# two-stage: the best candidate on the goal score (lowest), then that candidate's best t
+pick_two_stage = function(target) {
+  best_candidate = inner_scores |>
+    filter(.metric == target) |>
+    group_by(wflow_id, id) |>
+    slice_min(mean, n = 1, with_ties = FALSE) |>
+    ungroup() |>
+    select(wflow_id, id, .config)
+  f1_scores |>
+    semi_join(best_candidate, by = c("wflow_id", "id", ".config")) |>
+    group_by(wflow_id, id, rule) |>
+    slice_max(mean, n = 1, with_ties = FALSE) |>
+    ungroup() |>
+    mutate(target = target)
+}
+
+# joint: the best (candidate, t) on macro F1, for each rule
+pick_joint = f1_scores |>
+  group_by(wflow_id, id, rule) |>
+  slice_max(mean, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  mutate(target = "macro_f1")
+
+# choices: one row per workflow x outer year x target x rule, with the picked candidate and t
+#   inner_f1 = the inner macro F1 of that pick (what the joint target maximized)
+null_choices = tibble(wflow_id = "base_null", id = folds$id, target = "none", rule = "argmax",
+                      t = NA, .config = "none", params = list(tibble()), params_label = "", mean = NA)
+choices = bind_rows(pick_two_stage("mae"), pick_two_stage("poisson_log_loss"), pick_joint, null_choices) |>
+  separate_wider_delim(wflow_id, "_", names = c("covariates", "model_class"), cols_remove = FALSE) |>
+  filter(covariates == "base" | target %in% c("mae", "none")) |>
+  select(wflow_id, covariates, model_class, id, target, rule, t, .config, params, params_label,
+         inner_f1 = mean)
+
+# check: target "mae" must pick exactly what nestedtune itself picked (it selects on inner mae)
+nestedtune_picks = nested_res |>
+  filter(wflow_id != "base_null") |>
   mutate(chosen = map(result, collect_selections)) |>
   select(wflow_id, chosen) |>
   unnest(chosen)
+stopifnot(nrow(anti_join(distinct(filter(choices, target == "mae"), wflow_id, id, .config),
+                         nestedtune_picks, by = c("wflow_id", "id", ".config"))) == 0)
 
-# Section 8: Goal predictions----
-# - One row per held-out team-game per workflow
+# Section 10: Outer predictions for every algorithm----
+# choices -> fits -> preds:
+# - every pick in choices is refit by hand: fit the picked candidate on the 5 outer-training years and
+#     predict the held-out year (what nestedtune does after its own pick, done here for every target)
+# - several algorithms often share a pick (e.g. argmax / range / p_draw under mae), so each is fit once
+# - the fits are saved to RESULTS_DIR/outer_fits.rds, so sourcing this script again doesn't refit them
+
+# one refit: one row per held-out team-game
+refit_outer = function(wflow_id, outer_id, params) {
+  split = folds$splits[[which(folds$id == outer_id)]]
+  wf = extract_workflow(wf_set, wflow_id) |> finalize_workflow(params)
+  set.seed(6769)
+  fitted = fit(wf, analysis(split))
+  tibble(.row  = as.integer(split, data = "assessment"),
+         Goals = assessment(split)$Goals,
+         .pred = predict(fitted, assessment(split))$.pred)
+}
+
+# fits: one row per distinct (workflow, outer year, candidate) that some algorithm uses
+fits = choices |>
+  distinct(wflow_id, id, .config, .keep_all = TRUE) |>
+  select(wflow_id, id, .config, params)
+
+# reuse the saved fits only if they are for exactly these picks and no workflow was just rerun,
+# otherwise refit them all (a couple of minutes)
+FITS_FILE = file.path(RESULTS_DIR, "outer_fits.rds")
+saved_fits = if (file.exists(FITS_FILE)) readRDS(FITS_FILE)
+if (length(to_run) == 0 && !is.null(saved_fits) && identical(select(saved_fits, -pred), fits)) {
+  fits = saved_fits
+} else {
+  if (isTRUE(get0("LOAD_ONLY"))) stop("LOAD_ONLY: the outer fits are missing or out of date, run this script directly")
+  cat("refitting", nrow(fits), "picks\n")
+  fits$pred = pmap(list(fits$wflow_id, fits$id, fits$params), refit_outer)
+  saveRDS(fits, FITS_FILE)
+}
+
+# preds: one row per held-out team-game per algorithm
 # - ".row" is the row in euro, which gives back Year and match_id
-# - The neural net can predict slightly negative goals; lambda must be > 0 for Skellam, so clamp
-#     (moving a negative prediction to ~0 can only shrink its error, since Goals >= 0)
-preds = nested_res |>
-  mutate(pred = map(result, collect_predictions)) |>
-  select(wflow_id, pred) |>
+# - lambda must be > 0 for Skellam, so clamp (the neural net can predict slightly negative goals;
+#     moving a negative prediction to ~0 can only shrink its error, since Goals >= 0)
+preds = choices |>
+  select(-params) |>
+  left_join(select(fits, -params), by = c("wflow_id", "id", ".config")) |>
   unnest(pred) |>
-  separate_wider_delim(wflow_id, "_", names = c("covariates", "model_class"), cols_remove = FALSE) |>
   mutate(.pred = pmax(.pred, 1e-6),
-         Year = euro$Year[.row], match_id = euro$match_id[.row]) |>
-  select(wflow_id, covariates, model_class, Year, match_id, .row, Goals, .pred)
+         Year = euro$Year[.row], match_id = euro$match_id[.row],
+         algorithm = paste(wflow_id, target, rule, sep = " | ")) |>
+  select(algorithm, wflow_id, covariates, model_class, target, rule, id, Year, match_id, .row,
+         t, params_label, Goals, .pred)
 
-stopifnot(all(count(preds, wflow_id)$n == nrow(euro))) # every row predicted exactly once per workflow
+stopifnot(all(count(preds, algorithm)$n == nrow(euro))) # every row predicted exactly once per algorithm
 
-# Section 9: Win/draw/loss----
-# team 1 = first row of the match. Goal difference G1 - G2 ~ Skellam(lambda1, lambda2)
-lvls = c("win", "draw", "loss")
-
-convert_preds_to_wdl = function(preds) {
-  preds |>
-    arrange(.row) |>
-    group_by(Year, match_id) |>
-    summarise(lambda1 = first(.pred), lambda2 = last(.pred),
-              goals1  = first(Goals), goals2  = last(Goals), .groups = "drop") |>
-    mutate(
-      p_win   = pskellam(0, lambda1, lambda2, lower.tail = FALSE),  # G1 - G2 >= 1
-      p_draw  = dskellam(0, lambda1, lambda2),                      # G1 - G2 = 0
-      p_loss  = pskellam(-1, lambda1, lambda2),                     # G1 - G2 <= -1
-      p_range = pmax(p_win, p_draw, p_loss) - pmin(p_win, p_draw, p_loss),
-      pred_argmax = factor(lvls[max.col(cbind(p_win, p_draw, p_loss), ties.method = "first")], lvls),
-      actual = factor(case_when(goals1 > goals2 ~ "win", goals1 == goals2 ~ "draw", TRUE ~ "loss"), lvls)
-    )
-}
-
-# Draw rule: call a draw when the three probabilities are within t of each other, otherwise argmax
-# (Skellam almost never makes draw the single most likely outcome, so argmax alone never calls draws)
-pred_at_t_range = function(wdl, t) {
-  factor(if_else(wdl$p_range < t, "draw", as.character(wdl$pred_argmax)), lvls)
-}
-
-# Alternative: Call a draw when P_draw is above a threshod
-pred_at_t_draw = function(wdl, t) {
-  factor(if_else(wdl$p_draw > t, "draw", as.character(wdl$pred_argmax)), lvls)
-}
-
-# Macro F1: F1 of each class, then the plain average, so draws count as much as wins
-macro_f1 = function(truth, estimate) {
-  mean(sapply(lvls, function(k) {
-    tp = sum(estimate == k & truth == k)
-    fp = sum(estimate == k & truth != k)
-    fn = sum(estimate != k & truth == k)
-    if (2 * tp + fp + fn == 0) 0 else 2 * tp / (2 * tp + fp + fn)
-  }))
-}
-
-# t is tuned leave-one-tournament-out: each year's draws are called with the t that had the best
-# macro F1 on the OTHER five years, so the score at that t is honest. Ties go to the smallest t
-T_GRID_RANGE = seq(0, 0.30, by = 0.025)
-T_GRID_DRAW  = seq(.1, 0.40, by = 0.0125)
-
-add_draw_threshold = function(wdl) {
-  best_t_draw  = function(w) T_GRID_DRAW[which.max(sapply(T_GRID_DRAW,   \(t) macro_f1(w$actual, pred_at_t_draw(w, t))))]
-  best_t_range = function(w) T_GRID_RANGE[which.max(sapply(T_GRID_RANGE, \(t) macro_f1(w$actual, pred_at_t_range(w, t))))]
-  years = sort(unique(wdl$Year))
-  t_draw_by_year  = sapply(years, \(y) best_t_draw(filter(wdl, Year != y)))
-  t_range_by_year = sapply(years, \(y) best_t_range(filter(wdl, Year != y)))
-  wdl |>
-    mutate(overwrite_t_draw = t_draw_by_year[match(Year, years)],
-           overwrite_t_range = t_range_by_year[match(Year, years)],
-           pred_t_draw = pred_at_t_draw(wdl, overwrite_t_draw), 
-           pred_t_range = pred_at_t_range(wdl, overwrite_t_range))
-}
-
+# Section 11: Win/draw/loss----
+# wdl: one row per match per algorithm, with the call under that algorithm's rule and t
 wdl = preds |>
-  group_by(wflow_id, covariates, model_class) |>
-  group_modify(\(p, key) p |> convert_preds_to_wdl() |> add_draw_threshold()) |>
-  ungroup()
+  arrange(.row) |>
+  group_by(algorithm, wflow_id, covariates, model_class, target, rule, Year, match_id) |>
+  summarise(t = first(t), lambda1 = first(.pred), lambda2 = last(.pred),
+            goals1  = first(Goals), goals2  = last(Goals), .groups = "drop") |>
+  mutate(wdl_probs(lambda1, lambda2),
+         actual = actual_result(goals1, goals2),
+         call   = call_result(p_win, p_draw, p_loss, rule, t))
 
-stopifnot(all(count(wdl, wflow_id)$n == nrow(euro) / 2)) # one row per match per workflow
+# historical frequency baseline: each match gets the win / draw / loss shares of the other 5 years
+matches = wdl |> distinct(Year, match_id, goals1, goals2, actual)
+shares_without = function(year) prop.table(table(filter(matches, Year != year)$actual))
+baseline_wdl = matches |>
+  mutate(p_win  = map_dbl(Year, \(y) shares_without(y)[["win"]]),
+         p_draw = map_dbl(Year, \(y) shares_without(y)[["draw"]]),
+         p_loss = map_dbl(Year, \(y) shares_without(y)[["loss"]]),
+         call   = call_result(p_win, p_draw, p_loss, "argmax", NA),
+         algorithm = "historical | none | argmax", wflow_id = "historical", covariates = "none",
+         model_class = "historical", target = "none", rule = "argmax")
+wdl = bind_rows(wdl, baseline_wdl)
 
-# Section 10: Scores----
+stopifnot(all(count(wdl, algorithm)$n == nrow(euro) / 2)) # one row per match per algorithm
+
+# Section 12: Scores----
 # Every score is pooled: computed once over all held-out rows / matches, not averaged per year
-#   goal level:  mae, rmse, poisson_nll (-log P(actual goals))
-#   match level: rps, brier, log_loss use only the probabilities (no threshold involved)
-#                accuracy / macro_f1 for argmax and for the tuned draw threshold (_t)
-score_workflow = function(p, w) {
-  y = cbind(w$actual == "win", w$actual == "draw", w$actual == "loss") * 1
-  P = cbind(w$p_win, w$p_draw, w$p_loss)
-  tibble(
-    metric = c("mae", 
-               "rmse", 
-               "poisson_nll", 
-               "rps", 
-               "brier", 
-               "log_loss",
-               "accuracy_argmax", 
-               "accuracy_t_draw", 
-               "accuracy_t_range", 
-               "macro_f1_argmax", 
-               "macro_f1_t_draw",
-               "macro_f1_t_range",
-               "draw_recall_argmax",
-               "draw_recall_t_draw",
-               "draw_recall_t_range"),
-    value = c(
-      mean(abs(p$Goals - p$.pred)),
-      sqrt(mean((p$Goals - p$.pred)^2)),
-      -mean(dpois(p$Goals, p$.pred, log = TRUE)),
-      # RPS: squared errors of the cumulative probabilities P(win), P(win or draw), / 2
-      mean(((P[, 1] - y[, 1])^2 + (P[, 1] + P[, 2] - y[, 1] - y[, 2])^2) / 2),
-      mean(rowSums((P - y)^2)), #brier
-      -mean(log(rowSums(P * y))), #log_loss
-      mean(w$pred_argmax == w$actual),
-      mean(w$pred_t_draw == w$actual),
-      mean(w$pred_t_range == w$actual),
-      macro_f1(w$actual, w$pred_argmax),
-      macro_f1(w$actual, w$pred_t_draw),
-      macro_f1(w$actual, w$pred_t_range),
-      sum((w$pred_argmax == "draw")  & (w$actual == "draw")) / sum(w$actual == "draw"), 
-      sum((w$pred_t_draw == "draw")  & (w$actual == "draw")) / sum(w$actual == "draw"), 
-      sum((w$pred_t_range == "draw") & (w$actual == "draw")) / sum(w$actual == "draw")
-    )
-  )
-}
+#   goal level:  mae, rmse, poisson_nll (-log P(actual goals)). Not for the historical baseline
+#   match level: rps, brier, log_loss use only the probabilities (the rule doesn't change them)
+#                accuracy, macro_f1, draw_recall, draws_called use the call
+goal_scores = preds |>
+  group_by(algorithm, wflow_id, covariates, model_class, target, rule) |>
+  summarise(mae         = mean(abs(Goals - .pred)),
+            rmse        = sqrt(mean((Goals - .pred)^2)),
+            poisson_nll = -mean(dpois(Goals, .pred, log = TRUE)),
+            .groups = "drop")
 
-scores = wdl |>
-  distinct(wflow_id, covariates, model_class) |>
-  mutate(score = map(wflow_id, \(id) score_workflow(filter(preds, wflow_id == id),
-                                                    filter(wdl, wflow_id == id)))) |>
-  unnest(score)
+match_scores = wdl |>
+  group_by(algorithm, wflow_id, covariates, model_class, target, rule) |>
+  summarise(
+    # RPS: squared errors of the cumulative probabilities P(win), P(win or draw), / 2
+    rps          = mean(((p_win - (actual == "win"))^2 +
+                         (p_win + p_draw - (actual != "loss"))^2) / 2),
+    brier        = mean((p_win - (actual == "win"))^2 + (p_draw - (actual == "draw"))^2 +
+                        (p_loss - (actual == "loss"))^2),
+    log_loss     = -mean(log(case_when(actual == "win" ~ p_win, actual == "draw" ~ p_draw, TRUE ~ p_loss))),
+    accuracy     = mean(call == actual),
+    macro_f1     = macro_f1(actual, call),
+    draw_recall  = sum(call == "draw" & actual == "draw") / sum(actual == "draw"),
+    draws_called = sum(call == "draw"),
+    .groups = "drop")
 
+# scores: one row per metric per algorithm
+scores = full_join(goal_scores, match_scores,
+                   by = c("algorithm", "wflow_id", "covariates", "model_class", "target", "rule")) |>
+  pivot_longer(-c(algorithm, wflow_id, covariates, model_class, target, rule),
+               names_to = "metric", values_to = "value")
