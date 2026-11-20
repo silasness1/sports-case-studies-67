@@ -1,4 +1,4 @@
-tennis <- read.csv("D:/Course/Case Studies/SlamsData.csv", stringsAsFactors = TRUE)
+tennis <- read.csv("raw-data/SlamsData.csv", stringsAsFactors = TRUE)
 str(tennis)
 #Understanding the data
 #player1 and player2 are arbitarily placed (no home advantage). 

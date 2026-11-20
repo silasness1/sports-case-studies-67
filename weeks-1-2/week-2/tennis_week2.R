@@ -1,6 +1,6 @@
 library(rpart)
 
-tennis <- read.csv("D:/Course/Case Studies/SlamsData.csv", stringsAsFactors = TRUE)
+tennis <- read.csv("raw-data/SlamsData.csv", stringsAsFactors = TRUE)
 tennis$win <- as.factor(tennis$win)     
 
 tree.tennis <- rpart(win ~ rank + points + elo + age.30,
