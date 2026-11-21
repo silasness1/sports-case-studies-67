@@ -7,8 +7,7 @@
 # - To change a model or refit: edit and run football_combined_nested_tune.R directly, not from here
 # - After sourcing you have its objects (see the README at its top): euro, folds, nested_res,
 #       inner_scores, choices, fits, preds, wdl, scores
-#   and in Section 4 the expanding-window results as expanding$wdl, expanding$scores, ...
-#   (needs results/combined_expanding, made by running it with RESAMPLING = "expanding")
+#   and the expanding-window results as expanding$wdl, expanding$scores, ... (its Section 14)
 #   e.g. filter(scores, model_class == "rf", rule == "range"). Section 0.2 shows what each looks like
 # - Put shared plots/tables below, one section each. Personal results go in your own script
 # - Save with save_plot(plot, "name") and save_table(df, "name") (Section 0.2), so everything lands in
@@ -65,7 +64,7 @@ if (SHOW_OBJECTS) {
   glimpse(choices)
 
   # inner_scores: what the choices were made from. One row per workflow x outer year x candidate x
-  #   metric: the mean over the 5 inner folds. Metrics: mae, poisson_log_loss, f1_<rule>_<t>
+  #   metric: the mean over the 5 inner folds. Metrics: mae, poisson_log_loss, rps, f1_<rule>_<t>
   print("inner_scores object:")
   glimpse(inner_scores)
 
@@ -151,16 +150,30 @@ save_table = function(df, name, digits = 3, ...) {
 # One tile per algorithm on base covariates. Facets = selection target, so one picture shows the best
 # algorithm and whether the best rule depends on how the hyperparameters were picked
 # ("none" = algorithms with nothing to tune: the null model and the historical frequency baseline)
-target_order = c("none", "mae", "poisson_log_loss", "macro_f1")
-headline = scores |>
+# Every tile is the mean over the 6 refit seeds, with the seed sd below it (see seed_summary)
+
+# seed_summary: one row per algorithm x metric (macro_f1, rps): mean and sd over the 6 refit seeds
+#   rf / xg / nnet: from seed_scores (Section 13 of the nested tune file)
+#   pois, null and historical are deterministic: their one value, sd 0
+seed_summary = bind_rows(
+  seed_scores |> pivot_longer(c(macro_f1, rps), names_to = "metric"),
+  scores |> filter(metric %in% c("macro_f1", "rps"), !model_class %in% c("rf", "xg", "nnet"))) |>
+  group_by(algorithm, covariates, model_class, target, rule, metric) |>
+  summarise(mean = mean(value), sd = if (n() > 1) sd(value) else 0, n_seeds = n(), .groups = "drop")
+
+target_order = c("none", "mae", "poisson_log_loss", "rps", "macro_f1")
+model_order  = c("pois", "rf", "xg", "nnet", "null", "historical") # top to bottom in the plots
+headline = seed_summary |>
   filter(covariates %in% c("base", "none")) |>
   mutate(target = factor(target, target_order),
-         rule = factor(rule, c("argmax", "range", "p_draw")))
+         rule = factor(rule, c("argmax", "range", "p_draw")),
+         model_class = factor(model_class, rev(model_order))) # ggplot draws the first level at the bottom
 
 plot_headline = function(metric_name, label, digits = 3) {
-  ggplot(filter(headline, metric == metric_name), aes(rule, model_class, fill = value)) +
+  ggplot(filter(headline, metric == metric_name), aes(rule, model_class, fill = mean)) +
     geom_tile(color = "white") +
-    geom_text(aes(label = format(round(value, digits), nsmall = digits)), size = 3.5) +
+    geom_text(aes(label = paste0(format(round(mean, digits), nsmall = digits), "\n\u00b1",
+                                 format(round(sd, digits), nsmall = digits))), size = 3) +
     facet_grid(~ target, scales = "free_x", space = "free_x") +
     # begin = 0.35 skips the darkest colors, so the black numbers stay readable on every tile
     scale_fill_viridis_c(option = "magma", begin = 0.35, direction = if (metric_name == "macro_f1") 1 else -1) +
@@ -168,10 +181,10 @@ plot_headline = function(metric_name, label, digits = 3) {
          title = paste(label, "by model class, decision rule and selection target"))
 }
 
-save_plot(plot_headline("macro_f1", "Macro F1"), "headline_macro_f1", width = 10, height = 4)
+save_plot(plot_headline("macro_f1", "Macro F1"), "headline_macro_f1", width = 10, height = 5)
 # RPS doesn't depend on the rule (it only uses the probabilities), but it does on the target,
 # because each target can pick different hyperparameters
-save_plot(plot_headline("rps", "RPS"), "headline_rps", width = 10, height = 4)
+save_plot(plot_headline("rps", "RPS"), "headline_rps", width = 10, height = 5)
 
 # Section 2: Paired effects: does a change help on the same 246 matches?----
 # compare_algorithms(a, b): algorithm a (the change) against b (what it's compared to)
@@ -204,7 +217,7 @@ base_algorithms = scores |>
 
 # threshold effect: rule vs argmax with the same goal model (two-stage targets, same predictions)
 threshold_pairs = base_algorithms |>
-  filter(target %in% c("mae", "poisson_log_loss"), rule != "argmax") |>
+  filter(target %in% c("mae", "poisson_log_loss", "rps"), rule != "argmax") |>
   mutate(b = paste(wflow_id, target, "argmax", sep = " | "))
 
 # selection effect: joint (macro F1) vs two-stage (mae), same rule
@@ -228,12 +241,21 @@ save_table(paired_effects, "paired_effects")
 
 # Section 3: Tables----
 # main table: one row per algorithm on base covariates, the scores side by side
+#   seed columns: macro F1 / RPS as mean and sd over the 6 refit seeds, the rest from the main seed
+seed_columns = seed_summary |>
+  select(algorithm, metric, mean, sd) |>
+  pivot_wider(names_from = metric, values_from = c(mean, sd), names_glue = "{metric}_seed_{.value}")
 main_table = scores |>
   filter(covariates %in% c("base", "none"),
          metric %in% c("macro_f1", "accuracy", "draw_recall", "draws_called", "rps", "log_loss", "mae")) |>
-  select(model_class, target, rule, metric, value) |>
+  select(algorithm, model_class, target, rule, metric, value) |>
   pivot_wider(names_from = metric, values_from = value) |>
-  arrange(desc(macro_f1))
+  left_join(seed_columns, by = "algorithm") |>
+  select(-algorithm) |>
+  # two rankings: rps ranks the probabilities (the model), macro F1 the calls (model + decision rule)
+  mutate(rank_rps      = min_rank(rps_seed_mean),
+         rank_macro_f1 = min_rank(desc(macro_f1_seed_mean))) |>
+  arrange(desc(macro_f1_seed_mean))
 print(main_table, n = Inf)
 save_table(main_table, "main_table")
 
@@ -252,15 +274,8 @@ with(filter(wdl, algorithm == "base_pois | mae | range"), table(called = call, a
 # Each sub-result changes ONE thing from the reference slice (LOTO, base covariates, target mae, every
 # model x rule) and asks: does the winner (model, rule) change, and how much does the score move?
 
-# The expanding-window results, loaded into their own environment so their objects (scores, wdl, ...)
-#   don't overwrite the LOTO ones: use expanding$wdl, expanding$scores, ...
-#   (they come from running football_combined_nested_tune.R with RESAMPLING = "expanding")
-expanding = new.env()
-local({
-  RESAMPLING = "expanding"
-  LOAD_ONLY  = TRUE
-  source(NESTED_TUNE_FILE, local = TRUE)
-}, envir = expanding)
+# The expanding-window results are in `expanding` (expanding$wdl, expanding$scores, ...), loaded by
+#   Section 14 of the nested tune file (needs RUN_EXPANDING = TRUE there)
 expanding_years = unique(expanding$wdl$Year) # 2012-2024: the years both schemes test on
 
 # slice_scores(): macro F1 and RPS of every model x rule at target mae, on some covariates and years
@@ -270,7 +285,7 @@ slice_scores = function(wdl, covariates_used, years) {
     filter(covariates == covariates_used, target == "mae", Year %in% years) |>
     group_by(model_class, rule, algorithm) |>
     summarise(macro_f1 = macro_f1(actual, call),
-              rps      = mean(((p_win - (actual == "win"))^2 + (p_win + p_draw - (actual != "loss"))^2) / 2),
+              rps      = mean_rps(p_win, p_draw, actual),
               .groups  = "drop")
 }
 
