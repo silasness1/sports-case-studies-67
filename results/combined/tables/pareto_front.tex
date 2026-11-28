@@ -1,0 +1,13 @@
+
+\begin{tabular}{rlllrrrrrrr}
+\toprule
+id & model\_class & target & rule & draws\_called & accuracy & draw\_recall & draw\_precision & draw\_f1 & macro\_f1 & rps\\
+\midrule
+1 & pois & macro\_f1 & argmax & 0.000 & 0.516 & 0.000 & -- & 0.000 & 0.403 & 0.217\\
+2 & rf & poisson\_log\_loss & p\_draw & 59.333 & 0.505 & 0.275 & 0.334 & 0.302 & 0.486 & 0.194\\
+3 & rf & macro\_f1 & range & 75.167 & 0.495 & 0.368 & 0.352 & 0.360 & 0.487 & 0.198\\
+4 & pois & macro\_f1 & p\_draw & 101.000 & 0.488 & 0.500 & 0.356 & 0.416 & 0.489 & 0.197\\
+5 & pois & mae & range & 115.000 & 0.480 & 0.528 & 0.330 & 0.406 & 0.483 & 0.196\\
+6 & nnet & poisson\_log\_loss & p\_draw & 139.000 & 0.439 & 0.583 & 0.302 & 0.398 & 0.445 & 0.198\\
+\bottomrule
+\end{tabular}

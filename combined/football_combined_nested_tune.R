@@ -43,8 +43,10 @@
 # - preds:       one obs per {algorithm} x {team-match}: Goals and predicted lambda
 # - wdl:         one obs per {algorithm} x {match}: probabilities, actual result, call
 # - scores:      one obs per {algorithm} x {metric} (pooled over all held-out matches)
-# - seed_scores: one obs per {algorithm} x {seed}: macro F1 and RPS (rf / xg / nnet)
-# - expanding:   environment holding the expanding run's objects (expanding$scores, ...)
+# - seed_scores:  one obs per {algorithm} x {seed}: every score (rf / xg / nnet, the main seed + 5 others)
+# - seed_summary: one obs per {algorithm} x {metric}: mean, sd, min and max over the seeds (the default)
+# - expanding:    environment holding the expanding run's objects (expanding$scores, ...)
+# - finals:       the final models by name (finals$pois, finals$rf), for predict_final()
 
 # Section 0: Settings----
 
@@ -639,8 +641,12 @@ match_scores = wdl |>
     log_loss     = -mean(log(case_when(actual == "win" ~ p_win, actual == "draw" ~ p_draw, TRUE ~ p_loss))),
     accuracy     = mean(call == actual),
     macro_f1     = macro_f1(actual, call),
+    macruracy_mean = (accuracy + macro_f1)/2,
+    macruracy_h_mean = 2*(accuracy*macro_f1)/(accuracy+macro_f1),
     draw_recall  = sum(call == "draw" & actual == "draw") / sum(actual == "draw"),
     draws_called = sum(call == "draw"),
+    draw_f1      = 2 * sum(call == "draw" & actual == "draw") / (draws_called + sum(actual == "draw")), # 0 if no draw called right
+    draw_precision = if (draws_called > 0) sum(call == "draw" & actual == "draw") / draws_called else NA_real_, # NA: no draws called
     .groups = "drop")
 
 # scores contains the summary metrics with which to compare: one obs per {algorithm} x {metric}
@@ -678,15 +684,58 @@ if (RESAMPLING == "loto") {
   }
 
   # reuse to_preds() and to_wdl() to get scores object for each seed
-  seed_wdl = to_wdl(to_preds(seed_fits))
+  seed_preds = to_preds(seed_fits)
+  seed_wdl   = to_wdl(seed_preds)
+
+  # goal-level scores per seed (as goal_scores in Section 12), joined onto the match-level ones below
+  seed_goal_scores = bind_rows(preds, seed_preds) |>
+    filter(model_class %in% c("rf", "xg", "nnet")) |>
+    group_by(algorithm, wflow_id, covariates, model_class, target, rule, seed) |>
+    summarise(mae         = mean(abs(Goals - .pred)),
+              rmse        = sqrt(mean((Goals - .pred)^2)),
+              poisson_nll = -mean(dpois(Goals, .pred, log = TRUE)),
+              .groups = "drop")
+
   seed_scores = bind_rows(wdl, seed_wdl) |>
     filter(model_class %in% c("rf", "xg", "nnet")) |>
     group_by(algorithm, wflow_id, covariates, model_class, target, rule, seed) |>
-    summarise(macro_f1 = macro_f1(actual, call),
-              rps      = mean_rps(p_win, p_draw, actual),
-              .groups  = "drop")
-  stopifnot(all(count(seed_scores, algorithm)$n == length(SEEDS) + 1))
+    summarise(    rps          = mean_rps(p_win, p_draw, actual),
+                  brier        = mean((p_win - (actual == "win"))^2 + (p_draw - (actual == "draw"))^2 +
+                                        (p_loss - (actual == "loss"))^2),
+                  log_loss     = -mean(log(case_when(actual == "win" ~ p_win, actual == "draw" ~ p_draw, TRUE ~ p_loss))),
+                  accuracy     = mean(call == actual),
+                  macro_f1     = macro_f1(actual, call),
+                  macruracy_mean = (accuracy + macro_f1)/2,
+                  macruracy_h_mean = 2*(accuracy*macro_f1)/(accuracy+macro_f1),
+                  draw_recall  = sum(call == "draw" & actual == "draw") / sum(actual == "draw"),
+                  draws_called = sum(call == "draw"),
+                  draw_f1      = 2 * sum(call == "draw" & actual == "draw") / (draws_called + sum(actual == "draw")),
+                  draw_precision = if (draws_called > 0) sum(call == "draw" & actual == "draw") / draws_called else NA_real_,
+              .groups  = "drop") |>
+    left_join(seed_goal_scores, by = c("algorithm", "wflow_id", "covariates", "model_class", "target", "rule", "seed"))
+  stopifnot(all(count(seed_scores, algorithm)$n == length(SEEDS) + 1), !anyNA(seed_scores$mae))
 }
+
+# seed_summary: one obs per {algorithm} x {metric}: the mean, sd, min and max over the refit seeds
+# - rf / xg / nnet (LOTO): over the 6 seeds of seed_scores. Everything else, and every algorithm of the
+#     expanding run (no other seeds there): its one value from scores, sd 0
+# - draw_precision is NA at a seed that called no draws: those seeds are left out (NA if no seed called one)
+# - the default scores to report: seed means are less noisy than the main seed alone
+id_cols = c("algorithm", "wflow_id", "covariates", "model_class", "target", "rule")
+seed_values = if (RESAMPLING == "loto") {
+  bind_rows(seed_scores |> pivot_longer(-all_of(c(id_cols, "seed")), names_to = "metric"),
+            scores |> filter(!model_class %in% c("rf", "xg", "nnet")))
+} else {
+  scores
+}
+seed_summary = seed_values |>
+  group_by(across(all_of(id_cols)), metric) |>
+  summarise(mean    = if (all(is.na(value))) NA_real_ else mean(value, na.rm = TRUE),
+            sd      = if (sum(!is.na(value)) > 1) sd(value, na.rm = TRUE) else 0,
+            min     = if (all(is.na(value))) NA_real_ else min(value, na.rm = TRUE),
+            max     = if (all(is.na(value))) NA_real_ else max(value, na.rm = TRUE),
+            n_seeds = n(),
+            .groups = "drop")
 
 # Section 14: Expanding-window sub-experiment----
 
@@ -699,3 +748,114 @@ if (RESAMPLING == "loto" && RUN_EXPANDING) {
   }, envir = expanding)
 }
 
+# Section 15: Final models (LOTO only)----
+
+# context:
+# - the outer folds estimated how well each algorithm's *procedure* works (tune, then predict a new
+#   tournament). The final model runs the chosen procedure once more on all 6 tournaments, like
+#   nestedtune::nested_final_fit(), except that the tuning also picks the decision rule's t
+# - tuning resamples: the 6 outer folds (leave one tournament out over all the data), weighted by size
+# - target "macro_f1" (joint): the (candidate, t) with the best macro F1 over the 6 held-out years
+#   two-stage targets (mae, poisson_log_loss, rps): the best candidate on the target, then its best t
+#   ties go to the smallest t, then the first candidate (as in Section 9)
+# - tuning_macro_f1 is the score the pick was chosen on, so it's optimistic: the honest estimate of
+#   how the procedure does on a new tournament is the algorithm's outer score (scores, Section 12)
+# - FINALS: the algorithms to fit a final model for, by name. Each is saved to
+#   RESULTS_DIR/final_fit_<name>.rds and refit only if its settings, its grid or the folds change
+#     pois: the chosen algorithm (point 4 of the draw recall front: most draws caught before draw
+#           precision falls, best macro F1 and draw F1, deterministic)
+#     rf:   the more consistent alternative (point 3: best worst year, best in the expanding window)
+FINALS = list(pois = list(wflow_id = "base_pois", target = "macro_f1", rule = "p_draw"),
+              rf   = list(wflow_id = "base_rf",   target = "macro_f1", rule = "range"))
+
+# fit_final(settings, final_wf, final_grid, key): tune one algorithm on the 6 outer folds and refit its
+#   pick on all of euro. Returns its settings, params, t, the scores it was picked on and the fitted workflow
+fit_final = function(settings, final_wf, final_grid, key) {
+  # the 6 outer splits as one plain resampling set, weighted by held-out rows (as in Section 2)
+  final_folds = manual_rset(folds$splits, folds$id)
+  final_folds = add_resample_weights(final_folds, assessment_weights(final_folds))
+
+  # metrics: macro F1 at every t of the rule, plus the target if it's two-stage
+  two_stage     = settings$target != "macro_f1"
+  rule_metrics  = filter(rules, rule == settings$rule)
+  final_metrics = do.call(metric_set, c(
+    if (two_stage) list(mae = mae, poisson_log_loss = poisson_log_loss, rps = rps_metric)[settings$target],
+    f1_metrics[rule_metrics$metric_name]))
+
+  set.seed(6769)
+  final_tuning = tune_grid(final_wf, resamples = final_folds, grid = final_grid, metrics = final_metrics)
+
+  # one obs per {candidate} x {metric}: the weighted mean over the 6 held-out years
+  final_scores = collect_metrics(final_tuning)
+  final_f1 = final_scores |>
+    inner_join(select(rule_metrics, metric_name, t), by = c(".metric" = "metric_name")) |>
+    arrange(t) # so ties -> smallest t
+  if (two_stage) {
+    best_config = final_scores |>
+      filter(.metric == settings$target) |>
+      slice_min(mean, n = 1, with_ties = FALSE) |>
+      pull(.config)
+    final_f1 = filter(final_f1, .config == best_config)
+  }
+  best        = slice_max(final_f1, mean, n = 1, with_ties = FALSE)
+  best_params = select(best, all_of(extract_parameter_set_dials(final_wf)$id))
+
+  set.seed(6769) # rf is random: the same seed as the outer refits (Section 10)
+  list(key             = key,
+       settings        = settings,
+       params          = best_params,
+       t               = best$t,
+       tuning_macro_f1 = best$mean,
+       tuning_scores   = final_scores,
+       fit             = fit(finalize_workflow(final_wf, best_params), euro))
+}
+
+# predict_final(new_data, final_model): one obs per {match}: both lambdas, the win / draw / loss
+#   probabilities and the call under the model's rule and t, e.g. predict_final(new_data, finals$pois)
+#   new_data: like euro, the two rows of a match adjacent (the team's view, then the opponent's view)
+predict_final = function(new_data, final_model) {
+  stopifnot(nrow(new_data) %% 2 == 0)
+  lambda = pmax(predict(final_model$fit, new_data)$.pred, 1e-6)
+  team1  = seq(1, nrow(new_data), by = 2)
+  p      = wdl_probs(lambda[team1], lambda[team1 + 1])
+  tibble(Team = new_data$Team[team1], Opponent = new_data$Opponent[team1],
+         lambda1 = lambda[team1], lambda2 = lambda[team1 + 1], p,
+         call = call_result(p$p_win, p$p_draw, p$p_loss, final_model$settings$rule, final_model$t))
+}
+
+if (RESAMPLING == "loto") {
+  # finals: one final model per entry of FINALS (by the same name), loaded if up to date, else fitted.
+  #   Under LOAD_ONLY a missing or stale one is NULL (not needed to load the results, so no stop)
+  finals = imap(FINALS, \(settings, name) {
+    stopifnot(settings$wflow_id %in% wf_set$wflow_id, settings$rule %in% rules$rule,
+              settings$target %in% c("mae", "poisson_log_loss", "rps", "macro_f1"))
+    file       = file.path(RESULTS_DIR, paste0("final_fit_", name, ".rds"))
+    final_wf   = extract_workflow(wf_set, settings$wflow_id)
+    final_grid = wf_set$option[[which(wf_set$wflow_id == settings$wflow_id)]]$grid
+    key        = list(settings, final_grid, folds$id)
+    saved      = if (file.exists(file)) readRDS(file)
+    if (length(to_run) == 0 && !is.null(saved) && identical(saved$key, key)) return(saved)
+    if (isTRUE(get0("LOAD_ONLY"))) {
+      message("LOAD_ONLY: the final model ", name, " is missing or out of date, run this script directly to fit it")
+      return(NULL)
+    }
+    cat("fitting the final model:", name, "\n")
+    final = fit_final(settings, final_wf, final_grid, key)
+    saveRDS(final, file)
+    final
+  })
+
+  for (name in names(finals)) {
+    final = finals[[name]]
+    if (is.null(final)) next
+    cat("\nfinal model ", name, ": ", paste(final$settings, collapse = " | "), "\n", sep = "")
+    print(final$params)
+    cat("t =", final$t, "  macro F1 it was picked on (6 held-out years, optimistic):",
+        round(final$tuning_macro_f1, 3), "\n")
+    # what each outer fold picked for the same algorithm (Section 9): how stable the picks were
+    choices |>
+      filter(wflow_id == final$settings$wflow_id, target == final$settings$target, rule == final$settings$rule) |>
+      select(id, params_label, t, inner_f1) |>
+      print()
+  }
+}

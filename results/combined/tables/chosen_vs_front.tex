@@ -1,0 +1,13 @@
+
+\begin{tabular}{lrrrl}
+\toprule
+Compared with & Delta accuracy & Delta draw recall & Delta macro F1 & Years better\\
+\midrule
+base\_pois | macro\_f1 | argmax & -0.028 & 0.500 & 0.086 & 5/6\\
+base\_rf | poisson\_log\_loss | p\_draw & -0.017 & 0.225 & 0.003 & 3.7/6\\
+base\_rf | macro\_f1 | range & -0.007 & 0.132 & 0.001 & 2.5/6\\
+base\_pois | mae | range & 0.008 & -0.028 & 0.005 & 2/6\\
+base\_nnet | poisson\_log\_loss | p\_draw & 0.049 & -0.083 & 0.043 & 5.7/6\\
+historical | none | argmax & 0.171 & 0.500 & 0.241 & 6/6\\
+\bottomrule
+\end{tabular}
