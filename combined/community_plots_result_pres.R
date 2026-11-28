@@ -173,13 +173,18 @@ save_table = function(df, name, digits = 3, ...) {
 # - tournament_table: one obs per {tournament}: its size (16 teams up to 2012, 24 from 2016), goals,
 #     draw rate and the spread (sd) of two covariates. The covariates are team minus opponent, so their
 #     mean is 0 in every tournament, but their scale changes (e.g. UefaPoints)
-# - variance_levels: how the variance of a team's goals in a match splits into between tournaments,
-#     between teams within a tournament, and within a team's matches (nested sums of squares)
-#   tournaments barely differ in goals (about 1%), but a team's matches in one tournament are alike (about
-#   25%): they share the team and its covariates. A random split of the rows would put some of a team's
-#   matches in training and the rest in testing; holding out whole tournaments doesn't, and it's also the
-#   real task (predict a new tournament, with its own format and covariate scale)
-match_draws = tibble(Tournament = euro$Year[odd], draw = euro$Goals[odd] == euro$Goals[odd + 1]) # one per match
+# - variance_levels: how the variance of a match's total goals, and of whether it was a draw, splits into
+#     between tournaments (how far apart the tournament averages are) and within a tournament (between its
+#     matches): a one-way ANOVA per score. The last row tests the between-tournament part
+#   tournaments barely differ (about 2% of the variance, not significant): almost all the variation is
+#   between matches within a tournament. So the case for holding out whole tournaments isn't that their
+#   averages differ. It's the real task (predict a new tournament, with its own format and covariate
+#   scale), and that a tournament's matches belong together: a team plays several of them with the same
+#   covariates, so a random split of the rows would put some in training and the rest in testing
+# match_level: one obs per {match}: its tournament, total goals and whether it was a draw (1 = yes)
+match_level = tibble(Tournament = euro$Year[odd],
+                     total      = euro$Goals[odd] + euro$Goals[odd + 1],
+                     draw       = as.numeric(euro$Goals[odd] == euro$Goals[odd + 1]))
 tournament_table = euro |>
   group_by(Tournament = Year) |>
   summarise(Matches          = n() / 2,
@@ -187,16 +192,22 @@ tournament_table = euro |>
             `Goals per team` = mean(Goals),
             `SD MarketValue` = sd(MarketValue),
             `SD UefaPoints`  = sd(UefaPoints)) |>
-  left_join(match_draws |> group_by(Tournament) |> summarise(`Draw rate` = mean(draw)), by = "Tournament") |>
+  left_join(match_level |> group_by(Tournament) |> summarise(`Draw rate` = mean(draw)), by = "Tournament") |>
   relocate(`Draw rate`, .after = `Goals per team`)
 print(tournament_table)
 save_table(tournament_table, "tournament_structure", digits = c(0, 0, 0, 2, 3, 2, 0))
 
-goal_levels = anova(lm(Goals ~ factor(Year) / factor(Team), data = euro))
-variance_levels = tibble(Level = c("between tournaments", "between teams within a tournament",
-                                   "within a team's matches"),
-                         `Share of goal variance` = goal_levels[["Sum Sq"]] / sum(goal_levels[["Sum Sq"]]),
-                         p = c(goal_levels[["Pr(>F)"]][1:2], NA))
+# between_within(y): the between-tournament share of y's variance, the within share (the rest), and the
+#   p-value of the between part (F test)
+between_within = function(y) {
+  parts   = anova(lm(y ~ factor(Tournament), data = match_level))
+  between = parts[["Sum Sq"]][1] / sum(parts[["Sum Sq"]])
+  c(between, 1 - between, parts[["Pr(>F)"]][1])
+}
+variance_levels = tibble(Level                   = c("between tournaments", "within a tournament (between matches)",
+                                                     "p-value, between tournaments"),
+                         `Total goals per match` = between_within(match_level$total),
+                         `Draw (yes / no)`       = between_within(match_level$draw))
 print(variance_levels)
 save_table(variance_levels, "variance_levels", digits = c(0, 3, 3))
 
